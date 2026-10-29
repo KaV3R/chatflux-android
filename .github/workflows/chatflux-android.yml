@@ -126,9 +126,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "android-v${{ steps.v.outputs.name }}" release/*.apk \
+          set -euo pipefail
+          TAG="android-v${{ steps.v.outputs.name }}"
+          # Create the release as a draft first, upload with retries (large uploads sometimes time out), then publish.
+          gh release create "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "ChatFlux Android ${{ steps.v.outputs.name }}" \
             --notes "Töltsd le a ChatFlux-${{ steps.v.outputs.name }}.apk fájlt (ez minden telefonon megy). A -arm64-v8a változat kisebb, a legtöbb mai telefonra az kell. Telepítéskor engedélyezni kell az ismeretlen forrásból származó appokat." \
-            --latest
+            --draft
+          for f in release/*.apk; do
+            for attempt in 1 2 3 4 5; do
+              if gh release upload "$TAG" "$f" --repo "$GITHUB_REPOSITORY" --clobber; then
+                break
+              fi
+              if [ "$attempt" = 5 ]; then
+                echo "::error::Upload failed: $f"; exit 1
+              fi
+              echo "Upload failed ($f), retrying in $((attempt * 15))s..."
+              sleep $((attempt * 15))
+            done
+          done
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
