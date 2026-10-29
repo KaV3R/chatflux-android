@@ -1,0 +1,827 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+import 'package:fluxer_app/core/api/captcha_api_codes.dart';
+import 'package:fluxer_app/core/api/dio_error_message.dart';
+import 'package:fluxer_app/core/api/service_unavailable.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart' hide AuthSession;
+import 'package:fluxer_app/core/instance/instance_config_snapshot.dart';
+import 'package:fluxer_app/core/instance/instance_endpoint_normalizer.dart';
+import 'package:fluxer_app/core/instance/instance_legacy_endpoint_migrator.dart';
+import 'package:fluxer_app/features/auth/data/auth_token_storage.dart';
+import 'package:fluxer_app/features/auth/domain/account_recovery_result.dart';
+import 'package:fluxer_app/features/auth/domain/auth_failure.dart';
+import 'package:fluxer_app/features/auth/domain/auth_session.dart';
+import 'package:fluxer_app/features/auth/domain/ban_view.dart';
+import 'package:fluxer_app/features/auth/domain/ip_auth_poll_result.dart';
+import 'package:fluxer_app/features/auth/domain/ip_authorization_challenge.dart';
+import 'package:fluxer_app/features/auth/domain/login_result.dart';
+import 'package:fluxer_app/features/auth/domain/mfa_challenge.dart';
+import 'package:fluxer_app/features/auth/domain/registration_result.dart';
+import 'package:fluxer_app/features/auth/domain/stored_account.dart';
+import 'package:fluxer_dart/export.dart';
+
+class AuthRepository {
+  final FluxerClient _client;
+  final FluxerDatabase _db;
+  final AuthTokenStorage _tokenStorage;
+  final InstanceConfigSnapshot Function() _readInstanceSnapshot;
+
+  const AuthRepository(
+    this._client,
+    this._db,
+    this._tokenStorage, {
+    required this._readInstanceSnapshot,
+  });
+
+  Future<LoginResult> login({
+    required String email,
+    required String password,
+    String? inviteCode,
+    bool usernameSignIn = false,
+  }) async {
+    final request = usernameSignIn
+        ? LoginRequest(
+            login: email.trim(),
+            password: password,
+            inviteCode: JsonNullable.of(inviteCode),
+          )
+        : LoginRequest(
+            email: email.trim(),
+            password: password,
+            inviteCode: JsonNullable.of(inviteCode),
+          );
+
+    try {
+      final response = await _client.auth.loginUser(body: request);
+      return await _loginResultFromAuthLoginResponse(response);
+    } on AuthFailure {
+      rethrow;
+    } on DioException catch (error) {
+      final ipChallenge = _extractIpAuthChallenge(error);
+      if (ipChallenge != null) {
+        return LoginIpAuthRequired(ipChallenge);
+      }
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      await _client.auth.forgotPassword(
+        body: ForgotPasswordRequest(email: email.trim()),
+      );
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<LoginResult> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    try {
+      final response = await _client.auth.resetPassword(
+        body: ResetPasswordRequest(token: token, password: password),
+      );
+      return await _loginResultFromAuthLoginResponse(response);
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<AccountRecoveryResult> recoverAccount({
+    required String login,
+    required String recoveryKey,
+    required String password,
+  }) async {
+    try {
+      final response = await _client.auth.recoverAccount(
+        body: RecoverAccountRequest(
+          login: login.trim(),
+          recoveryKey: recoveryKey,
+          password: password,
+        ),
+      );
+      if (response.toJson()['mfa'] == true) {
+        final mfaResponse = response.toVariant2();
+        return AccountRecoveryResult(
+          login: LoginMfaRequired(
+            MfaChallenge(
+              ticket: mfaResponse.ticket,
+              totp: mfaResponse.totp,
+              webauthn: mfaResponse.webauthn,
+            ),
+          ),
+          recoveryKey: mfaResponse.recoveryKey,
+          recoveryKitCreatedAt: mfaResponse.recoveryKitCreatedAt,
+        );
+      }
+      final tokenResponse = response.toVariant1();
+      final session = AuthSession(
+        token: tokenResponse.token,
+        userId: tokenResponse.userId,
+      );
+      await _saveSession(session);
+      return AccountRecoveryResult(
+        login: LoginSuccess(session),
+        recoveryKey: tokenResponse.recoveryKey,
+        recoveryKitCreatedAt: tokenResponse.recoveryKitCreatedAt,
+        username: tokenResponse.user.username,
+        discriminator: tokenResponse.user.discriminator,
+      );
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<bool> isUsernameAvailable(String username) async {
+    final response = await _client.auth.getUsernameAvailability(
+      username: username,
+    );
+    return response.available;
+  }
+
+  Future<List<String>> getUsernameSuggestions({
+    required String globalName,
+  }) async {
+    try {
+      final response = await _client.auth.getUsernameSuggestions(
+        body: UsernameSuggestionsRequest(globalName: globalName),
+      );
+      return response.suggestions;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<RegistrationResult> register({
+    required String? email,
+    required String password,
+    String? dateOfBirth,
+    String? username,
+    String? displayName,
+    String? inviteCode,
+    String? registrationUrlCode,
+  }) async {
+    try {
+      final response = await _client.auth.registerAccount(
+        body: RegisterRequest(
+          email: email?.trim(),
+          password: password,
+          dateOfBirth: dateOfBirth,
+          consent: true,
+          username: (username?.trim().isNotEmpty ?? false)
+              ? username!.trim()
+              : null,
+          globalName: (displayName?.trim().isNotEmpty ?? false)
+              ? displayName!.trim()
+              : null,
+          inviteCode: JsonNullable.of(inviteCode),
+          registrationUrlCode: JsonNullable.of(registrationUrlCode),
+        ),
+      );
+
+      if (response.toJson()['registration_pending_approval'] == true) {
+        return RegistrationPendingApproval(
+          response.toAuthRegistrationPendingApprovalResponse().userId,
+        );
+      }
+
+      final tokenResponse = response.toAuthRegisterSuccessResponse();
+      final session = AuthSession(
+        token: tokenResponse.token,
+        userId: tokenResponse.userId,
+      );
+      await _saveSession(session);
+      return RegistrationSuccess(session);
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<AuthSession?> getActiveSession() async {
+    while (true) {
+      final row = await _db.authSessionDao.getActiveSession();
+      if (row == null) {
+        return null;
+      }
+      final AuthSession? session = await _resolveSessionForUserId(row.userId);
+      if (session != null) {
+        return session;
+      }
+      await _db.authSessionDao.removeSession(row.userId);
+    }
+  }
+
+  Future<AuthSession?> getSession(String userId) async {
+    final row = await _db.authSessionDao.getSession(userId);
+    if (row == null) {
+      return null;
+    }
+    return _resolveSessionForUserId(userId);
+  }
+
+  Future<void> migrateLegacyTokens() async {
+    final List<({String userId, String token})> legacyTokens = await _db
+        .authSessionDao
+        .getLegacyTokens();
+    if (legacyTokens.isEmpty) {
+      await _db.authSessionDao.dropLegacyTokenColumnIfPresent();
+      return;
+    }
+    for (final ({String userId, String token}) entry in legacyTokens) {
+      try {
+        await _tokenStorage.saveToken(userId: entry.userId, token: entry.token);
+      } on AuthTokenStorageException {
+        return;
+      }
+    }
+    await _db.authSessionDao.clearLegacyTokens();
+    await _db.authSessionDao.dropLegacyTokenColumnIfPresent();
+  }
+
+  Future<void> migrateLegacyInstanceEndpoints() async {
+    const InstanceLegacyEndpointMigrator migrator =
+        InstanceLegacyEndpointMigrator();
+    final sessions = await _db.authSessionDao.getAllSessions();
+    for (final session in sessions) {
+      await _migrateLegacyInstanceSnapshotForUser(
+        migrator: migrator,
+        userId: session.userId,
+        instanceSnapshotJson: session.instanceSnapshotJson,
+      );
+      await _migrateLegacyStoredApiBaseUrl(
+        migrator: migrator,
+        userId: session.userId,
+      );
+    }
+    final List<RecentInstance> recents = await _db.recentInstancesDao
+        .getRecentInstances();
+    for (final RecentInstance recent in recents) {
+      final String? migratedDomain = migrator
+          .migrateOfficialRecentDomainIfNeeded(recent.domain);
+      if (migratedDomain == null) {
+        continue;
+      }
+      await _db.recentInstancesDao.renameRecentInstanceDomain(
+        fromDomain: recent.domain,
+        toDomain: migratedDomain,
+      );
+    }
+  }
+
+  Future<void> _migrateLegacyInstanceSnapshotForUser({
+    required InstanceLegacyEndpointMigrator migrator,
+    required String userId,
+    String? instanceSnapshotJson,
+  }) async {
+    if (instanceSnapshotJson == null || instanceSnapshotJson.isEmpty) {
+      return;
+    }
+    try {
+      final InstanceConfigSnapshot snapshot = InstanceConfigSnapshot.fromJson(
+        instanceSnapshotJson,
+      );
+      final InstanceConfigSnapshot? migrated = migrator
+          .migrateOfficialSnapshotIfNeeded(snapshot);
+      if (migrated == null) {
+        return;
+      }
+      await _db.authSessionDao.updateInstanceSnapshotJson(
+        userId: userId,
+        instanceSnapshotJson: migrated.toJson(),
+      );
+      await _persistApiBaseUrl(userId, migrated.apiBaseUrl);
+    } on Object {
+      // Bad snapshot json should not block startup.
+    }
+  }
+
+  Future<void> _migrateLegacyStoredApiBaseUrl({
+    required InstanceLegacyEndpointMigrator migrator,
+    required String userId,
+  }) async {
+    final String? token = await _tokenStorage.readToken(userId);
+    if (token == null || token.isEmpty) {
+      return;
+    }
+    final String? stored = await _tokenStorage.readApiBaseUrl(userId);
+    if (stored == null || stored.isEmpty) {
+      return;
+    }
+    final String? migrated = migrator.migrateOfficialApiBaseUrlIfNeeded(stored);
+    if (migrated == null) {
+      return;
+    }
+    await _persistApiBaseUrl(userId, migrated);
+  }
+
+  Future<void> pruneTokenlessSessions() async {
+    final sessions = await _db.authSessionDao.getAllSessions();
+    for (final session in sessions) {
+      final String? token = await _tokenStorage.readToken(session.userId);
+      if (token == null || token.isEmpty) {
+        await _db.authSessionDao.removeSession(session.userId);
+      }
+    }
+  }
+
+  Future<void> logout(String userId) async {
+    try {
+      await _client.auth.logoutUser();
+    } on Object {
+      // Best-effort API call — proceed with local cleanup regardless.
+    }
+    await _db.authSessionDao.removeSession(userId);
+    await _tokenStorage.deleteToken(userId);
+    await _db.clearUserData();
+  }
+
+  Future<IpAuthPollResult> pollIpAuthorization(String ticket) async {
+    try {
+      final response = await _client.auth.pollIpAuthorization(ticket: ticket);
+      if (response.completed &&
+          response.token != null &&
+          response.userId != null) {
+        final session = AuthSession(
+          token: response.token!,
+          userId: response.userId!,
+        );
+        await _saveSession(session);
+        return IpAuthCompleted(session);
+      }
+      return const IpAuthPending();
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 400) {
+        return const IpAuthExpired();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> resendIpAuthorization(String ticket) async {
+    await _client.auth.resendIpAuthorization(
+      body: MfaTicketRequest(ticket: ticket),
+    );
+  }
+
+  Future<void> _saveSession(
+    AuthSession session, {
+    String? username,
+    String? discriminator,
+    String? avatar,
+  }) async {
+    final InstanceConfigSnapshot snapshot = _readInstanceSnapshot();
+    await _tokenStorage.saveToken(userId: session.userId, token: session.token);
+    await _persistApiBaseUrl(session.userId, snapshot.apiBaseUrl);
+    await _db.authSessionDao.saveSessionMetadata(
+      userId: session.userId,
+      username: username,
+      discriminator: discriminator,
+      avatar: avatar,
+      instanceSnapshotJson: snapshot.toJson(),
+    );
+  }
+
+  Future<void> persistRotatedToken(String token) async {
+    if (token.isEmpty) {
+      return;
+    }
+    final row = await _db.authSessionDao.getActiveSession();
+    if (row == null) {
+      return;
+    }
+    await _tokenStorage.saveToken(userId: row.userId, token: token);
+  }
+
+  Future<void> persistInstanceSnapshot(InstanceConfigSnapshot snapshot) async {
+    final row = await _db.authSessionDao.getActiveSession();
+    if (row == null) {
+      return;
+    }
+    await _db.authSessionDao.updateInstanceSnapshotJson(
+      userId: row.userId,
+      instanceSnapshotJson: snapshot.toJson(),
+    );
+    await _persistApiBaseUrl(row.userId, snapshot.apiBaseUrl);
+  }
+
+  Future<void> persistApiBaseUrls() async {
+    final sessions = await _db.authSessionDao.getAllSessions();
+    for (final session in sessions) {
+      try {
+        await _persistApiBaseUrlForUser(session.userId);
+      } on Object {
+        // Bad snapshot json should not block startup.
+      }
+    }
+  }
+
+  Future<void> _persistApiBaseUrlForUser(String userId) async {
+    final String? token = await _tokenStorage.readToken(userId);
+    if (token == null || token.isEmpty) {
+      return;
+    }
+    final InstanceConfigSnapshot snapshot =
+        await resolveInstanceSnapshotForUser(userId);
+    await _persistApiBaseUrl(userId, snapshot.apiBaseUrl);
+  }
+
+  Future<void> _persistApiBaseUrl(String userId, String apiBaseUrl) async {
+    if (apiBaseUrl.isEmpty) {
+      return;
+    }
+    final String? existing = await _tokenStorage.readApiBaseUrl(userId);
+    if (existing == apiBaseUrl) {
+      return;
+    }
+    try {
+      await _tokenStorage.saveApiBaseUrl(
+        userId: userId,
+        apiBaseUrl: apiBaseUrl,
+      );
+    } on AuthTokenStorageException {
+      return;
+    }
+  }
+
+  Future<InstanceConfigSnapshot> resolveInstanceSnapshotForUser(
+    String userId,
+  ) async {
+    final String? json = await _db.authSessionDao.getInstanceSnapshotJson(
+      userId,
+    );
+    if (json == null || json.isEmpty) {
+      return InstanceConfigSnapshot.officialDefault();
+    }
+    return InstanceConfigSnapshot.fromJson(json);
+  }
+
+  Future<InstanceConfigSnapshot?> resolveActiveInstanceSnapshot() async {
+    final row = await _db.authSessionDao.getActiveSession();
+    if (row == null) {
+      return null;
+    }
+    return resolveInstanceSnapshotForUser(row.userId);
+  }
+
+  String _resolveDisplayDomain(String? instanceSnapshotJson) {
+    const InstanceEndpointNormalizer normalizer = InstanceEndpointNormalizer();
+    final String? parsed = _parseDisplayDomain(instanceSnapshotJson);
+    final String raw =
+        parsed ?? InstanceConfigSnapshot.officialDefault().displayDomain;
+    return normalizer.formatDisplayDomain(raw);
+  }
+
+  String _resolveMediaBaseUrl(String? instanceSnapshotJson) {
+    if (instanceSnapshotJson == null || instanceSnapshotJson.isEmpty) {
+      return InstanceConfigSnapshot.officialDefault().mediaBaseUrl;
+    }
+    try {
+      return InstanceConfigSnapshot.fromJson(instanceSnapshotJson).mediaBaseUrl;
+    } on Object {
+      return InstanceConfigSnapshot.officialDefault().mediaBaseUrl;
+    }
+  }
+
+  String? _parseDisplayDomain(String? instanceSnapshotJson) {
+    if (instanceSnapshotJson == null || instanceSnapshotJson.isEmpty) {
+      return null;
+    }
+    try {
+      final Object? decoded = jsonDecode(instanceSnapshotJson);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      final Object? displayDomain = decoded['display_domain'];
+      if (displayDomain is String && displayDomain.isNotEmpty) {
+        return displayDomain;
+      }
+      return null;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<AuthSession> verifyMfaTotp({
+    required String ticket,
+    required String code,
+  }) async {
+    try {
+      final response = await _client.auth.loginWithTotp(
+        body: MfaTotpRequest(code: code, ticket: ticket),
+      );
+      final session = AuthSession(
+        token: response.token,
+        userId: response.userId,
+      );
+      await _saveSession(session);
+      return session;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> getMfaWebauthnOptions({
+    required String ticket,
+  }) async {
+    try {
+      final options = await _client.auth.getWebauthnMfaOptions(
+        body: MfaTicketRequest(ticket: ticket),
+      );
+      return jsonDecode(jsonEncode(options)) as Map<String, dynamic>;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<AuthSession> verifyMfaWebauthn({
+    required String ticket,
+    required dynamic response,
+    required String challenge,
+  }) async {
+    try {
+      final result = await _client.auth.loginWithWebauthnMfa(
+        body: WebAuthnMfaRequest(
+          response: WebAuthnAuthenticationResponse.fromJson(
+            Map<String, dynamic>.from(response as Map),
+          ),
+          challenge: challenge,
+          ticket: ticket,
+        ),
+      );
+      final session = AuthSession(token: result.token, userId: result.userId);
+      await _saveSession(session);
+      return session;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> getPasskeyLoginOptions() async {
+    try {
+      final options = await _client.auth.getWebauthnAuthenticationOptions();
+      return jsonDecode(jsonEncode(options)) as Map<String, dynamic>;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<SsoStartResponse> startSso({
+    String? redirectTo,
+    String? redirectUri,
+  }) async {
+    try {
+      return await _client.auth.startSso(
+        body: SsoStartRequest(
+          redirectTo: JsonNullable.of(redirectTo),
+          redirectUri: JsonNullable.of(redirectUri),
+        ),
+      );
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<AuthSession> completeSso({
+    required String code,
+    required String state,
+  }) async {
+    try {
+      final SsoCompleteResponse response = await _client.auth.completeSso(
+        body: SsoCompleteRequest(code: code, state: state),
+      );
+      if (response.toJson()['mfa'] == true) {
+        throw const AuthFailure('MFA is required to complete SSO.');
+      }
+      final SsoCompleteResponseVariant1 success = response.toVariant1();
+      final AuthSession session = AuthSession(
+        token: success.token,
+        userId: success.userId,
+      );
+      await _saveSession(
+        session,
+        username: success.user.username,
+        discriminator: success.user.discriminator,
+        avatar: success.user.avatar,
+      );
+      return session;
+    } on DioException catch (error) {
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<LoginResult> loginWithPasskey({
+    required dynamic response,
+    required String challenge,
+  }) async {
+    try {
+      final result = await _client.auth.authenticateWithWebauthn(
+        body: WebAuthnAuthenticateRequest(
+          response: WebAuthnAuthenticationResponse.fromJson(
+            Map<String, dynamic>.from(response as Map),
+          ),
+          challenge: challenge,
+        ),
+      );
+      final session = AuthSession(token: result.token, userId: result.userId);
+      await _saveSession(session);
+      return LoginSuccess(session);
+    } on DioException catch (error) {
+      final ipChallenge = _extractIpAuthChallenge(error);
+      if (ipChallenge != null) {
+        return LoginIpAuthRequired(ipChallenge);
+      }
+      throw _failureFromDio(error);
+    }
+  }
+
+  Future<List<StoredAccount>> getStoredAccounts() async {
+    final sessions = await _db.authSessionDao.getAllSessions();
+    final List<StoredAccount> accounts = <StoredAccount>[];
+    for (final s in sessions) {
+      final String? token = await _tokenStorage.readToken(s.userId);
+      if (token == null || token.isEmpty) {
+        continue;
+      }
+      accounts.add(
+        StoredAccount(
+          userId: s.userId,
+          isValid: s.isValid,
+          username: s.username,
+          discriminator: s.discriminator,
+          avatar: s.avatar,
+          displayDomain: _resolveDisplayDomain(s.instanceSnapshotJson),
+          mediaBaseUrl: _resolveMediaBaseUrl(s.instanceSnapshotJson),
+        ),
+      );
+    }
+    return accounts;
+  }
+
+  Future<void> removeStoredAccount(String userId) async {
+    await _db.authSessionDao.removeSession(userId);
+    await _tokenStorage.deleteToken(userId);
+  }
+
+  Future<LoginResult> _loginResultFromAuthLoginResponse(
+    AuthLoginResponse response,
+  ) async {
+    final Map<String, dynamic> json = response.toJson();
+    if (json['mfa'] == true) {
+      final AuthLoginResponseVariant2 mfaResponse = response.toVariant2();
+      return LoginMfaRequired(
+        MfaChallenge(
+          ticket: mfaResponse.ticket,
+          totp: mfaResponse.totp,
+          webauthn: mfaResponse.webauthn,
+        ),
+      );
+    }
+
+    final banViewToken = json['ban_view_token'] as String?;
+    final banType = json['ban_type'] as String?;
+    if (banViewToken != null && banType != null) {
+      return LoginSuspended(
+        BanViewInfo(token: banViewToken, banType: BanType.fromString(banType)),
+      );
+    }
+
+    final String token = json['token'] as String? ?? '';
+    final Object? userIdRaw = json['user_id'];
+    final String userId = userIdRaw == null ? '' : userIdRaw.toString();
+    if (token.isEmpty || userId.isEmpty) {
+      throw const AuthFailure('Unexpected login response from Fluxer API.');
+    }
+    final AuthSession session = AuthSession(token: token, userId: userId);
+    await _saveSession(session);
+    return LoginSuccess(session);
+  }
+
+  Future<AuthSession?> _resolveSessionForUserId(String userId) async {
+    final String? token = await _tokenStorage.readToken(userId);
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+    return AuthSession(token: token, userId: userId);
+  }
+
+  IpAuthorizationChallenge? _extractIpAuthChallenge(DioException error) {
+    if (error.response?.statusCode != 403) {
+      return null;
+    }
+
+    final data = error.response?.data;
+    if (data is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final code = data['code'] as String?;
+    if (code != 'IP_AUTHORIZATION_REQUIRED') {
+      return null;
+    }
+
+    final ticket = data['ticket'] as String?;
+    final email = data['email'] as String?;
+    final resendIn = (data['resend_available_in'] as num?)?.toInt();
+
+    if (ticket == null || email == null) {
+      return null;
+    }
+
+    return IpAuthorizationChallenge(
+      ticket: ticket,
+      email: email,
+      resendAvailableIn: resendIn ?? 30,
+    );
+  }
+
+  AuthFailure _failureFromDio(DioException error) {
+    final String? apiCode = apiErrorCodeFromDioException(error);
+    if (apiCode == kCaptchaRequiredApiCode ||
+        apiCode == kInvalidCaptchaApiCode) {
+      return const AuthFailure(
+        'Verification failed.',
+        kind: AuthFailureKind.verificationFailed,
+      );
+    }
+
+    if (isHttpServiceUnavailable(error)) {
+      return const AuthFailure(
+        'This instance is temporarily unavailable.',
+        kind: AuthFailureKind.serviceUnavailable,
+      );
+    }
+
+    final responseData = error.response?.data;
+
+    if (responseData is Map<String, dynamic>) {
+      final rawErrors = responseData['errors'];
+      if (rawErrors is List<dynamic>) {
+        var sawInvalidCredentials = false;
+        final fieldErrors = <String, String>{};
+        for (final item in rawErrors) {
+          if (item is! Map<String, dynamic>) {
+            continue;
+          }
+          if (item['code'] == 'INVALID_EMAIL_OR_PASSWORD' ||
+              item['code'] == 'INVALID_LOGIN_OR_PASSWORD') {
+            sawInvalidCredentials = true;
+          }
+          final Object? field = item['path'] ?? item['field'];
+          final Object? message = item['message'];
+          if (field is String &&
+              field.isNotEmpty &&
+              message is String &&
+              message.isNotEmpty) {
+            fieldErrors.putIfAbsent(field, () => message);
+          }
+        }
+
+        if (sawInvalidCredentials) {
+          return const AuthFailure(
+            'Invalid email or password.',
+            kind: AuthFailureKind.invalidCredentials,
+          );
+        }
+        if (fieldErrors.isNotEmpty) {
+          final topMessage = responseData['message'];
+          return AuthFailure(
+            topMessage is String && topMessage.isNotEmpty
+                ? topMessage
+                : 'Invalid form body.',
+            fieldErrors: fieldErrors,
+          );
+        }
+      }
+
+      final message = responseData['message'];
+      if (message is String && message.isNotEmpty) {
+        return AuthFailure(message);
+      }
+    }
+
+    if (responseData is String && responseData.isNotEmpty) {
+      return AuthFailure(responseData);
+    }
+
+    switch (error.response?.statusCode) {
+      case 401:
+        return const AuthFailure(
+          'Invalid email or password.',
+          kind: AuthFailureKind.invalidCredentials,
+        );
+      case 429:
+        return const AuthFailure(
+          'Too many attempts. Please wait and try again.',
+        );
+    }
+
+    if (error.message != null && error.message!.isNotEmpty) {
+      return AuthFailure(error.message!);
+    }
+
+    return const AuthFailure('Unable to sign in right now. Please try again.');
+  }
+}

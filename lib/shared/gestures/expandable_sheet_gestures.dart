@@ -1,0 +1,258 @@
+import 'dart:math' as math;
+
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/fluxer_haptics.dart';
+
+const double kExpandableSheetSnapMidpointFraction = 0.42;
+const double kExpandableSheetFlingVelocityThreshold = 650;
+
+Duration expandableSheetSnapDuration(
+  BuildContext context, {
+  required bool isDragging,
+}) {
+  if (isDragging || MediaQuery.disableAnimationsOf(context)) {
+    return Duration.zero;
+  }
+  return context.motion.slow;
+}
+
+double expandableSheetBinarySnapHeight({
+  required double currentHeight,
+  required double velocity,
+  required double collapsedHeight,
+  required double expandedHeight,
+}) {
+  final double midpoint =
+      collapsedHeight +
+      ((expandedHeight - collapsedHeight) *
+          kExpandableSheetSnapMidpointFraction);
+  if (velocity < -kExpandableSheetFlingVelocityThreshold) {
+    return expandedHeight;
+  }
+  if (velocity > kExpandableSheetFlingVelocityThreshold) {
+    return collapsedHeight;
+  }
+  return currentHeight >= midpoint ? expandedHeight : collapsedHeight;
+}
+
+void playExpandableSheetSnapHaptic({
+  required bool wasExpanded,
+  required bool isExpanded,
+}) {
+  if (wasExpanded == isExpanded) {
+    return;
+  }
+  if (isExpanded) {
+    FluxerHaptics.medium();
+    return;
+  }
+  FluxerHaptics.soft();
+}
+
+void playExpandableSheetDismissHaptic() {
+  FluxerHaptics.soft();
+}
+
+bool expandableSheetIsPastCollapsedHeight({
+  required double currentHeight,
+  required double collapsedHeight,
+}) {
+  return currentHeight > collapsedHeight + 1;
+}
+
+void updateExpandableSheetHeight({
+  required ValueNotifier<double> heightNotifier,
+  required double nextHeight,
+}) {
+  if (heightNotifier.value == nextHeight) {
+    return;
+  }
+  heightNotifier.value = nextHeight;
+}
+
+class ExpandableSheetHeightBuilder extends StatelessWidget {
+  const ExpandableSheetHeightBuilder({
+    required this.heightNotifier,
+    required this.isDraggingNotifier,
+    required this.sizeBuilder,
+    required this.child,
+    super.key,
+  });
+
+  final ValueNotifier<double> heightNotifier;
+  final ValueNotifier<bool> isDraggingNotifier;
+  final Widget Function(
+    BuildContext context,
+    double height, {
+    required bool isDragging,
+    required Widget child,
+  })
+  sizeBuilder;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge(<Listenable>[
+        heightNotifier,
+        isDraggingNotifier,
+      ]),
+      builder: (BuildContext context, Widget? stableChild) {
+        return sizeBuilder(
+          context,
+          heightNotifier.value,
+          isDragging: isDraggingNotifier.value,
+          child: stableChild!,
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+const Duration kComposerPanelMotionDuration = Duration(milliseconds: 450);
+const double kComposerPanelSpringOmega = 17.8;
+const Curve kComposerPanelMotionCurve = ComposerPanelSpringCurve();
+
+class ComposerPanelSpringCurve extends Curve {
+  const ComposerPanelSpringCurve({this.initialVelocity = 0});
+
+  factory ComposerPanelSpringCurve.fromRelease({
+    required double fromHeight,
+    required double toHeight,
+    required double heightVelocity,
+  }) {
+    final double distance = toHeight - fromHeight;
+    if (distance.abs() < 1) {
+      return const ComposerPanelSpringCurve();
+    }
+    return ComposerPanelSpringCurve(initialVelocity: heightVelocity / distance);
+  }
+
+  final double initialVelocity;
+
+  @override
+  double transformInternal(double t) {
+    final double seconds =
+        t *
+        kComposerPanelMotionDuration.inMicroseconds /
+        Duration.microsecondsPerSecond;
+    final double velocity = initialVelocity.clamp(
+      0.0,
+      kComposerPanelSpringOmega,
+    );
+    return 1 -
+        (1 + (kComposerPanelSpringOmega - velocity) * seconds) *
+            math.exp(-kComposerPanelSpringOmega * seconds);
+  }
+}
+
+Duration composerPanelMotionDuration(BuildContext context) {
+  if (MediaQuery.disableAnimationsOf(context)) {
+    return Duration.zero;
+  }
+  return kComposerPanelMotionDuration;
+}
+
+Widget expandableSheetAnimatedSize({
+  required BuildContext context,
+  required bool isDragging,
+  required double height,
+  required Widget child,
+  double? width,
+  BoxDecoration? decoration,
+  Clip clipBehavior = Clip.none,
+  bool composerPanelMotion = false,
+  Curve composerPanelCurve = kComposerPanelMotionCurve,
+}) {
+  final Duration duration = isDragging
+      ? Duration.zero
+      : composerPanelMotion
+      ? composerPanelMotionDuration(context)
+      : expandableSheetSnapDuration(context, isDragging: false);
+  return AnimatedContainer(
+    duration: duration,
+    curve: composerPanelMotion ? composerPanelCurve : Curves.easeOutCubic,
+    width: width,
+    height: height,
+    decoration: decoration,
+    clipBehavior: decoration == null ? Clip.none : clipBehavior,
+    child: child,
+  );
+}
+
+bool? updateExpandableSheetDragHaptic({
+  required bool? wasPastCollapsed,
+  required double previousHeight,
+  required double currentHeight,
+  required double collapsedHeight,
+}) {
+  final bool wasPast =
+      wasPastCollapsed ??
+      expandableSheetIsPastCollapsedHeight(
+        currentHeight: previousHeight,
+        collapsedHeight: collapsedHeight,
+      );
+  final bool isPastCollapsed = expandableSheetIsPastCollapsedHeight(
+    currentHeight: currentHeight,
+    collapsedHeight: collapsedHeight,
+  );
+  if (wasPast != isPastCollapsed) {
+    playExpandableSheetSnapHaptic(
+      wasExpanded: wasPast,
+      isExpanded: isPastCollapsed,
+    );
+  }
+  return isPastCollapsed;
+}
+
+class ExpandableSheetDragHandlers {
+  const ExpandableSheetDragHandlers({
+    required this.onVerticalDragUpdate,
+    required this.onVerticalDragEnd,
+    this.onVerticalDragStart,
+    this.expand,
+  });
+
+  final GestureDragStartCallback? onVerticalDragStart;
+  final VoidCallback? expand;
+  final GestureDragUpdateCallback onVerticalDragUpdate;
+  final GestureDragEndCallback onVerticalDragEnd;
+
+  Widget wrapChrome(Widget child) {
+    return ExpandableSheetDragTarget(
+      onVerticalDragStart: onVerticalDragStart,
+      onVerticalDragUpdate: onVerticalDragUpdate,
+      onVerticalDragEnd: onVerticalDragEnd,
+      child: child,
+    );
+  }
+}
+
+class ExpandableSheetDragTarget extends StatelessWidget {
+  const ExpandableSheetDragTarget({
+    required this.onVerticalDragUpdate,
+    required this.onVerticalDragEnd,
+    required this.child,
+    this.onVerticalDragStart,
+    super.key,
+  });
+
+  final GestureDragStartCallback? onVerticalDragStart;
+  final GestureDragUpdateCallback onVerticalDragUpdate;
+  final GestureDragEndCallback onVerticalDragEnd;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return FluxerGestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragStart: onVerticalDragStart,
+      onVerticalDragUpdate: onVerticalDragUpdate,
+      onVerticalDragEnd: onVerticalDragEnd,
+      child: child,
+    );
+  }
+}

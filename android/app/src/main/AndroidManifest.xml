@@ -1,0 +1,366 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Launcher app-icon badge (app_badge_plus) -->
+    <uses-permission android:name="com.sec.android.provider.badge.permission.READ"/>
+    <uses-permission android:name="com.sec.android.provider.badge.permission.WRITE"/>
+    <uses-permission android:name="com.htc.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.htc.launcher.permission.UPDATE_SHORTCUT"/>
+    <uses-permission android:name="com.sonyericsson.home.permission.BROADCAST_BADGE"/>
+    <uses-permission android:name="com.sonymobile.home.permission.PROVIDER_INSERT_BADGE"/>
+    <uses-permission android:name="com.anddoes.launcher.permission.UPDATE_COUNT"/>
+    <uses-permission android:name="com.majeur.launcher.permission.UPDATE_BADGE"/>
+    <uses-permission android:name="com.huawei.android.launcher.permission.CHANGE_BADGE" />
+    <uses-permission android:name="com.huawei.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.huawei.android.launcher.permission.WRITE_SETTINGS" />
+
+    <!-- Without a category, Xiaomi Game Turbo treats the app as a game and caps it at 60 Hz (flutter/flutter#192600). -->
+    <application
+        android:name=".FluxerApplication"
+        android:allowBackup="false"
+        android:label="${appLabel}"
+        android:icon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:appCategory="social"
+        android:enableOnBackInvokedCallback="true">
+        <meta-data android:name="sh.measure.android.API_KEY" android:value="${measureApiKey}" />
+        <meta-data android:name="sh.measure.android.API_URL" android:value="${measureApiUrl}" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fluxer" android:host="channels" />
+                <data android:scheme="fluxer" android:host="invite" />
+                <data android:scheme="fluxer" android:host="gift" />
+                <data android:scheme="fluxer" android:host="users" />
+                <data android:scheme="fluxer" android:host="settings" android:pathPrefix="/user" />
+                <data android:scheme="fluxer" android:host="notifications" />
+                <data android:scheme="fluxer" android:host="you" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/channels" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/gift" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/users" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/settings/user" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/reset" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="web.fluxer.app" android:pathPrefix="/you" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/channels" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/gift" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/users" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/settings/user" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/reset" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="web.canary.fluxer.app" android:pathPrefix="/you" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/channels" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/gift" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/users" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/settings/user" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/reset" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="web.fluxer.com" android:pathPrefix="/you" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/channels" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/gift" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/users" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/settings/user" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/reset" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="web.canary.fluxer.com" android:pathPrefix="/you" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="fluxer.gg" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.default"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="${appLabel}"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.starfield"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_starfield"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.sweden"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_sweden"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.waves"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_waves"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.greyscale"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_greyscale"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.rainbow"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_rainbow"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.chromatic_aberration"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_chromatic_aberration"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.default_brutalist"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_default_brutalist"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.greyscale_brutalist"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_greyscale_brutalist"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.ChromeCustomTabsActivity"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true" />
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.ChromeCustomTabsActivitySingleInstance"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.AuthenticationManagementActivity"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true" />
+        <activity
+            android:name=".SsoCallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter android:label="fluxer_sso_callback">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="fluxer"
+                    android:host="auth"
+                    android:pathPrefix="/sso/callback" />
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+        <!-- Impeller picks GLES on PowerVR B-Series, MediaTek vendor-SDK under 32 and Adreno
+             650 or older, re-encoding GL state for half of every raster frame (flutter/flutter#192147).
+             Raster avg 12.6 to 8.5 ms on moto g54, 10.1 to 5.1 ms and late frames 74% to 3% on ruby.
+             Revisit when the GLES backend caches state or the flag is removed. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+        <meta-data
+            android:name="com.fluxer.BUILD_ENVIRONMENT"
+            android:value="${buildEnvironment}" />
+        <meta-data
+            android:name="com.fluxer.PUSH_PROVIDER"
+            android:value="${pushProvider}" />
+        <service
+            android:name="de.julianassmann.flutter_background.IsolateHolderService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+        <service
+            android:name=".UploadKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <service
+            android:name="com.ryanheise.audioservice.AudioService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="Instantiatable">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name=".FluxerNotificationReplyReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.ryanheise.audioservice.MediaButtonReceiver"
+            android:exported="true"
+            tools:ignore="Instantiatable">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+        <activity
+            android:name="com.hiennv.flutter_callkit_incoming.CallkitIncomingActivity"
+            android:noHistory="false"
+            tools:replace="android:noHistory" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="org.unifiedpush.android.distributor.REGISTER" />
+        </intent>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <package android:name="com.android.chrome" />
+        <package android:name="org.mozilla.firefox" />
+        <package android:name="com.duckduckgo.mobile.android" />
+        <package android:name="com.qwant.liberty" />
+    </queries>
+</manifest>

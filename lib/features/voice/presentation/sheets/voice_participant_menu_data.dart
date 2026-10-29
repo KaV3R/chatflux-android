@@ -1,0 +1,322 @@
+import 'package:fluxer_app/features/ui/voice/voice_participant_media_tile.dart';
+import 'package:fluxer_app/features/voice/providers/voice_channel_participants_provider.dart';
+import 'package:fluxer_app/features/voice/utils/participant/participant_menu_capabilities.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class VoiceParticipantMenuTarget {
+  const VoiceParticipantMenuTarget({
+    required this.participant,
+    required this.tileId,
+    required this.channelId,
+    required this.tileSource,
+    this.guildId,
+  });
+
+  final VoiceChannelParticipantData participant;
+  final String tileId;
+  final String? guildId;
+  final String channelId;
+  final VoiceParticipantTileSource tileSource;
+
+  bool get isScreenShareTile =>
+      tileSource == VoiceParticipantTileSource.screenShare;
+}
+
+sealed class VoiceParticipantMenuEntry {}
+
+class VoiceParticipantMenuActionEntry extends VoiceParticipantMenuEntry {
+  VoiceParticipantMenuActionEntry({
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.isDanger = false,
+    this.enabled = true,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final PhosphorIconData? icon;
+  final bool isDanger;
+  final bool enabled;
+}
+
+class VoiceParticipantMenuCheckboxEntry extends VoiceParticipantMenuEntry {
+  VoiceParticipantMenuCheckboxEntry({
+    required this.label,
+    required this.isChecked,
+    required this.onChanged,
+    this.icon,
+  });
+
+  final String label;
+  final bool isChecked;
+  final ValueChanged<bool> onChanged;
+  final PhosphorIconData? icon;
+}
+
+class VoiceParticipantMenuVolumeEntry extends VoiceParticipantMenuEntry {
+  VoiceParticipantMenuVolumeEntry({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final ValueChanged<int> onChanged;
+}
+
+class VoiceParticipantMenuGroup {
+  const VoiceParticipantMenuGroup({required this.entries});
+
+  final List<VoiceParticipantMenuEntry> entries;
+}
+
+class VoiceParticipantMenuLabels {
+  const VoiceParticipantMenuLabels({
+    required this.viewProfile,
+    required this.focus,
+    required this.unfocus,
+    required this.mute,
+    required this.deafen,
+    required this.communityMute,
+    required this.communityDeafen,
+    required this.disconnect,
+    required this.userVolume,
+    required this.streamVolume,
+    required this.prioritizeSpeakers,
+    required this.watchStream,
+    required this.stopWatching,
+    required this.stopStreaming,
+  });
+
+  final String viewProfile;
+  final String focus;
+  final String unfocus;
+  final String mute;
+  final String deafen;
+  final String communityMute;
+  final String communityDeafen;
+  final String disconnect;
+  final String userVolume;
+  final String streamVolume;
+  final String prioritizeSpeakers;
+  final String watchStream;
+  final String stopWatching;
+  final String stopStreaming;
+}
+
+void _addMenuGroupIfNotEmpty(
+  List<VoiceParticipantMenuGroup> groups,
+  List<VoiceParticipantMenuEntry> entries,
+) {
+  if (entries.isEmpty) {
+    return;
+  }
+  groups.add(VoiceParticipantMenuGroup(entries: entries));
+}
+
+List<VoiceParticipantMenuGroup> buildVoiceParticipantMenuGroups({
+  required VoiceParticipantMenuCapabilities capabilities,
+  required VoiceParticipantMenuLabels labels,
+  required VoidCallback onViewProfile,
+  required VoidCallback onToggleFocus,
+  required VoidCallback onToggleSelfMute,
+  required VoidCallback onToggleSelfDeafen,
+  required ValueChanged<bool> onToggleCommunityMute,
+  required ValueChanged<bool> onToggleCommunityDeafen,
+  required VoidCallback onDisconnect,
+  required ValueChanged<int> onVolumeChanged,
+  required ValueChanged<int> onStreamVolumeChanged,
+  required ValueChanged<bool> onToggleStreamMute,
+  required ValueChanged<bool> onToggleLocalMute,
+  required ValueChanged<bool> onTogglePrioritizeSpeakers,
+  required VoidCallback onWatchStream,
+  required VoidCallback onStopWatching,
+  required VoidCallback onStopStreaming,
+}) {
+  if (capabilities.isScreenShareTile) {
+    return _buildStreamMenuGroups(
+      capabilities: capabilities,
+      labels: labels,
+      onWatchStream: onWatchStream,
+      onStopWatching: onStopWatching,
+      onStopStreaming: onStopStreaming,
+      onStreamVolumeChanged: onStreamVolumeChanged,
+      onToggleStreamMute: onToggleStreamMute,
+    );
+  }
+  final List<VoiceParticipantMenuGroup> groups = <VoiceParticipantMenuGroup>[];
+  final List<VoiceParticipantMenuEntry> primaryEntries =
+      <VoiceParticipantMenuEntry>[
+        VoiceParticipantMenuActionEntry(
+          label: labels.viewProfile,
+          icon: PhosphorIconsFill.user,
+          onPressed: onViewProfile,
+        ),
+      ];
+  if (capabilities.canFocus) {
+    primaryEntries.add(
+      VoiceParticipantMenuActionEntry(
+        label: capabilities.isFocused ? labels.unfocus : labels.focus,
+        icon: capabilities.isFocused
+            ? PhosphorIconsFill.eyeSlash
+            : PhosphorIconsFill.eye,
+        onPressed: onToggleFocus,
+      ),
+    );
+  }
+  groups.add(VoiceParticipantMenuGroup(entries: primaryEntries));
+  final List<VoiceParticipantMenuEntry> controlEntries =
+      <VoiceParticipantMenuEntry>[];
+  if (capabilities.showSelfMute) {
+    controlEntries.add(
+      VoiceParticipantMenuCheckboxEntry(
+        label: labels.mute,
+        icon: PhosphorIconsFill.microphoneSlash,
+        isChecked: capabilities.isSelfMuted,
+        onChanged: (_) => onToggleSelfMute(),
+      ),
+    );
+  }
+  if (capabilities.showSelfDeafen) {
+    controlEntries.add(
+      VoiceParticipantMenuCheckboxEntry(
+        label: labels.deafen,
+        icon: PhosphorIconsFill.speakerSlash,
+        isChecked: capabilities.isSelfDeafened,
+        onChanged: (_) => onToggleSelfDeafen(),
+      ),
+    );
+  }
+  if (capabilities.showCommunityMute) {
+    controlEntries.add(
+      VoiceParticipantMenuCheckboxEntry(
+        label: labels.communityMute,
+        icon: PhosphorIconsFill.microphoneSlash,
+        isChecked: capabilities.isCommunityMuted,
+        onChanged: onToggleCommunityMute,
+      ),
+    );
+  }
+  if (capabilities.showCommunityDeafen) {
+    controlEntries.add(
+      VoiceParticipantMenuCheckboxEntry(
+        label: labels.communityDeafen,
+        icon: PhosphorIconsFill.speakerSlash,
+        isChecked: capabilities.isCommunityDeafened,
+        onChanged: onToggleCommunityDeafen,
+      ),
+    );
+  }
+  if (controlEntries.isNotEmpty) {
+    _addMenuGroupIfNotEmpty(groups, controlEntries);
+  }
+  if (capabilities.showDisplayPreferences) {
+    _addMenuGroupIfNotEmpty(groups, <VoiceParticipantMenuEntry>[
+      VoiceParticipantMenuCheckboxEntry(
+        label: labels.prioritizeSpeakers,
+        icon: PhosphorIconsFill.handTap,
+        isChecked: capabilities.prioritizeSpeakingParticipants,
+        onChanged: onTogglePrioritizeSpeakers,
+      ),
+    ]);
+  }
+  if (capabilities.showDisconnect) {
+    groups.add(
+      VoiceParticipantMenuGroup(
+        entries: <VoiceParticipantMenuEntry>[
+          VoiceParticipantMenuActionEntry(
+            label: labels.disconnect,
+            icon: PhosphorIconsFill.phoneDisconnect,
+            isDanger: true,
+            onPressed: onDisconnect,
+          ),
+        ],
+      ),
+    );
+  }
+  if (capabilities.showVolume) {
+    groups.add(
+      VoiceParticipantMenuGroup(
+        entries: <VoiceParticipantMenuEntry>[
+          VoiceParticipantMenuVolumeEntry(
+            label: labels.userVolume,
+            value: capabilities.volumePercent,
+            onChanged: onVolumeChanged,
+          ),
+          VoiceParticipantMenuCheckboxEntry(
+            label: labels.mute,
+            icon: PhosphorIconsFill.speakerSlash,
+            isChecked: capabilities.isLocallyMuted,
+            onChanged: onToggleLocalMute,
+          ),
+        ],
+      ),
+    );
+  }
+  return groups;
+}
+
+List<VoiceParticipantMenuGroup> _buildStreamMenuGroups({
+  required VoiceParticipantMenuCapabilities capabilities,
+  required VoiceParticipantMenuLabels labels,
+  required VoidCallback onWatchStream,
+  required VoidCallback onStopWatching,
+  required VoidCallback onStopStreaming,
+  required ValueChanged<int> onStreamVolumeChanged,
+  required ValueChanged<bool> onToggleStreamMute,
+}) {
+  final List<VoiceParticipantMenuGroup> groups = <VoiceParticipantMenuGroup>[];
+  if (capabilities.isOwnScreenShare) {
+    groups.add(
+      VoiceParticipantMenuGroup(
+        entries: <VoiceParticipantMenuEntry>[
+          VoiceParticipantMenuActionEntry(
+            label: labels.stopStreaming,
+            icon: PhosphorIconsFill.monitor,
+            isDanger: true,
+            onPressed: onStopStreaming,
+          ),
+        ],
+      ),
+    );
+    return groups;
+  }
+  groups.add(
+    VoiceParticipantMenuGroup(
+      entries: <VoiceParticipantMenuEntry>[
+        VoiceParticipantMenuActionEntry(
+          label: capabilities.isWatching
+              ? labels.stopWatching
+              : labels.watchStream,
+          icon: capabilities.isWatching
+              ? PhosphorIconsFill.eyeSlash
+              : PhosphorIconsFill.eye,
+          onPressed: capabilities.isWatching ? onStopWatching : onWatchStream,
+        ),
+      ],
+    ),
+  );
+  if (capabilities.showStreamControls) {
+    groups.add(
+      VoiceParticipantMenuGroup(
+        entries: <VoiceParticipantMenuEntry>[
+          VoiceParticipantMenuCheckboxEntry(
+            label: labels.mute,
+            icon: PhosphorIconsFill.speakerSlash,
+            isChecked: capabilities.isStreamMuted,
+            onChanged: onToggleStreamMute,
+          ),
+          VoiceParticipantMenuVolumeEntry(
+            label: labels.streamVolume,
+            value: capabilities.streamVolumePercent,
+            onChanged: onStreamVolumeChanged,
+          ),
+        ],
+      ),
+    );
+  }
+  return groups;
+}

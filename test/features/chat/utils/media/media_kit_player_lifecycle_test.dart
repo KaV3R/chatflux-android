@@ -1,0 +1,83 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_kit_player_lifecycle.dart';
+
+void main() {
+  group('MediaKitPlayerLifecycleCoordinator', () {
+    test('pauseAll does not throw when no players are registered', () async {
+      await MediaKitPlayerLifecycleCoordinator.instance.pauseAll();
+    });
+
+    test('createPlayer initializes media_kit before constructing a Player '
+        '(libmpv is no longer loaded at launch)', () {
+      var initializerCalls = 0;
+      final MediaKitPlayerLifecycleCoordinator coordinator =
+          MediaKitPlayerLifecycleCoordinator(
+            ensureInitialized: () {
+              initializerCalls++;
+              throw _InitializerReached();
+            },
+          );
+
+      expect(coordinator.createPlayer, throwsA(isA<_InitializerReached>()));
+      expect(initializerCalls, 1);
+    });
+  });
+
+  group('MediaKitForegroundResumeController', () {
+    test('resumes only after background paused playback', () async {
+      final MediaKitForegroundResumeController controller =
+          MediaKitForegroundResumeController();
+      var resumeCount = 0;
+
+      controller
+        ..handleAppForegroundChanged(
+          isForeground: false,
+          isPlaying: true,
+          canResume: true,
+          onResume: () async {
+            resumeCount++;
+          },
+        )
+        ..handleAppForegroundChanged(
+          isForeground: true,
+          isPlaying: false,
+          canResume: true,
+          onResume: () async {
+            resumeCount++;
+          },
+        );
+
+      await pumpEventQueue();
+      expect(resumeCount, 1);
+    });
+
+    test('does not resume when playback was already paused', () async {
+      final MediaKitForegroundResumeController controller =
+          MediaKitForegroundResumeController();
+      var resumeCount = 0;
+
+      controller
+        ..handleAppForegroundChanged(
+          isForeground: false,
+          isPlaying: false,
+          canResume: true,
+          onResume: () async {
+            resumeCount++;
+          },
+        )
+        ..handleAppForegroundChanged(
+          isForeground: true,
+          isPlaying: false,
+          canResume: true,
+          onResume: () async {
+            resumeCount++;
+          },
+        );
+
+      await pumpEventQueue();
+      expect(resumeCount, 0);
+    });
+  });
+}
+
+class _InitializerReached implements Exception {}

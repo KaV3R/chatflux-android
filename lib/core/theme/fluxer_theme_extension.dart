@@ -1,0 +1,24 @@
+import 'package:fluxer_app/core/theme/fluxer_color_override_scope.dart';
+import 'package:fluxer_app/core/theme/fluxer_color_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_motion_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+extension FluxerThemeX on BuildContext {
+  FluxerColorTheme get colors =>
+      FluxerColorOverrideScope.maybeOf(this)?.colors ??
+      Theme.of(this).extension<FluxerColorTheme>()!;
+  FluxerTextTheme get textStyles =>
+      FluxerColorOverrideScope.maybeOf(this)?.textStyles ??
+      Theme.of(this).extension<FluxerTextTheme>()!;
+  FluxerLayoutTheme get layout =>
+      Theme.of(this).extension<FluxerLayoutTheme>()!;
+
+  FluxerMotionTheme get motion {
+    if (MediaQuery.disableAnimationsOf(this)) {
+      return const FluxerMotionTheme.reduced();
+    }
+    return Theme.of(this).extension<FluxerMotionTheme>()!;
+  }
+}

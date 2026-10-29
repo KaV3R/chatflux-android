@@ -1,0 +1,215 @@
+// Root ProviderScope built by a helper; the lint only exempts a
+// ProviderScope written inline in pumpWidget.
+// ignore_for_file: riverpod_lint/scoped_providers_should_specify_dependencies
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart'
+    show FluxerDatabase;
+import 'package:fluxer_app/core/providers/app/local_day_provider.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_item.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_row_layout.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/time_format_providers.dart';
+import 'package:fluxer_app/features/ui/avatar/fluxer_avatar.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_dart/export.dart';
+import 'package:riverpod/src/framework.dart' show Override;
+
+import '../../../../../helpers/instance_runtime_config_override.dart';
+import '../../../../../helpers/message_item_test_overrides.dart';
+import '../../../../../helpers/open_test_database.dart';
+import '../../../../../helpers/test_l10n.dart';
+
+Message _message() {
+  return Message(
+    id: '1',
+    channelId: 'c1',
+    authorId: '123456789012345678',
+    authorName: 'Alice',
+    webhookId: 'wh1',
+    content: 'hello world',
+    timestamp: DateTime(2026, 1, 1, 12),
+  );
+}
+
+const MessageRenderSettings _cozySettings = MessageRenderSettings(
+  activeGuildId: null,
+  renderEmbeds: false,
+  renderReactions: false,
+  inlineAttachmentMedia: false,
+  renderSpoilers: RenderSpoilers.onClick,
+  revealSpoilers: false,
+  chatPreferences: ChatPreferencesState(),
+  messageGroupSpacing: 16,
+);
+
+const MessageRenderSettings _denseSettings = MessageRenderSettings(
+  activeGuildId: null,
+  renderEmbeds: false,
+  renderReactions: false,
+  inlineAttachmentMedia: false,
+  renderSpoilers: RenderSpoilers.onClick,
+  revealSpoilers: false,
+  chatPreferences: ChatPreferencesState(),
+  messageGroupSpacing: 16,
+  messageDisplayCompact: true,
+);
+
+class _FixedLocalDay extends LocalDay {
+  _FixedLocalDay(this._day);
+
+  final DateTime _day;
+
+  @override
+  DateTime build() => _day;
+
+  void rollToNextDay() =>
+      state = DateTime(state.year, state.month, state.day + 1);
+}
+
+Widget _app(Widget child, {List<Override> overrides = const <Override>[]}) {
+  final colorTheme = buildDarkColorTheme();
+  return ProviderScope(
+    overrides: [
+      ...overrides,
+      fluxerDatabaseProvider.overrideWithValue(_database),
+      instanceRuntimeConfigOverride(),
+      ...messageItemTestProviderOverrides(),
+      use12HourTimeFormatProvider.overrideWithValue(false),
+    ],
+    child: MaterialApp(
+      locale: kTestLocale,
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
+late FluxerDatabase _database;
+
+void main() {
+  setUp(() {
+    _database = openTestDatabase();
+  });
+
+  group('MessageItem cozy layout', () {
+    messageItemTestWidgets(
+      'group-start rows use the full-size avatar and author header',
+      (tester) async {
+        await tester.pumpWidget(
+          _app(MessageItem(message: _message(), renderSettings: _cozySettings)),
+        );
+        await tester.pump();
+
+        final FluxerAvatar avatar = tester.widget<FluxerAvatar>(
+          find.byType(FluxerAvatar),
+        );
+        expect(avatar.size, kMessageAvatarSize);
+        expect(find.textContaining('Alice'), findsOneWidget);
+      },
+    );
+
+    messageItemTestWidgets(
+      'grouped continuation rows hide avatar and author header',
+      (tester) async {
+        await tester.pumpWidget(
+          _app(
+            MessageItem(
+              message: _message(),
+              isGrouped: true,
+              renderSettings: _cozySettings,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(FluxerAvatar), findsNothing);
+        expect(find.text('Alice'), findsNothing);
+      },
+    );
+
+    messageItemTestWidgets(
+      'long author names truncate instead of wrapping timestamp',
+      (tester) async {
+        const String longName = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+        final DateTime now = DateTime.now();
+        final DateTime timestamp = DateTime(now.year, now.month, now.day, 12);
+        await tester.binding.setSurfaceSize(const Size(320, 640));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          _app(
+            MessageItem(
+              message: _message().copyWith(
+                authorName: longName,
+                timestamp: timestamp,
+              ),
+              renderSettings: _cozySettings,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final Finder nameFinder = find.textContaining('AAAA');
+        final Finder timestampFinder = find.textContaining('12:00');
+        expect(nameFinder, findsOneWidget);
+        expect(timestampFinder, findsOneWidget);
+        expect(
+          (tester.getTopLeft(timestampFinder).dy -
+                  tester.getTopLeft(nameFinder).dy)
+              .abs(),
+          lessThan(10),
+        );
+      },
+    );
+
+    messageItemTestWidgets('relative day label follows the local day', (
+      tester,
+    ) async {
+      final _FixedLocalDay localDay = _FixedLocalDay(DateTime(2026));
+      await tester.pumpWidget(
+        _app(
+          MessageItem(
+            message: _message().copyWith(
+              timestamp: DateTime(2026, 1, 1, 23, 59),
+            ),
+            renderSettings: _cozySettings,
+          ),
+          overrides: [localDayProvider.overrideWith(() => localDay)],
+        ),
+      );
+      await tester.pump();
+      expect(find.textContaining('Today at'), findsOneWidget);
+
+      localDay.rollToNextDay();
+      await tester.pump();
+      expect(find.textContaining('Today at'), findsNothing);
+      expect(find.textContaining('Yesterday at'), findsOneWidget);
+    });
+
+    messageItemTestWidgets('dense mode does not use the cozy avatar layout', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(MessageItem(message: _message(), renderSettings: _denseSettings)),
+      );
+      await tester.pump();
+
+      expect(find.byType(FluxerAvatar), findsNothing);
+      expect(find.textContaining('Alice'), findsOneWidget);
+    });
+  });
+}

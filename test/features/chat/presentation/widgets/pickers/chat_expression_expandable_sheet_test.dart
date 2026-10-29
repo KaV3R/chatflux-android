@@ -1,0 +1,644 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/fluxer_color_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/pickers/chat_expression_expandable_sheet.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/expression_panel_provider.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../../helpers/sheet_corner_pixels.dart';
+import '../../../../../helpers/test_l10n.dart';
+
+const Size _kMobileViewport = Size(390, 844);
+const double _kAnchorHeight = 291;
+const double _kDragHandleHeight = kFluxerSheetHandleHeight;
+const Key _kFirstControlKey = Key('expression-sheet-first-control');
+const double _kDockedContentHeight = _kAnchorHeight - _kDragHandleHeight;
+const double _kTextareaHeight = 72;
+const TargetPlatformVariant _kTouchPlatforms = TargetPlatformVariant(
+  <TargetPlatform>{TargetPlatform.android, TargetPlatform.iOS},
+);
+
+void main() {
+  final FluxerColorTheme colorTheme = buildDarkColorTheme();
+
+  setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+
+  group('ChatExpressionExpandableSheet', () {
+    testWidgets('opens at anchor height, not full screen', (tester) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final double sheetHeight = tester
+          .getSize(find.byKey(kChatExpressionSheetKey))
+          .height;
+      expect(sheetHeight, closeTo(_kAnchorHeight, 2));
+      expect(sheetHeight, lessThan(_kMobileViewport.height * 0.5));
+    });
+
+    testWidgets('sheet anchors to bottom of chat slot below textarea', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Offset sheetTopLeft = tester.getTopLeft(
+        find.byKey(kChatExpressionSheetKey),
+      );
+      final double sheetBottom =
+          sheetTopLeft.dy +
+          tester.getSize(find.byKey(kChatExpressionSheetKey)).height;
+      expect(_kMobileViewport.height - sheetBottom, closeTo(0, 2));
+    });
+
+    testWidgets('handle can be dragged repeatedly after snap', (tester) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder dragTarget = find.byKey(kChatExpressionSheetDragHeaderKey);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double initialHeight = tester.getSize(sheet).height;
+      final Offset dragStart = tester.getCenter(dragTarget);
+      final TestGesture expandGesture = await tester.startGesture(dragStart);
+      await expandGesture.moveBy(const Offset(0, -160));
+      await tester.pump();
+      expect(tester.getSize(sheet).height, greaterThan(initialHeight + 20));
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      final double expandedHeight = tester.getSize(sheet).height;
+      expect(expandedHeight, greaterThan(initialHeight + 20));
+      final TestGesture collapseGesture = await tester.startGesture(dragStart);
+      await collapseGesture.moveBy(const Offset(0, 160));
+      await tester.pump();
+      expect(tester.getSize(sheet).height, lessThan(expandedHeight - 20));
+      await collapseGesture.up();
+      await tester.pumpAndSettle();
+      final double collapsedHeight = tester.getSize(sheet).height;
+      expect(collapsedHeight, lessThan(expandedHeight - 20));
+      final TestGesture secondExpandGesture = await tester.startGesture(
+        dragStart,
+      );
+      await secondExpandGesture.moveBy(const Offset(0, -120));
+      await tester.pump();
+      expect(tester.getSize(sheet).height, greaterThan(collapsedHeight + 10));
+      await secondExpandGesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('panel height stays below the header and rubber-bands down', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder dragTarget = find.byKey(kChatExpressionSheetDragHeaderKey);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double maxHeight = _kMobileViewport.height;
+      final TestGesture expandGesture = await tester.startGesture(
+        tester.getCenter(dragTarget),
+      );
+      await expandGesture.moveBy(const Offset(0, -900));
+      await tester.pump();
+      expect(tester.getSize(sheet).height, lessThanOrEqualTo(maxHeight + 1));
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      final TestGesture collapseGesture = await tester.startGesture(
+        tester.getCenter(dragTarget),
+      );
+      await collapseGesture.moveBy(const Offset(0, 900));
+      await tester.pump();
+      expect(
+        tester.getSize(sheet).height,
+        greaterThanOrEqualTo(_kAnchorHeight - kExpressionSheetRubberBandLimit),
+      );
+      await collapseGesture.up();
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSize(sheet).height,
+        greaterThanOrEqualTo(_kAnchorHeight - 1),
+      );
+    });
+
+    testWidgets('list pull up expands docked sheet to expanded height', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final Finder list = find.byType(Scrollable).last;
+      final double dockedHeight = tester.getSize(sheet).height;
+      final Offset listCenter = tester.getCenter(list);
+      final TestGesture expandGesture = await tester.startGesture(listCenter);
+      await expandGesture.moveBy(const Offset(0, -220));
+      await tester.pump();
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, greaterThan(dockedHeight + 40));
+    });
+
+    testWidgets('slow list drag up expands the docked sheet before scrolling', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double dockedHeight = tester.getSize(sheet).height;
+      final TestGesture gesture = await tester.startGesture(
+        tester.getCenter(find.byType(Scrollable).last),
+      );
+      for (int i = 0; i < 20; i++) {
+        await gesture.moveBy(const Offset(0, -3));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(_listPosition(tester).pixels, 0);
+      expect(tester.getSize(sheet).height, greaterThan(dockedHeight + 40));
+      for (int i = 0; i < 60; i++) {
+        await gesture.moveBy(const Offset(0, -3));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await tester.pump(const Duration(milliseconds: 300));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, greaterThan(dockedHeight + 150));
+    }, variant: _kTouchPlatforms);
+
+    testWidgets('slow list drag up scrolls a docked list that is not at top', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      _listPosition(tester).jumpTo(100);
+      await tester.pump();
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double dockedHeight = tester.getSize(sheet).height;
+      final TestGesture gesture = await tester.startGesture(
+        tester.getCenter(find.byType(Scrollable).last),
+      );
+      for (int i = 0; i < 20; i++) {
+        await gesture.moveBy(const Offset(0, -3));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(_listPosition(tester).pixels, greaterThan(120));
+      expect(tester.getSize(sheet).height, closeTo(dockedHeight, 1));
+      await tester.pump(const Duration(milliseconds: 300));
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }, variant: _kTouchPlatforms);
+
+    testWidgets('list pull down collapses expanded sheet to docked height', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final Finder list = find.byType(Scrollable).last;
+      final double dockedHeight = tester.getSize(sheet).height;
+      final Offset handleCenter = tester.getCenter(
+        find.byKey(kChatExpressionSheetDragHeaderKey),
+      );
+      final TestGesture expandGesture = await tester.startGesture(handleCenter);
+      await expandGesture.moveBy(const Offset(0, -220));
+      await tester.pump();
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      final double expandedHeight = tester.getSize(sheet).height;
+      expect(expandedHeight, greaterThan(dockedHeight + 40));
+      final Offset listCenter = tester.getCenter(list);
+      final TestGesture collapseGesture = await tester.startGesture(listCenter);
+      await collapseGesture.moveBy(const Offset(0, 220));
+      await tester.pump();
+      await collapseGesture.up();
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, closeTo(dockedHeight, 4));
+    });
+
+    testWidgets('fast upward flick on handle expands the sheet', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double dockedHeight = tester.getSize(sheet).height;
+      await tester.fling(
+        find.byKey(kChatExpressionSheetDragHeaderKey),
+        const Offset(0, -1200),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, greaterThan(dockedHeight + 40));
+    });
+
+    testWidgets('fast downward flick near anchor docks instead of closing', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double dockedHeight = tester.getSize(sheet).height;
+      await tester.fling(
+        find.byKey(kChatExpressionSheetDragHeaderKey),
+        const Offset(0, 1200),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, closeTo(dockedHeight, 4));
+    });
+
+    testWidgets('pull down at scroll top shrinks once per gesture', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final Finder list = find.byType(Scrollable).last;
+      final Offset handleCenter = tester.getCenter(
+        find.byKey(kChatExpressionSheetDragHeaderKey),
+      );
+      final TestGesture expandGesture = await tester.startGesture(handleCenter);
+      await expandGesture.moveBy(const Offset(0, -220));
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      final double expandedHeight = tester.getSize(sheet).height;
+      final Offset listCenter = tester.getCenter(list);
+      final TestGesture collapseGesture = await tester.startGesture(listCenter);
+      await collapseGesture.moveBy(const Offset(0, 80));
+      await tester.pump();
+      final double midCollapseHeight = tester.getSize(sheet).height;
+      expect(midCollapseHeight, lessThan(expandedHeight - 20));
+      expect(midCollapseHeight, greaterThan(expandedHeight - 120));
+      await collapseGesture.moveBy(const Offset(0, 80));
+      await tester.pump();
+      final double afterSecondMove = tester.getSize(sheet).height;
+      expect(afterSecondMove, lessThan(midCollapseHeight));
+      await collapseGesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('selecting an expression docks an expanded sheet', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      final double dockedHeight = tester.getSize(sheet).height;
+      final Offset handleCenter = tester.getCenter(
+        find.byKey(kChatExpressionSheetDragHeaderKey),
+      );
+      final TestGesture expandGesture = await tester.startGesture(handleCenter);
+      await expandGesture.moveBy(const Offset(0, -220));
+      await expandGesture.up();
+      await tester.pumpAndSettle();
+      final double expandedHeight = tester.getSize(sheet).height;
+      expect(expandedHeight, greaterThan(dockedHeight + 40));
+      (tester.state(find.byType(ChatExpressionExpandableSheet))
+              as ChatExpressionExpandableSheetState)
+          .onEmojiSelectForTest('thumbsup', '\uD83D\uDC4D');
+      await tester.pumpAndSettle();
+      final double heightAfterSelect = tester.getSize(sheet).height;
+      expect(heightAfterSelect, closeTo(dockedHeight, 4));
+    });
+
+    testWidgets(
+      'selecting an expression docks a search-expanded sheet and unfocuses search',
+      (tester) async {
+        final ProviderContainer container = ProviderContainer();
+        addTearDown(container.dispose);
+        await _pumpSheet(
+          tester,
+          colorTheme: colorTheme,
+          container: container,
+          includeSearchField: true,
+        );
+        container.read(expressionPanelProvider.notifier).open();
+        await tester.pump();
+        final Finder sheet = find.byKey(kChatExpressionSheetKey);
+        final double dockedHeight = tester.getSize(sheet).height;
+        final ChatExpressionExpandableSheetState sheetState =
+            tester.state<ChatExpressionExpandableSheetState>(
+              find.byType(ChatExpressionExpandableSheet),
+            )..onSearchActivatedForTest();
+        await tester.pumpAndSettle();
+        expect(sheetState.searchFocusNodeForTest.hasFocus, isTrue);
+        expect(tester.getSize(sheet).height, greaterThan(dockedHeight + 40));
+        sheetState.onEmojiSelectForTest('thumbsup', '\uD83D\uDC4D');
+        await tester.pumpAndSettle();
+        expect(tester.getSize(sheet).height, closeTo(dockedHeight, 4));
+        expect(sheetState.searchFocusNodeForTest.hasFocus, isFalse);
+      },
+    );
+
+    testWidgets(
+      'selecting an expression docks when search focus locked the expanded height',
+      (tester) async {
+        await _pumpSheet(
+          tester,
+          colorTheme: colorTheme,
+          includeSearchField: true,
+        );
+        final Finder sheet = find.byKey(kChatExpressionSheetKey);
+        final double dockedHeight = tester.getSize(sheet).height;
+        final ChatExpressionExpandableSheetState sheetState = tester.state(
+          find.byType(ChatExpressionExpandableSheet),
+        );
+        await _expandSheet(tester);
+        final double expandedHeight = tester.getSize(sheet).height;
+        expect(expandedHeight, greaterThan(dockedHeight + 40));
+        sheetState.searchFocusNodeForTest.requestFocus();
+        await tester.pump();
+        expect(sheetState.searchFocusNodeForTest.hasFocus, isTrue);
+        expect(tester.getSize(sheet).height, closeTo(expandedHeight, 4));
+        sheetState.onEmojiSelectForTest('thumbsup', '\uD83D\uDC4D');
+        await tester.pumpAndSettle();
+        expect(tester.getSize(sheet).height, closeTo(dockedHeight, 4));
+        expect(sheetState.searchFocusNodeForTest.hasFocus, isFalse);
+      },
+    );
+
+    testWidgets('close animates height before provider teardown', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      (tester.state(find.byType(ChatExpressionExpandableSheet))
+              as ChatExpressionExpandableSheetState)
+          .closeForTest();
+      for (final Duration? delay in <Duration?>[
+        null,
+        const Duration(milliseconds: 50),
+      ]) {
+        await tester.pump(delay);
+      }
+      final double midCloseHeight = tester.getSize(sheet).height;
+      expect(midCloseHeight, lessThan(_kAnchorHeight));
+      expect(midCloseHeight, greaterThan(0));
+      expect(find.byKey(kChatExpressionSheetKey), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.byKey(kChatExpressionSheetKey), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('dismiss request animates height before provider teardown', (
+      tester,
+    ) async {
+      final ProviderContainer container = ProviderContainer();
+      addTearDown(container.dispose);
+      await _pumpSheet(tester, colorTheme: colorTheme, container: container);
+      container.read(expressionPanelProvider.notifier).open();
+      await tester.pump();
+
+      final Finder sheet = find.byKey(kChatExpressionSheetKey);
+      container
+          .read(composerPanelDismissRequestProvider.notifier)
+          .requestAnimatedClose();
+      for (final Duration? delay in <Duration?>[
+        null,
+        const Duration(milliseconds: 50),
+      ]) {
+        await tester.pump(delay);
+      }
+      final double midCloseHeight = tester.getSize(sheet).height;
+      expect(midCloseHeight, lessThan(_kAnchorHeight));
+      expect(midCloseHeight, greaterThan(0));
+      expect(find.byKey(kChatExpressionSheetKey), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.byKey(kChatExpressionSheetKey), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('keeps sheet mounted when collapsedHeight is zero', (
+      tester,
+    ) async {
+      await _pumpSheet(tester, colorTheme: colorTheme, collapsedHeight: 0);
+      expect(find.byKey(kChatExpressionSheetKey), findsOneWidget);
+      expect(find.byType(Scrollable), findsWidgets);
+    });
+
+    testWidgets('expanded handle spacing matches the shared sheet', (
+      tester,
+    ) async {
+      _usePhoneView(tester);
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      await _expandSheet(tester);
+      final Rect sheet = _sheetSurfaceRect(tester);
+      final Rect bar = tester.getRect(
+        find.descendant(
+          of: find.byKey(kChatExpressionSheetDragHandleKey),
+          matching: find.byType(FluxerSheetHandleBar),
+        ),
+      );
+      final Rect control = tester.getRect(find.byKey(_kFirstControlKey));
+      expect(bar.top - sheet.top, kFluxerSheetHandleTop);
+      expect(control.top - bar.bottom, kFluxerSheetHandleGap);
+    }, variant: _kTouchPlatforms);
+
+    testWidgets('expanded corners show only surface and dimmed backdrop', (
+      tester,
+    ) async {
+      _usePhoneView(tester);
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      await _expandSheet(tester);
+      final Rect sheet = _sheetSurfaceRect(tester);
+      expect(sheet.left, 0);
+      expect(sheet.top, greaterThan(kExpressionSheetCornerRadius));
+      final Color surface = colorTheme.backgroundSecondaryAlt;
+
+      final ScreenPixels pixels = await ScreenPixels.capture(tester);
+      expect(pixels.at(Offset(4, sheet.top - 3)), isNot(surface));
+      expect(
+        sheetCornerColorMismatches(
+          pixels: pixels,
+          sheet: sheet,
+          radius: kExpressionSheetCornerRadius,
+          surface: surface,
+        ),
+        isEmpty,
+      );
+    }, variant: _kTouchPlatforms);
+
+    testWidgets('search expand increases content height', (tester) async {
+      await _pumpSheet(tester, colorTheme: colorTheme);
+      final ChatExpressionExpandableSheetState sheetState = tester.state(
+        find.byType(ChatExpressionExpandableSheet),
+      );
+      final double dockedContentHeight = sheetState.sheetContentHeightForTest;
+      sheetState.onSearchActivatedForTest();
+      expect(
+        sheetState.sheetContentHeightForTest,
+        greaterThan(dockedContentHeight + 20),
+      );
+    });
+
+    testWidgets(
+      'parent rebuild with a new contentBuilder keeps gallery scroll',
+      (tester) async {
+        late StateSetter setHostState;
+        await tester.binding.setSurfaceSize(_kMobileViewport);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              locale: kTestLocale,
+              localizationsDelegates: fluxerLocalizationsDelegates,
+              supportedLocales: FluxerLocalizations.supportedLocales,
+              theme: buildFluxerTheme(
+                colorTheme: colorTheme,
+                textTheme: FluxerTextTheme.fromColors(colorTheme),
+                layoutTheme: FluxerLayoutTheme.scaled(),
+              ),
+              home: Scaffold(
+                body: StatefulBuilder(
+                  builder: (BuildContext context, StateSetter setState) {
+                    setHostState = setState;
+                    return ChatExpressionExpandableSheet(
+                      collapsedHeight: _kDockedContentHeight,
+                      dragHandleHeight: _kDragHandleHeight,
+                      contentBuilder:
+                          (
+                            BuildContext context,
+                            ScrollController scrollController,
+                          ) {
+                            return ListView(
+                              controller: scrollController,
+                              children: const <Widget>[
+                                SizedBox(
+                                  height: 2000,
+                                  child: ColoredBox(color: Color(0xFF333333)),
+                                ),
+                              ],
+                            );
+                          },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final ScrollableState scrollable = tester.state(
+          find.byType(Scrollable).last,
+        );
+        scrollable.position.jumpTo(420);
+        await tester.pump();
+        expect(scrollable.position.pixels, 420);
+
+        setHostState(() {});
+        await tester.pump();
+        expect(scrollable.position.pixels, 420);
+      },
+    );
+  });
+}
+
+Future<void> _expandSheet(WidgetTester tester) async {
+  final Offset handleCenter = tester.getCenter(
+    find.byKey(kChatExpressionSheetDragHeaderKey),
+  );
+  final TestGesture expandGesture = await tester.startGesture(handleCenter);
+  await expandGesture.moveBy(const Offset(0, -220));
+  await expandGesture.up();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpSheet(
+  WidgetTester tester, {
+  required FluxerColorTheme colorTheme,
+  double collapsedHeight = _kDockedContentHeight,
+  ProviderContainer? container,
+  bool includeSearchField = false,
+}) async {
+  await tester.binding.setSurfaceSize(_kMobileViewport);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  final ProviderContainer scopeContainer = container ?? ProviderContainer();
+  if (container == null) {
+    addTearDown(scopeContainer.dispose);
+  }
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: scopeContainer,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        locale: kTestLocale,
+        localizationsDelegates: fluxerLocalizationsDelegates,
+        supportedLocales: FluxerLocalizations.supportedLocales,
+        theme: buildFluxerTheme(
+          colorTheme: colorTheme,
+          textTheme: FluxerTextTheme.fromColors(colorTheme),
+          layoutTheme: FluxerLayoutTheme.scaled(),
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            height: _kMobileViewport.height,
+            width: _kMobileViewport.width,
+            child: Stack(
+              children: <Widget>[
+                const Column(
+                  children: <Widget>[
+                    Expanded(child: ColoredBox(color: Color(0xFF111111))),
+                    SizedBox(
+                      height: _kTextareaHeight,
+                      child: ColoredBox(color: Color(0xFF222222)),
+                    ),
+                    SizedBox(height: _kAnchorHeight),
+                  ],
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: ChatExpressionExpandableSheet(
+                    collapsedHeight: collapsedHeight,
+                    dragHandleHeight: _kDragHandleHeight,
+                    contentBuilder:
+                        (
+                          BuildContext context,
+                          ScrollController scrollController,
+                        ) {
+                          final Widget list = ListView(
+                            controller: scrollController,
+                            children: const <Widget>[
+                              SizedBox(
+                                key: _kFirstControlKey,
+                                height: 800,
+                                child: ColoredBox(color: Color(0xFF333333)),
+                              ),
+                            ],
+                          );
+                          if (!includeSearchField) {
+                            return list;
+                          }
+                          final FocusNode focusNode = context
+                              .findAncestorStateOfType<
+                                ChatExpressionExpandableSheetState
+                              >()!
+                              .searchFocusNodeForTest;
+                          return Column(
+                            children: <Widget>[
+                              Focus(
+                                focusNode: focusNode,
+                                child: const SizedBox.shrink(),
+                              ),
+                              Expanded(child: list),
+                            ],
+                          );
+                        },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+void _usePhoneView(WidgetTester tester) {
+  tester.view.physicalSize = _kMobileViewport * 3;
+  tester.view.devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+}
+
+Rect _sheetSurfaceRect(WidgetTester tester) => tester.getRect(
+  find
+      .ancestor(
+        of: find.byKey(kChatExpressionSheetDragHandleKey),
+        matching: find.byType(AnimatedContainer),
+      )
+      .first,
+);
+
+ScrollPosition _listPosition(WidgetTester tester) {
+  return tester.state<ScrollableState>(find.byType(Scrollable).last).position;
+}

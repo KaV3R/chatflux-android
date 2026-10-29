@@ -1,0 +1,352 @@
+import 'package:dio/dio.dart';
+import 'package:fluxer_app/core/talker.dart';
+import 'package:fluxer_app/core/utils/bounded_lru_cache.dart';
+import 'package:fluxer_app/features/chat/domain/gif_selection.dart';
+import 'package:fluxer_app/features/chat/utils/media/gif_media_selection.dart';
+import 'package:fluxer_dart/export.dart' as sdk;
+
+typedef GifActiveProviderLoader = Future<GifProviderKind> Function();
+
+const _kFeaturedCacheCapacity = 8;
+const _kTrendingCacheCapacity = 8;
+const _kSearchCacheCapacity = 40;
+
+const _kGifsFeaturedPath = '/gifs/featured';
+const _kGifsRegisterSharePath = '/gifs/register-share';
+const _kGifsSearchPath = '/gifs/search';
+const _kGifsTrendingPath = '/gifs/trending';
+
+class GifRepository {
+  GifRepository({required this._dio, required this._loadActiveProvider});
+
+  final Dio _dio;
+  final GifActiveProviderLoader _loadActiveProvider;
+  final BoundedLruCache<String, GifPickerFeatured> _featuredCache =
+      BoundedLruCache<String, GifPickerFeatured>(
+        capacity: _kFeaturedCacheCapacity,
+      );
+  final BoundedLruCache<String, List<GifPickerGif>> _searchCache =
+      BoundedLruCache<String, List<GifPickerGif>>(
+        capacity: _kSearchCacheCapacity,
+      );
+  final BoundedLruCache<String, List<GifPickerGif>> _trendingCache =
+      BoundedLruCache<String, List<GifPickerGif>>(
+        capacity: _kTrendingCacheCapacity,
+      );
+  GifProviderKind? _activeProvider;
+
+  Future<GifProviderKind> getActiveProvider() async {
+    final cached = _activeProvider;
+    if (cached != null) {
+      return cached;
+    }
+
+    try {
+      final provider = await _loadActiveProvider();
+      _activeProvider = provider;
+      return provider;
+    } on Object catch (error) {
+      talker.warning('[GifRepository] Failed to load GIF provider: $error');
+      _activeProvider = GifProviderKind.klipy;
+      return _activeProvider!;
+    }
+  }
+
+  Future<GifPickerFeatured> getFeatured({required sdk.Locale locale}) async {
+    final provider = await getActiveProvider();
+    final key = _cacheKey(provider, locale);
+    final cached = _featuredCache.get(key);
+    if (cached != null) {
+      return cached;
+    }
+
+    final featured = await _getFeatured(locale: locale);
+    final mapped = GifPickerFeatured(
+      gifs: _mapGifs(featured.gifs, provider),
+      categories: featured.categories.map(_mapCategory).toList(),
+    );
+    _featuredCache.set(key, mapped);
+    return mapped;
+  }
+
+  Future<List<GifPickerGif>> getTrending({required sdk.Locale locale}) async {
+    final provider = await getActiveProvider();
+    final key = _cacheKey(provider, locale);
+    final cached = _trendingCache.get(key);
+    if (cached != null) {
+      return cached;
+    }
+
+    final gifs = _mapGifs(await _getGifs(_kGifsTrendingPath, locale), provider);
+    _trendingCache.set(key, gifs);
+    return gifs;
+  }
+
+  Future<List<GifPickerGif>> search({
+    required String query,
+    required sdk.Locale locale,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return const <GifPickerGif>[];
+    }
+
+    final provider = await getActiveProvider();
+    final key = _cacheKey(provider, locale, trimmed);
+    final cached = _searchCache.get(key);
+    if (cached != null) {
+      return cached;
+    }
+
+    final gifs = _mapGifs(
+      await _getGifs(
+        _kGifsSearchPath,
+        locale,
+        queryParameters: <String, Object?>{'q': trimmed},
+      ),
+      provider,
+    );
+    _searchCache.set(key, gifs);
+    return gifs;
+  }
+
+  Future<void> registerShare({
+    required GifProviderKind provider,
+    required String id,
+    required String query,
+    required sdk.Locale locale,
+  }) async {
+    try {
+      final normalizedQuery = query.trim();
+      await _dio.post<Object?>(
+        _kGifsRegisterSharePath,
+        data: <String, Object?>{
+          'id': id,
+          if (normalizedQuery.isNotEmpty) 'q': normalizedQuery,
+          'locale': _localeQueryValue(locale),
+        },
+      );
+    } on Object catch (error) {
+      talker.warning('[GifRepository] Failed to register share: $error');
+    }
+  }
+
+  Future<_GifApiFeatured> _getFeatured({required sdk.Locale locale}) async {
+    final response = await _dio.get<Object?>(
+      _kGifsFeaturedPath,
+      queryParameters: <String, Object?>{'locale': _localeQueryValue(locale)},
+    );
+    return _GifApiFeatured.fromJson(
+      _stringObjectMap(response.data, _kGifsFeaturedPath),
+    );
+  }
+
+  Future<List<_GifApiGif>> _getGifs(
+    String path,
+    sdk.Locale locale, {
+    Map<String, Object?> queryParameters = const <String, Object?>{},
+  }) async {
+    final response = await _dio.get<Object?>(
+      path,
+      queryParameters: <String, Object?>{
+        ...queryParameters,
+        'locale': _localeQueryValue(locale),
+      },
+    );
+    return _jsonObjectList(
+      response.data,
+      path,
+    ).map(_GifApiGif.fromJson).toList();
+  }
+
+  List<GifPickerGif> _mapGifs(
+    List<_GifApiGif> gifs,
+    GifProviderKind provider,
+  ) => gifs.map((gif) {
+    final previewMedia = gifPreviewMediaForPicker(
+      src: gif.src,
+      proxySrc: gif.proxySrc,
+      width: gif.width,
+      height: gif.height,
+      media: gif.media,
+    );
+    return GifPickerGif(
+      provider: provider,
+      id: gif.id,
+      title: gif.title,
+      url: gif.url,
+      src: previewMedia.src,
+      proxySrc: previewMedia.proxySrc,
+      width: previewMedia.width > 0 ? previewMedia.width : gif.width,
+      height: previewMedia.height > 0 ? previewMedia.height : gif.height,
+      slug: gif.slug,
+      media: gif.media,
+    );
+  }).toList();
+
+  GifPickerCategory _mapCategory(_GifApiCategory category) {
+    final gif = category.gif;
+    if (gif == null) {
+      return GifPickerCategory(
+        name: category.name,
+        src: category.src,
+        proxySrc: category.proxySrc,
+      );
+    }
+
+    final previewMedia = gifPreviewMediaForPicker(
+      src: gif.src,
+      proxySrc: gif.proxySrc,
+      width: gif.width,
+      height: gif.height,
+      media: gif.media,
+    );
+    return GifPickerCategory(
+      name: category.name,
+      src: previewMedia.src.isNotEmpty ? previewMedia.src : category.src,
+      proxySrc: previewMedia.proxySrc.isNotEmpty
+          ? previewMedia.proxySrc
+          : category.proxySrc,
+    );
+  }
+
+  String _cacheKey(
+    GifProviderKind provider,
+    sdk.Locale locale, [
+    String value = '',
+  ]) => '${provider.name}::${_localeQueryValue(locale)}::$value';
+}
+
+GifProviderKind gifProviderKindFromWireValue(String provider) =>
+    switch (provider.toLowerCase()) {
+      'tenor' => GifProviderKind.tenor,
+      'klipy' => GifProviderKind.klipy,
+      _ => GifProviderKind.klipy,
+    };
+
+String _localeQueryValue(sdk.Locale locale) => locale.json ?? locale.name;
+
+class _GifApiFeatured {
+  const _GifApiFeatured({required this.gifs, required this.categories});
+
+  factory _GifApiFeatured.fromJson(Map<String, Object?> json) =>
+      _GifApiFeatured(
+        gifs: _jsonObjectList(
+          json['gifs'],
+          'gifs',
+        ).map(_GifApiGif.fromJson).toList(growable: false),
+        categories: _jsonObjectList(
+          json['categories'],
+          'categories',
+        ).map(_GifApiCategory.fromJson).toList(growable: false),
+      );
+
+  final List<_GifApiGif> gifs;
+  final List<_GifApiCategory> categories;
+}
+
+class _GifApiCategory {
+  const _GifApiCategory({
+    required this.name,
+    required this.src,
+    required this.proxySrc,
+    this.gif,
+  });
+
+  factory _GifApiCategory.fromJson(Map<String, Object?> json) =>
+      _GifApiCategory(
+        name: _requiredString(json, 'name'),
+        src: _requiredString(json, 'src'),
+        proxySrc: _requiredString(json, 'proxy_src'),
+        gif: json['gif'] == null
+            ? null
+            : _GifApiGif.fromJson(_stringObjectMap(json['gif'], 'gif')),
+      );
+
+  final String name;
+  final String src;
+  final String proxySrc;
+  final _GifApiGif? gif;
+}
+
+class _GifApiGif {
+  const _GifApiGif({
+    required this.id,
+    required this.title,
+    required this.url,
+    required this.src,
+    required this.proxySrc,
+    required this.width,
+    required this.height,
+    this.slug = '',
+    this.media,
+  });
+
+  factory _GifApiGif.fromJson(Map<String, Object?> json) => _GifApiGif(
+    id: _requiredString(json, 'id'),
+    title: _requiredString(json, 'title'),
+    url: _requiredString(json, 'url'),
+    src: _requiredString(json, 'src'),
+    proxySrc: _requiredString(json, 'proxy_src'),
+    width: _requiredInt(json, 'width'),
+    height: _requiredInt(json, 'height'),
+    slug: json['slug'] as String? ?? '',
+    media: _parseMedia(json['media']),
+  );
+
+  final String id;
+  final String title;
+  final String url;
+  final String src;
+  final String proxySrc;
+  final int width;
+  final int height;
+  final String slug;
+  final Map<String, sdk.GifMediaFormat>? media;
+}
+
+Map<String, sdk.GifMediaFormat>? _parseMedia(Object? value) {
+  if (value == null) {
+    return null;
+  }
+
+  final mediaJson = _stringObjectMap(value, 'media');
+  final media = <String, sdk.GifMediaFormat>{};
+  for (final entry in mediaJson.entries) {
+    media[entry.key] = sdk.GifMediaFormat.fromJson(
+      _stringObjectMap(entry.value, 'media.${entry.key}'),
+    );
+  }
+
+  return media.isEmpty ? null : media;
+}
+
+List<Map<String, Object?>> _jsonObjectList(Object? value, String context) {
+  if (value is List<Object?>) {
+    return value
+        .map((entry) => _stringObjectMap(entry, context))
+        .toList(growable: false);
+  }
+  throw FormatException('Expected $context to be a list');
+}
+
+Map<String, Object?> _stringObjectMap(Object? value, String context) {
+  if (value is Map<String, Object?>) {
+    return value;
+  }
+  if (value is Map<Object?, Object?>) {
+    return value.map((key, mapValue) {
+      if (key is! String) {
+        throw FormatException('Expected $context to have string keys');
+      }
+      return MapEntry(key, mapValue);
+    });
+  }
+  throw FormatException('Expected $context to be an object');
+}
+
+String _requiredString(Map<String, Object?> json, String key) =>
+    json[key] as String? ?? (throw FormatException('Missing $key'));
+
+int _requiredInt(Map<String, Object?> json, String key) =>
+    (json[key] as num? ?? (throw FormatException('Missing $key'))).toInt();

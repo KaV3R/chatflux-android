@@ -1,0 +1,193 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_network_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/embed_animated_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_load_error_placeholder.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_thumb_hash_placeholder.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_double_tap_exemption.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_animated_image_url.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_gallery_utils.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_media_viewer_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/hdr_aware_image_url.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_dimension_utils.dart';
+import 'package:fluxer_app/features/mature_content/presentation/widgets/mature_media_overlay.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+class EmbedImage extends ConsumerWidget {
+  final Embed embed;
+  final MediaDimensionSize dimensionSize;
+  final String? channelId;
+  final String? messageId;
+  final int? embedIndex;
+  final MessageMediaActionScope? mediaActionScope;
+
+  const EmbedImage({
+    required this.embed,
+    this.dimensionSize = MediaDimensionSize.small,
+    this.channelId,
+    this.messageId,
+    this.embedIndex,
+    this.mediaActionScope,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final EmbedMedia? media = galleryMediaForEmbed(embed);
+    if (media == null) {
+      return const SizedBox.shrink();
+    }
+    final HdrDisplayMode hdrDisplayMode = ref.watch(
+      appearancePreferencesProvider.select(
+        (AppearancePreferencesState state) => state.hdrDisplayMode,
+      ),
+    );
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) =>
+          _buildMedia(
+            context,
+            media: media,
+            hdrDisplayMode: hdrDisplayMode,
+            dimensions: mediaDimensionsWithinWidth(
+              mediaDimensionsForSize(dimensionSize),
+              constraints.maxWidth,
+            ),
+          ),
+    );
+  }
+
+  Widget _buildMedia(
+    BuildContext context, {
+    required EmbedMedia media,
+    required HdrDisplayMode hdrDisplayMode,
+    required FluxerMediaDimensions dimensions,
+  }) {
+    final Size displaySize = constrainMediaSize(
+      dimensions: dimensions,
+      width: media.width,
+      height: media.height,
+    )!;
+    final bool animate = embed.type == EmbedType.gifv || media.isAnimated;
+    final double cellWidth = displaySize.width;
+    final double cellHeight = displaySize.height;
+    final Widget placeholder = ColoredBox(
+      color: context.colors.backgroundSecondaryAlt,
+      child: MediaThumbHashPlaceholder(thumbHash: media.placeholder),
+    );
+    const Widget errorPlaceholder = MediaLoadErrorPlaceholder();
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      constraints: BoxConstraints(
+        maxWidth: dimensions.maxWidth,
+        maxHeight: dimensions.maxHeight,
+      ),
+      child: MatureMediaOverlay(
+        channelId: channelId,
+        isMatureMedia: embed.isMatureMedia,
+        borderRadius: BorderRadius.circular(4),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: MessageDoubleTapExempt(
+            child: FluxerGestureDetector(
+              onTap: canOpenEmbedMediaViewer(media)
+                  ? () => openEmbedMediaViewer(
+                      context,
+                      media: media,
+                      title: embed.title,
+                      embedPageUrl: embed.url,
+                      animated: animate,
+                      embedIndex: embedIndex,
+                      downloadMedia: embed.type == EmbedType.gifv
+                          ? embed.video
+                          : null,
+                      channelId: channelId,
+                      messageId: messageId,
+                      actionScope: mediaActionScope,
+                    )
+                  : null,
+              child: animate
+                  ? SizedBox(
+                      width: cellWidth,
+                      height: cellHeight,
+                      child: EmbedAnimatedImage(
+                        animatedUrl: animatedEmbedImageUrl(
+                          embedMediaEffectiveUrl(media),
+                        ),
+                        staticUrl: staticEmbedImageUrl(
+                          embedMediaEffectiveUrl(media),
+                        ),
+                        placeholder: placeholder,
+                        errorPlaceholder: errorPlaceholder,
+                      ),
+                    )
+                  : _EmbedStaticImage(
+                      imageUrl: buildHdrAwareImageUrl(
+                        url: embedMediaEffectiveUrl(media),
+                        mode: hdrDisplayMode,
+                        contentType: media.contentType,
+                      ),
+                      contentType: media.contentType,
+                      cellWidth: cellWidth,
+                      cellHeight: cellHeight,
+                      sourceWidth: media.width,
+                      sourceHeight: media.height,
+                      placeholder: placeholder,
+                      errorPlaceholder: errorPlaceholder,
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmbedStaticImage extends StatelessWidget {
+  const _EmbedStaticImage({
+    required this.imageUrl,
+    required this.contentType,
+    required this.cellWidth,
+    required this.cellHeight,
+    required this.sourceWidth,
+    required this.sourceHeight,
+    required this.placeholder,
+    required this.errorPlaceholder,
+  });
+
+  final String imageUrl;
+  final String? contentType;
+  final double cellWidth;
+  final double cellHeight;
+  final int? sourceWidth;
+  final int? sourceHeight;
+  final Widget placeholder;
+  final Widget errorPlaceholder;
+
+  @override
+  Widget build(BuildContext context) {
+    final double devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final ({int? width, int? height}) cache = coverDecodeCacheSize(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      devicePixelRatio: devicePixelRatio,
+      sourceWidth: sourceWidth,
+      sourceHeight: sourceHeight,
+    );
+    return ChatNetworkImage(
+      imageUrl: imageUrl,
+      contentType: contentType,
+      width: cellWidth,
+      height: cellHeight,
+      memCacheWidth: cache.width,
+      memCacheHeight: cache.height,
+      fit: BoxFit.cover,
+      placeholder: placeholder,
+      errorPlaceholder: errorPlaceholder,
+    );
+  }
+}

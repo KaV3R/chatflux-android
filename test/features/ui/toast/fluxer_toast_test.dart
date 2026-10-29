@@ -1,0 +1,156 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/ui/toast/fluxer_toast.dart';
+import 'package:fluxer_app/features/ui/toast/fluxer_toast_overlay.dart';
+import 'package:fluxer_app/features/ui/toast/toast_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+import '../../../helpers/test_l10n.dart';
+
+Widget buildTestApp(Widget child) {
+  final colorTheme = buildDarkColorTheme();
+  return ProviderScope(
+    child: MaterialApp(
+      locale: kTestLocale,
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      home: Scaffold(body: FluxerToastOverlay(child: child)),
+    ),
+  );
+}
+
+void main() {
+  group('FluxerToastOverlay', () {
+    testWidgets('shows toast message when triggered via provider', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestApp(const SizedBox.shrink()));
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FluxerToastOverlay)),
+      );
+      container
+          .read(toastProvider.notifier)
+          .show(const FluxerToast(message: 'Test notification'));
+
+      await tester.pump();
+
+      expect(find.text('Test notification'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+    });
+
+    testWidgets('toast is dismissible via tap', (tester) async {
+      await tester.pumpWidget(buildTestApp(const SizedBox.shrink()));
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FluxerToastOverlay)),
+      );
+      container
+          .read(toastProvider.notifier)
+          .show(const FluxerToast(message: 'Tap me away'));
+
+      await tester.pumpAndSettle();
+      expect(find.text('Tap me away'), findsOneWidget);
+
+      await tester.tap(find.text('Tap me away'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tap me away'), findsNothing);
+    });
+
+    testWidgets('tapping the action runs it and dismisses the toast', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestApp(const SizedBox.shrink()));
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FluxerToastOverlay)),
+      );
+      int pressed = 0;
+      container
+          .read(toastProvider.notifier)
+          .show(
+            FluxerToast(
+              message: 'Failed',
+              action: FluxerToastAction(
+                label: 'Undo',
+                onPressed: () => pressed++,
+              ),
+            ),
+          );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(pressed, 1);
+      expect(find.text('Failed'), findsNothing);
+    });
+
+    testWidgets('auto-dismisses after duration', (tester) async {
+      await tester.pumpWidget(buildTestApp(const SizedBox.shrink()));
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FluxerToastOverlay)),
+      );
+      container
+          .read(toastProvider.notifier)
+          .show(
+            const FluxerToast(
+              message: 'Temporary',
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+      await tester.pump();
+      expect(find.text('Temporary'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+
+      expect(find.text('Temporary'), findsNothing);
+    });
+
+    testWidgets('hide removes a visible or pending toast', (tester) async {
+      await tester.pumpWidget(buildTestApp(const SizedBox.shrink()));
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FluxerToastOverlay)),
+      );
+      final notifier = container.read(toastProvider.notifier);
+      const first = FluxerToast(message: 'First');
+      const pending = FluxerToast(message: 'Pending');
+
+      notifier.show(first);
+      await tester.pumpAndSettle();
+      expect(find.text('First'), findsOneWidget);
+
+      notifier
+        ..show(pending)
+        ..hide(pending);
+      await tester.pumpAndSettle();
+      expect(find.text('First'), findsNothing);
+      expect(find.text('Pending'), findsNothing);
+
+      notifier.show(first);
+      await tester.pump();
+      expect(find.text('First'), findsOneWidget);
+
+      notifier.hide(first);
+      await tester.pumpAndSettle();
+      expect(find.text('First'), findsNothing);
+      expect(container.read(toastProvider), isEmpty);
+    });
+  });
+}

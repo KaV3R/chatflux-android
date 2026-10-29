@@ -1,0 +1,321 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/build/push_provider_guard.dart';
+import 'package:fluxer_app/core/providers/instance/active_instance_provider.dart';
+import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
+import 'package:fluxer_app/core/push/apns/apns_mobile_device_registration.dart';
+import 'package:fluxer_app/core/push/apns/apns_voip_mobile_device_registration.dart';
+import 'package:fluxer_app/core/push/fcm/fcm_mobile_device_registration.dart';
+import 'package:fluxer_app/core/push/relay_consent/push_relay_consent_provider.dart';
+import 'package:fluxer_app/core/push/relay_consent/push_relay_consent_sheet.dart';
+import 'package:fluxer_app/core/push/web_push/web_push_relay.dart';
+import 'package:fluxer_app/core/system_permissions/system_permission_kind.dart';
+import 'package:fluxer_app/core/system_permissions/system_permission_service.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/profile/providers/user_settings_status_provider.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/user_notifications_permission_banner.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/user_notifications_push_delivery_details.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/user_notifications_sound_settings_section.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/user_notifications_tts_section.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/wide_settings_content_layout.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/mention_preference_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/notification_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/sync/user_settings_sync_service.dart';
+import 'package:fluxer_app/features/settings/utils/platform_desktop_utils.dart';
+import 'package:fluxer_app/features/ui/system_permissions/system_permission_settings_prompt.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_dart/export.dart';
+
+const int _kMinAfkTimeoutMinutes = 1;
+const int _kMaxAfkTimeoutMinutes = 10;
+
+class UserNotificationsSettings extends ConsumerWidget {
+  const UserNotificationsSettings({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = FluxerLocalizations.of(context);
+    final layout = context.layout;
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    final notificationPrefs = ref.watch(notificationPreferencesProvider);
+    final notificationNotifier = ref.read(
+      notificationPreferencesProvider.notifier,
+    );
+    final mentionPreferenceAsync = ref.watch(mentionReplyPreferenceProvider);
+    final mentionPreference =
+        mentionPreferenceAsync.value ?? MentionReplyPreferences.noPreference;
+    final settings = ref.watch(userSettingsStatusProvider);
+    final int afkTimeoutMinutes = settings == null
+        ? 5
+        : (settings.afkTimeout / 60).round().clamp(
+            _kMinAfkTimeoutMinutes,
+            _kMaxAfkTimeoutMinutes,
+          );
+    final String notificationsLabel = isDesktopOs
+        ? l10n.notificationsEnableDesktopNotificationsLabel
+        : l10n.notificationsEnableNotificationsLabel;
+    final String notificationsDescription = isDesktopOs
+        ? l10n.notificationsEnableDesktopNotificationsDescription
+        : l10n.notificationsEnableNotificationsDescription(
+            ref.watch(
+              instanceRuntimeConfigProvider.select(
+                (config) => config.productName,
+              ),
+            ),
+          );
+    final timeoutItems = List<FluxerSelectItem<int>>.generate(
+      _kMaxAfkTimeoutMinutes,
+      (int index) {
+        final int minutes = index + 1;
+        return FluxerSelectItem<int>(
+          value: minutes,
+          label: minutes == 1
+              ? l10n.notificationsPushInactiveTimeoutOneMinute(minutes)
+              : l10n.notificationsPushInactiveTimeoutMinutes(minutes),
+        );
+      },
+    );
+    return SingleChildScrollView(
+      controller: scrollController,
+      padding: settingsScrollPadding(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FluxerSettingsSection(
+            sectionId: 'notifications',
+            title: l10n.notificationsGeneralSectionTitle,
+            isFirst: true,
+            children: [
+              const UserNotificationsPermissionBanner(),
+              FluxerSettingsSwitchItem(
+                label: notificationsLabel,
+                description: notificationsDescription,
+                value: notificationPrefs.notificationsEnabled,
+                onChanged: (bool value) => unawaited(
+                  _handleNotificationsEnabledChanged(
+                    context: context,
+                    ref: ref,
+                    notificationNotifier: notificationNotifier,
+                    l10n: l10n,
+                    value: value,
+                  ),
+                ),
+              ),
+              const UserNotificationsPushDeliveryDetails(),
+              if (isDesktopOs) ...[
+                Text(
+                  l10n.notificationsPushInactiveTimeoutLabel,
+                  style: textStyles.label.copyWith(color: colors.textPrimary),
+                ),
+                SizedBox(height: layout.s1),
+                Text(
+                  l10n.notificationsPushInactiveTimeoutDescription(
+                    ref.watch(
+                      instanceRuntimeConfigProvider.select(
+                        (config) => config.productName,
+                      ),
+                    ),
+                  ),
+                  style: textStyles.smallText.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: layout.s3),
+                FluxerSelect<int>(
+                  value: afkTimeoutMinutes,
+                  items: timeoutItems,
+                  onChanged: (int minutes) async {
+                    try {
+                      await ref
+                          .read(userSettingsSyncProvider)
+                          .pushAfkTimeout(minutes);
+                    } on Object {
+                      if (context.mounted) {
+                        _showSyncFailedToast(
+                          ref,
+                          l10n.notificationsAfkTimeoutSyncFailed,
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+          if (pushRelayConsentIsAvailable() &&
+              !ref.watch(isActiveInstanceOfficialProvider))
+            FluxerSettingsSection(
+              sectionId: 'push-relay',
+              title: l10n.notificationsPushRelaySectionTitle,
+              description: l10n.notificationsPushRelaySectionDescription(
+                pushRelayProviderName(isApple: PushProviderGuard.isApple),
+              ),
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FluxerSettingsSwitchItem(
+                      label: l10n.notificationsPushRelayConsentLabel,
+                      description:
+                          l10n.notificationsPushRelayConsentDescription,
+                      value: ref.watch(pushRelayConsentProvider),
+                      onChanged: (bool value) => unawaited(
+                        _handlePushRelayConsentChanged(
+                          context: context,
+                          ref: ref,
+                          value: value,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: layout.s2),
+                    FluxerTextLink(
+                      text: l10n.pushRelayConsentNoticeLink,
+                      url: kPushRelayNoticeUrl,
+                      style: textStyles.smallText,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          FluxerSettingsSection(
+            sectionId: 'mention-preference',
+            title: l10n.notificationsMentionPreferenceSectionTitle,
+            children: [
+              Semantics(
+                label: l10n.notificationsReplyMentionPreferenceAriaLabel,
+                container: true,
+                child: FluxerRadioGroup<MentionReplyPreferences>(
+                  value: mentionPreference,
+                  onChanged: (MentionReplyPreferences value) async {
+                    try {
+                      await ref
+                          .read(mentionReplyPreferenceProvider.notifier)
+                          .setPreference(value);
+                    } on Object {
+                      if (context.mounted) {
+                        _showSyncFailedToast(
+                          ref,
+                          l10n.notificationsMentionPreferenceSyncFailed,
+                        );
+                      }
+                    }
+                  },
+                  items: [
+                    FluxerRadioItem(
+                      value: MentionReplyPreferences.noPreference,
+                      label: l10n.notificationsMentionNoPreferenceName,
+                      description:
+                          l10n.notificationsMentionNoPreferenceDescription,
+                    ),
+                    FluxerRadioItem(
+                      value: MentionReplyPreferences.preferMention,
+                      label: l10n.notificationsMentionPreferMentionName,
+                      description:
+                          l10n.notificationsMentionPreferMentionDescription,
+                    ),
+                    FluxerRadioItem(
+                      value: MentionReplyPreferences.preferNoMention,
+                      label: l10n.notificationsMentionPreferNoMentionName,
+                      description:
+                          l10n.notificationsMentionPreferNoMentionDescription,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const UserNotificationsTtsSection(),
+          FluxerSettingsSection(
+            sectionId: 'sounds',
+            title: l10n.notificationsSoundsSectionTitle,
+            children: const [UserNotificationsSoundSettingsSection()],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _handlePushRelayConsentChanged({
+  required BuildContext context,
+  required WidgetRef ref,
+  required bool value,
+}) async {
+  final PushRelayConsent consent = ref.read(pushRelayConsentProvider.notifier);
+  await consent.ensureLoaded();
+
+  if (!value) {
+    await consent.setEnabled(value: false);
+    await _unregisterPushRelayMobileDevices(ref);
+    return;
+  }
+
+  if (!context.mounted) {
+    return;
+  }
+  final bool? agreed = await showPushRelayConsentSheet(context);
+  if (!context.mounted) {
+    return;
+  }
+  await recordPushRelayConsentSheetResult(consent: consent, agreed: agreed);
+}
+
+Future<void> _unregisterPushRelayMobileDevices(WidgetRef ref) async {
+  if (PushProviderGuard.isApple) {
+    await ref
+        .read(apnsMobileDeviceRegistrationProvider.notifier)
+        .unregisterCurrentToken();
+    await ref
+        .read(apnsVoipMobileDeviceRegistrationProvider.notifier)
+        .unregisterCurrentToken();
+  }
+  if (PushProviderGuard.isFirebaseMessaging) {
+    await ref
+        .read(fcmMobileDeviceRegistrationProvider.notifier)
+        .unregisterCurrentToken();
+  }
+}
+
+Future<void> _handleNotificationsEnabledChanged({
+  required BuildContext context,
+  required WidgetRef ref,
+  required NotificationPreferences notificationNotifier,
+  required FluxerLocalizations l10n,
+  required bool value,
+}) async {
+  final BuildContext? modalContext = value
+      ? resolveSystemPermissionContext(context)
+      : null;
+  final NotificationEnableResult result = await notificationNotifier
+      .setNotificationsEnabled(value: value);
+  if (result == NotificationEnableResult.requiresSystemSettings) {
+    if (modalContext != null && modalContext.mounted) {
+      await SystemPermissionSettingsPrompt.show(
+        modalContext,
+        kind: SystemPermissionKind.notifications,
+      );
+    }
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
+  if (result == NotificationEnableResult.permissionDenied) {
+    _showSyncFailedToast(
+      ref,
+      l10n.notificationsEnableNotificationsPermissionDenied,
+    );
+  }
+}
+
+void _showSyncFailedToast(WidgetRef ref, String message) {
+  ref
+      .read(toastProvider.notifier)
+      .show(FluxerToast(message: message, variant: FluxerToastVariant.danger));
+}

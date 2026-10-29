@@ -1,0 +1,1053 @@
+import 'dart:convert';
+
+import 'package:cross_file/cross_file.dart';
+import 'package:dio/dio.dart';
+import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+import 'package:fluxer_app/core/api/dio_error_message.dart';
+import 'package:fluxer_app/core/api/retry_interceptor.dart';
+import 'package:fluxer_app/core/database/daos/message_dao.dart' show MessageKey;
+import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
+import 'package:fluxer_app/core/gateway/message_mention_context_cache.dart';
+import 'package:fluxer_app/core/talker.dart';
+import 'package:fluxer_app/core/utils/message_mention_resolver.dart';
+import 'package:fluxer_app/features/channels/data/read_state_repository.dart';
+import 'package:fluxer_app/features/channels/data/read_state_utils.dart';
+import 'package:fluxer_app/features/chat/domain/api_attachment_metadata.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/domain/message_attachment_update.dart';
+import 'package:fluxer_app/features/chat/domain/message_translation.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_page_sync.dart';
+import 'package:fluxer_app/shared/utils/guild_user_display.dart';
+import 'package:fluxer_app/shared/utils/sdk_converters.dart';
+import 'package:fluxer_app/shared/utils/snowflake_time.dart';
+import 'package:fluxer_dart/export.dart';
+
+const Duration _kSendLookupClockSkew = Duration(minutes: 2);
+
+bool sendMaybeCreated(Object error) =>
+    error is DioException &&
+    ((error.response?.statusCode ?? 0) >= 500 ||
+        error.type == DioExceptionType.receiveTimeout);
+
+class MessageListLoadResult {
+  const MessageListLoadResult({
+    required this.messages,
+    this.embeddedReplyParents = const [],
+  });
+
+  final List<Message> messages;
+  final List<Message> embeddedReplyParents;
+}
+
+Map<String, dynamic> buildMessageCreateBody({
+  required String content,
+  String? replyToId,
+  bool replyMention = true,
+  String? clientNonce,
+  List<String> stickerIds = const [],
+  String? favoriteMemeId,
+  List<ApiAttachmentMetadata>? attachments,
+  int? messageFlags,
+  bool tts = false,
+}) {
+  final body = <String, dynamic>{};
+  if (content.isNotEmpty) {
+    body['content'] = content;
+  }
+  if (replyToId != null) {
+    body['message_reference'] = <String, dynamic>{'message_id': replyToId};
+    body['allowed_mentions'] = <String, dynamic>{'replied_user': replyMention};
+  }
+  if (stickerIds.isNotEmpty) {
+    body['sticker_ids'] = stickerIds;
+  }
+  if (favoriteMemeId != null) {
+    body['favorite_meme_id'] = favoriteMemeId;
+  }
+  if (messageFlags != null && messageFlags != 0) {
+    body['flags'] = messageFlags;
+  }
+  if (tts) {
+    body['tts'] = true;
+  }
+  if (attachments != null && attachments.isNotEmpty) {
+    body['attachments'] = attachments
+        .map((ApiAttachmentMetadata e) => e.toJson())
+        .toList();
+  }
+  if (clientNonce != null && clientNonce.isNotEmpty) {
+    body['nonce'] = clientNonce;
+  }
+  return body;
+}
+
+Map<String, dynamic> buildForwardMessageBody({
+  required String sourceChannelId,
+  required String sourceMessageId,
+  String? sourceGuildId,
+  List<String>? attachmentIds,
+  List<int>? embedIndices,
+  String? clientNonce,
+  int? messageFlags,
+}) {
+  final reference = <String, dynamic>{
+    'type': 1,
+    'channel_id': sourceChannelId,
+    'message_id': sourceMessageId,
+  };
+  if (sourceGuildId != null && sourceGuildId.isNotEmpty) {
+    reference['guild_id'] = sourceGuildId;
+  }
+  if (attachmentIds != null && attachmentIds.isNotEmpty) {
+    reference['attachment_ids'] = attachmentIds;
+  }
+  if (embedIndices != null && embedIndices.isNotEmpty) {
+    reference['embed_indices'] = embedIndices;
+  }
+  final body = <String, dynamic>{'message_reference': reference};
+  if (messageFlags != null && messageFlags != 0) {
+    body['flags'] = messageFlags;
+  }
+  if (clientNonce != null && clientNonce.isNotEmpty) {
+    body['nonce'] = clientNonce;
+  }
+  return body;
+}
+
+class MessageRepository {
+  final FluxerClient _client;
+  final Dio _dio;
+  final db.FluxerDatabase _db;
+  final String? _currentUserId;
+  final MessageMentionContextCache? _mentionContextCache;
+  final String? Function()? _gatewaySessionId;
+  final Map<String, Future<MessageListLoadResult>> _inFlightPages =
+      <String, Future<MessageListLoadResult>>{};
+
+  MessageRepository(
+    this._client,
+    this._dio,
+    this._db,
+    this._currentUserId, {
+    this._mentionContextCache,
+    this._gatewaySessionId,
+  });
+
+  Future<List<Message>> getCachedMessages(
+    String channelId, {
+    int limit = 30,
+  }) async {
+    final rows = await _db.messageDao.getMessages(channelId, limit: limit);
+    return Message.fromRowsAsync(rows);
+  }
+
+  Future<List<Message>> getCachedMessagesBefore(
+    String channelId,
+    String beforeId, {
+    int limit = 30,
+  }) async {
+    final rows = await _db.messageDao.getMessages(
+      channelId,
+      limit: limit,
+      beforeId: beforeId,
+    );
+    return Message.fromRowsAsync(rows);
+  }
+
+  Future<List<Message>> getCachedMessagesAfter(
+    String channelId,
+    String afterId, {
+    int limit = 30,
+  }) async {
+    final rows = await _db.messageDao.getMessagesAfter(
+      channelId,
+      afterId,
+      limit: limit,
+    );
+    return Message.fromRowsAsync(rows);
+  }
+
+  Future<List<Message>> getMessages({
+    required String channelId,
+    int limit = 30,
+    String? before,
+    String? after,
+    String? around,
+  }) async {
+    final page = await loadMessagePage(
+      channelId: channelId,
+      limit: limit,
+      before: before,
+      after: after,
+      around: around,
+    );
+    return page.messages;
+  }
+
+  Future<MessageListLoadResult> loadMessagePage({
+    required String channelId,
+    int limit = 30,
+    String? before,
+    String? after,
+    String? around,
+    bool fresh = false,
+  }) {
+    if (fresh) {
+      return _fetchMessagePage(
+        channelId: channelId,
+        limit: limit,
+        before: before,
+        after: after,
+        around: around,
+      );
+    }
+    final String key =
+        '$channelId|${before ?? ''}|${after ?? ''}|${around ?? ''}|$limit';
+    final Future<MessageListLoadResult>? existing = _inFlightPages[key];
+    if (existing != null) {
+      return existing;
+    }
+    final Future<MessageListLoadResult> future =
+        _fetchMessagePage(
+          channelId: channelId,
+          limit: limit,
+          before: before,
+          after: after,
+          around: around,
+        ).whenComplete(() {
+          _inFlightPages.removeWhere((k, _) => k == key);
+        });
+    _inFlightPages[key] = future;
+    return future;
+  }
+
+  Future<MessageListLoadResult> _fetchMessagePage({
+    required String channelId,
+    int limit = 30,
+    String? before,
+    String? after,
+    String? around,
+  }) async {
+    final bool isLatestPage = before == null && after == null && around == null;
+    final Stopwatch pageStopwatch = Stopwatch()..start();
+    final List<String> pageMarks = <String>[];
+    void mark(String name) {
+      pageMarks.add('$name@${pageStopwatch.elapsedMilliseconds}');
+    }
+
+    // Tail read before the fetch keeps rows that arrive in flight: https://feedback.fluxer.com/p/1863
+    final String? localTailBeforeFetch = isLatestPage
+        ? await _db.messageDao.newestServerMessageId(channelId)
+        : null;
+
+    try {
+      final List<MessageResponseSchema> data = await _client.channels
+          .listMessages(
+            channelId: channelId,
+            limit: limit.toString(),
+            before: before,
+            after: after,
+            around: around,
+          );
+      mark('http');
+
+      final List<Message> embeddedReplyParents = <Message>[];
+      for (final sdk in data) {
+        final referenced = sdk.referencedMessage;
+        if (referenced != null) {
+          embeddedReplyParents.add(
+            Message.fromReferencedSdk(
+              referenced,
+              currentUserId: _currentUserId,
+            ),
+          );
+        }
+      }
+
+      final mentionCtx =
+          await _mentionContextCache?.contextFor(
+            currentUserId: _currentUserId,
+            channelId: channelId,
+          ) ??
+          await buildMessageMentionContext(
+            _db,
+            currentUserId: _currentUserId,
+            channelId: channelId,
+          );
+      mark('ctx');
+      final List<Message> messages = data
+          .map(
+            (sdk) =>
+                Message.fromSdk(sdk, currentUserId: _currentUserId).copyWith(
+                  isMentioned: messageMentionsUser(
+                    mentionCtx,
+                    authorId: sdk.author.id,
+                    mentionedUserIds: sdk.mentions.map((u) => u.id).toList(),
+                    mentionEveryone: sdk.mentionEveryone,
+                    mentionRoleIds: sdk.mentionRoles,
+                  ),
+                ),
+          )
+          .toList()
+          .reversed
+          .toList();
+
+      final Map<String, db.UsersCompanion> pageUsersById =
+          <String, db.UsersCompanion>{};
+      for (final sdk in data) {
+        if (sdk.webhookId == null) {
+          pageUsersById[sdk.author.id] = userFromPartialSdk(sdk.author);
+        }
+        for (final mention in sdk.mentions) {
+          pageUsersById[mention.id] = userFromPartialSdk(mention);
+        }
+        for (final UserPartialResponse user
+            in sdk.users ?? const <UserPartialResponse>[]) {
+          pageUsersById[user.id] = userFromPartialSdk(user);
+        }
+      }
+      late final List<Message> persisted;
+      await _db.transaction(() async {
+        if (pageUsersById.isNotEmpty) {
+          await upsertUsersCompanions(_db, pageUsersById.values);
+        }
+        mark('users');
+        persisted = await _upsertKeepingTranslations(messages);
+        await _pruneStaleMessagesForNetworkPage(
+          channelId,
+          persisted,
+          isLatestPage: isLatestPage,
+          localTailBeforeFetch: localTailBeforeFetch,
+        );
+        mark('persist');
+
+        if (persisted.isNotEmpty) {
+          final last = persisted.last;
+          await _db.dmChannelDao.updateLastMessage(
+            channelId,
+            last.id,
+            last.content,
+            last.authorId,
+            last.timestamp,
+          );
+        }
+        mark('tail');
+      });
+
+      if (persisted.any((m) => m.isMentioned)) {
+        await ReadStateRepository(_client, _db).recomputeMentionsAfterBackfill(
+          channelId: channelId,
+          currentUserId: _currentUserId,
+          allowDecrease: true,
+        );
+        mark('mentions');
+      }
+      debugPrint(
+        '[MessageRepo] page ch=$channelId n=${persisted.length} '
+        '[${pageMarks.join(' ')}]',
+      );
+
+      return MessageListLoadResult(
+        messages: persisted,
+        embeddedReplyParents: embeddedReplyParents,
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 200) {
+        talker.warning(
+          '[MessageRepo] SDK parse failed, '
+          'using fallback: ${e.error}',
+        );
+        final messages = await _getMessagesFallback(
+          channelId: channelId,
+          limit: limit,
+          before: before,
+          after: after,
+          around: around,
+        );
+        return MessageListLoadResult(messages: messages);
+      }
+      rethrow;
+    }
+  }
+
+  Future<Message> fetchMessage({
+    required String channelId,
+    required String messageId,
+  }) async {
+    try {
+      final sdk = await _client.channels.getMessage(
+        channelId: channelId,
+        messageId: messageId,
+      );
+      if (sdk.webhookId == null) {
+        await _db.userDao.upsertUser(userFromPartialSdk(sdk.author));
+      }
+      await upsertMentionUsersFromSdk(_db, sdk.mentions);
+      await upsertSupplementalUsersFromSdk(_db, sdk.users);
+      final message = Message.fromSdk(sdk, currentUserId: _currentUserId)
+          .copyWith(
+            isMentioned: await resolveMessageMentionsUser(
+              _db,
+              currentUserId: _currentUserId,
+              channelId: channelId,
+              authorId: sdk.author.id,
+              mentionedUserIds: sdk.mentions.map((u) => u.id).toList(),
+              mentionEveryone: sdk.mentionEveryone,
+              mentionRoleIds: sdk.mentionRoles,
+            ),
+          );
+      return await _upsertKeepingTranslation(message);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        rethrow;
+      }
+      throw Exception(
+        e.error?.toString() ?? e.message ?? 'Failed to fetch message',
+      );
+    }
+  }
+
+  Future<List<Message>> _getMessagesFallback({
+    required String channelId,
+    int limit = 30,
+    String? before,
+    String? after,
+    String? around,
+  }) async {
+    final bool isLatestPage = before == null && after == null && around == null;
+    final String? localTailBeforeFetch = isLatestPage
+        ? await _db.messageDao.newestServerMessageId(channelId)
+        : null;
+    final queryParams = <String, dynamic>{
+      'limit': limit,
+      'before': ?before,
+      'after': ?after,
+      'around': ?around,
+    };
+    final response = await _dio.get<List<dynamic>>(
+      '/channels/$channelId/messages',
+      queryParameters: queryParams,
+    );
+    final data = response.data;
+    if (data == null) {
+      if (isLatestPage) {
+        await _pruneStaleMessagesForNetworkPage(
+          channelId,
+          const <Message>[],
+          isLatestPage: true,
+          localTailBeforeFetch: localTailBeforeFetch,
+        );
+      }
+      return [];
+    }
+
+    final messages = <Message>[];
+    final mentionCtx = await buildMessageMentionContext(
+      _db,
+      currentUserId: _currentUserId,
+      channelId: channelId,
+    );
+    for (final json in data.reversed) {
+      try {
+        final map = json as Map<String, dynamic>;
+        final author = map['author'] as Map<String, dynamic>;
+        messages.add(
+          Message(
+            id: map['id'] as String,
+            channelId: map['channel_id'] as String,
+            authorId: author['id'] as String,
+            authorName: resolveMessageAuthorNameFromJson(author),
+            authorAvatar: author['avatar'] as String?,
+            authorAvatarColor: author['avatar_color'] as int?,
+            authorIsBot: (author['bot'] as bool?) ?? false,
+            authorIsSystem: (author['system'] as bool?) ?? false,
+            webhookId: map['webhook_id'] as String?,
+            content: (map['content'] as String?) ?? '',
+            timestamp: DateTime.parse(map['timestamp'] as String),
+            editedTimestamp: map['edited_timestamp'] != null
+                ? DateTime.tryParse(map['edited_timestamp'] as String)
+                : null,
+            embeds:
+                (map['embeds'] as List<dynamic>?)
+                    ?.map((e) => Embed.fromJson(e as Map<String, dynamic>))
+                    .toList() ??
+                const [],
+            attachments:
+                (map['attachments'] as List<dynamic>?)
+                    ?.map((e) => Attachment.fromJson(e as Map<String, dynamic>))
+                    .toList() ??
+                const [],
+            stickers:
+                (map['stickers'] as List<dynamic>?)
+                    ?.map(
+                      (e) => MessageSticker.fromJson(e as Map<String, dynamic>),
+                    )
+                    .toList() ??
+                const [],
+            replyToId:
+                (map['message_reference']
+                        as Map<String, dynamic>?)?['message_id']
+                    as String?,
+            messageReference: map['message_reference'] != null
+                ? MessageReference.fromJson(
+                    map['message_reference'] as Map<String, dynamic>,
+                  )
+                : null,
+            messageSnapshots:
+                (map['message_snapshots'] as List<dynamic>?)
+                    ?.map(
+                      (e) =>
+                          MessageSnapshot.fromJson(e as Map<String, dynamic>),
+                    )
+                    .toList() ??
+                const [],
+            isPinned: (map['pinned'] as bool?) ?? false,
+            isMentioned: messageMentionsUser(
+              mentionCtx,
+              authorId: author['id'] as String,
+              mentionedUserIds: _mentionedUserIdsFromJson(map),
+              mentionEveryone: (map['mention_everyone'] as bool?) ?? false,
+              mentionRoleIds:
+                  (map['mention_roles'] as List<dynamic>?)
+                      ?.map((e) => e.toString())
+                      .toList() ??
+                  const [],
+            ),
+            mentionedUserIds: _mentionedUserIdsFromJson(map),
+            supplementalUserIds: _supplementalUserIdsFromJson(map),
+            type: (map['type'] as int?) ?? 0,
+            flags: (map['flags'] as int?) ?? 0,
+          ),
+        );
+
+        final String? webhookId = map['webhook_id'] as String?;
+        if (webhookId == null) {
+          final authorId = author['id'] as String;
+          await _db.userDao.upsertUser(
+            db.UsersCompanion.insert(
+              id: authorId,
+              username: (author['username'] as String?) ?? '',
+              memberSince: Value(dateTimeFromUserSnowflakeOrNull(authorId)),
+            ),
+          );
+          await upsertMentionUsersFromJson(
+            _db,
+            map['mentions'] as List<dynamic>?,
+          );
+          await upsertMentionUsersFromJson(_db, map['users'] as List<dynamic>?);
+        }
+      } on Object catch (e) {
+        talker.warning('[MessageRepo] Skipping message: $e');
+      }
+    }
+
+    if (messages.isNotEmpty) {
+      final List<Message> persisted = await _upsertKeepingTranslations(
+        messages,
+      );
+      await _pruneStaleMessagesForNetworkPage(
+        channelId,
+        persisted,
+        isLatestPage: isLatestPage,
+        localTailBeforeFetch: localTailBeforeFetch,
+      );
+
+      final last = persisted.last;
+      await _db.dmChannelDao.updateLastMessage(
+        channelId,
+        last.id,
+        last.content,
+        last.authorId,
+        last.timestamp,
+      );
+      if (persisted.any((m) => m.isMentioned)) {
+        await ReadStateRepository(_client, _db).recomputeMentionsAfterBackfill(
+          channelId: channelId,
+          currentUserId: _currentUserId,
+          allowDecrease: true,
+        );
+      }
+      return persisted;
+    }
+
+    if (isLatestPage) {
+      await _pruneStaleMessagesForNetworkPage(
+        channelId,
+        messages,
+        isLatestPage: true,
+        localTailBeforeFetch: localTailBeforeFetch,
+      );
+    }
+    return messages;
+  }
+
+  Future<Set<String>> _composerDraftReplyMessageIds(String channelId) async {
+    final String? replyId = (await _db.composerDraftDao.getDraft(
+      channelId,
+    ))?.replyToMessageId;
+    if (replyId == null || replyId.isEmpty) {
+      return const <String>{};
+    }
+    return <String>{replyId};
+  }
+
+  Future<void> _pruneStaleMessagesForNetworkPage(
+    String channelId,
+    List<Message> networkPage, {
+    required bool isLatestPage,
+    String? localTailBeforeFetch,
+  }) async {
+    if (networkPage.isEmpty) {
+      if (isLatestPage && localTailBeforeFetch != null) {
+        final Set<String> preserveMessageIds =
+            await _composerDraftReplyMessageIds(channelId);
+        await _db.messageDao.deleteSentMessagesForChannel(
+          channelId,
+          upToId: localTailBeforeFetch,
+          preserveMessageIds: preserveMessageIds,
+        );
+      }
+      return;
+    }
+    final String oldestId = networkPage.first.id;
+    final String newestId = networkPage.last.id;
+    final List<db.Message> localRows = await _db.messageDao
+        .getMessagesInSnowflakeRange(channelId, oldestId, newestId);
+    final List<String> staleIds = networkPageStaleLocalIds(
+      localMessageIds: localRows.map((db.Message row) => row.id),
+      networkPage: networkPage,
+    );
+    await _db.messageDao.deleteMessages(channelId, staleIds);
+    if (isLatestPage &&
+        localTailBeforeFetch != null &&
+        compareSnowflakeIds(localTailBeforeFetch, newestId) > 0) {
+      await _db.messageDao.deleteServerMessagesBetween(
+        channelId,
+        afterId: newestId,
+        upToId: localTailBeforeFetch,
+      );
+    }
+  }
+
+  List<String> _mentionedUserIdsFromJson(Map<String, dynamic> map) {
+    final mentions = map['mentions'] as List<dynamic>?;
+    if (mentions == null) {
+      return const [];
+    }
+    return [
+      for (final mention in mentions)
+        if (mention is Map<String, dynamic> && mention['id'] != null)
+          mention['id'].toString(),
+    ];
+  }
+
+  List<String> _supplementalUserIdsFromJson(Map<String, dynamic> map) {
+    final users = map['users'] as List<dynamic>?;
+    if (users == null) {
+      return const [];
+    }
+    return [
+      for (final user in users)
+        if (user is Map<String, dynamic> && user['id'] != null)
+          user['id'].toString(),
+    ];
+  }
+
+  Future<void> addReaction({
+    required String channelId,
+    required String messageId,
+    required String emoji,
+  }) async {
+    await _client.channels.addReaction(
+      channelId: channelId,
+      messageId: messageId,
+      emoji: emoji,
+      sessionId: _gatewaySessionId?.call(),
+    );
+  }
+
+  Future<void> removeReaction({
+    required String channelId,
+    required String messageId,
+    required String emoji,
+  }) async {
+    await _client.channels.removeOwnReaction(
+      channelId: channelId,
+      messageId: messageId,
+      emoji: emoji,
+      sessionId: _gatewaySessionId?.call(),
+    );
+  }
+
+  Future<void> removeAllReactions({
+    required String channelId,
+    required String messageId,
+  }) async {
+    await _client.channels.removeAllReactions(
+      channelId: channelId,
+      messageId: messageId,
+    );
+  }
+
+  Future<Message> sendMessage({
+    required String channelId,
+    required String content,
+    String? replyToId,
+    bool replyMention = true,
+    String? clientNonce,
+    List<String> stickerIds = const [],
+    String? favoriteMemeId,
+    List<ApiAttachmentMetadata>? attachmentMetadata,
+    List<XFile>? attachmentFiles,
+    int? messageFlags,
+    bool tts = false,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+  }) async {
+    try {
+      final Map<String, dynamic> body = buildMessageCreateBody(
+        content: content,
+        replyToId: replyToId,
+        replyMention: replyMention,
+        clientNonce: clientNonce,
+        stickerIds: stickerIds,
+        favoriteMemeId: favoriteMemeId,
+        attachments: attachmentMetadata,
+        messageFlags: messageFlags,
+        tts: tts,
+      );
+
+      if (attachmentFiles != null && attachmentFiles.isNotEmpty) {
+        final FormData formData = FormData();
+        formData.fields.add(MapEntry('payload_json', jsonEncode(body)));
+        for (var i = 0; i < attachmentFiles.length; i++) {
+          final XFile x = attachmentFiles[i];
+          formData.files.add(
+            MapEntry(
+              'files[$i]',
+              await MultipartFile.fromFile(x.path, filename: x.name),
+            ),
+          );
+        }
+        final Response<Map<String, dynamic>> response = await _dio
+            .post<Map<String, dynamic>>(
+              '/channels/$channelId/messages',
+              data: formData,
+              cancelToken: cancelToken,
+              onSendProgress: onSendProgress,
+              options: Options(
+                contentType: 'multipart/form-data',
+                sendTimeout: const Duration(minutes: 30),
+                receiveTimeout: const Duration(minutes: 5),
+                extra: <String, Object>{kNoRetryKey: true},
+              ),
+            );
+        final Map<String, dynamic>? data = response.data;
+        if (data == null) {
+          throw Exception('Empty response from sendMessage');
+        }
+        final MessageResponseSchema schema = MessageResponseSchema.fromJson(
+          data,
+        );
+        return await _persistSdkMessage(channelId: channelId, schema: schema);
+      }
+
+      final Message sent = await _postMessage(
+        channelId,
+        body,
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress,
+      );
+      return sent;
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<String?> findUnseenOwnSend({
+    required String channelId,
+    required String clientNonce,
+    required String content,
+    required List<String> attachmentFilenames,
+  }) async {
+    final int? sentAtMs = snowflakeTimestampMsOrNull(clientNonce);
+    final String? authorId = _currentUserId;
+    if (sentAtMs == null || authorId == null) {
+      return null;
+    }
+    final List<MessageResponseSchema> page = await _client.channels
+        .listMessages(
+          channelId: channelId,
+          after: snowflakeFromDateTime(
+            DateTime.fromMillisecondsSinceEpoch(
+              sentAtMs - _kSendLookupClockSkew.inMilliseconds,
+            ),
+          ),
+          limit: '100',
+        );
+    final List<MessageResponseSchema> ordered = [...page]
+      ..sort(
+        (MessageResponseSchema a, MessageResponseSchema b) =>
+            BigInt.parse(a.id).compareTo(BigInt.parse(b.id)),
+      );
+    final List<String> expectedNames = [...attachmentFilenames]..sort();
+    for (final MessageResponseSchema message in ordered) {
+      if (message.author.id != authorId) {
+        continue;
+      }
+      if (message.nonce != null) {
+        if (message.nonce == clientNonce) {
+          return message.id;
+        }
+        continue;
+      }
+      final List<String> names = [
+        for (final MessageAttachmentResponse a
+            in message.attachments ?? const <MessageAttachmentResponse>[])
+          a.filename,
+      ]..sort();
+      if (message.content.trim() != content.trim() ||
+          !listEquals(names, expectedNames)) {
+        continue;
+      }
+      if (await _db.messageDao.getMessage(channelId, message.id) != null) {
+        continue;
+      }
+      return message.id;
+    }
+    return null;
+  }
+
+  Future<Message> _postMessage(
+    String channelId,
+    Map<String, dynamic> body, {
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+  }) async {
+    final Response<Map<String, dynamic>> response = await _dio
+        .post<Map<String, dynamic>>(
+          '/channels/$channelId/messages',
+          data: body,
+          cancelToken: cancelToken,
+          onSendProgress: onSendProgress,
+          options: Options(
+            sendTimeout: const Duration(minutes: 5),
+            receiveTimeout: const Duration(minutes: 2),
+          ),
+        );
+    final Map<String, dynamic>? data = response.data;
+    if (data == null) {
+      throw Exception('Empty response from sendMessage');
+    }
+    final MessageResponseSchema schema = MessageResponseSchema.fromJson(data);
+    return _persistSdkMessage(channelId: channelId, schema: schema);
+  }
+
+  Future<Message> _persistSdkMessage({
+    required String channelId,
+    required MessageResponseSchema schema,
+  }) async {
+    final Message base = Message.fromSdk(schema, currentUserId: _currentUserId);
+    final mentionCtx = await buildMessageMentionContext(
+      _db,
+      currentUserId: _currentUserId,
+      channelId: channelId,
+    );
+    final Message message = base.copyWith(
+      isMentioned: messageMentionsUser(
+        mentionCtx,
+        authorId: base.authorId,
+        mentionedUserIds: base.mentionedUserIds,
+        mentionEveryone: schema.mentionEveryone,
+        mentionRoleIds: schema.mentionRoles,
+      ),
+    );
+    return _upsertKeepingTranslation(message);
+  }
+
+  Future<Message> sendForward({
+    required String channelId,
+    required String sourceChannelId,
+    required String sourceMessageId,
+    required String clientNonce,
+    String? sourceGuildId,
+    List<String>? attachmentIds,
+    List<int>? embedIndices,
+    int? messageFlags,
+  }) {
+    return _postMessage(
+      channelId,
+      buildForwardMessageBody(
+        sourceChannelId: sourceChannelId,
+        sourceMessageId: sourceMessageId,
+        sourceGuildId: sourceGuildId,
+        attachmentIds: attachmentIds,
+        embedIndices: embedIndices,
+        clientNonce: clientNonce,
+        messageFlags: messageFlags,
+      ),
+    );
+  }
+
+  Future<Message> editMessage({
+    required String channelId,
+    required String messageId,
+    required String content,
+  }) async {
+    try {
+      final MessageResponseSchema schema = await _client.channels.editMessage(
+        channelId: channelId,
+        messageId: messageId,
+        content: content,
+      );
+      return await _persistSdkMessage(channelId: channelId, schema: schema);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Message> crosspostMessage({
+    required String channelId,
+    required String messageId,
+  }) async {
+    final MessageResponseSchema schema = await _client.channels
+        .crosspostMessage(channelId: channelId, messageId: messageId);
+    return _persistSdkMessage(channelId: channelId, schema: schema);
+  }
+
+  Future<CrosspostSourceResponse> getCrosspostSource({
+    required String channelId,
+    required String messageId,
+  }) {
+    return _client.channels.getMessageCrosspostSource(
+      channelId: channelId,
+      messageId: messageId,
+    );
+  }
+
+  Future<void> deleteAttachment({
+    required String channelId,
+    required String messageId,
+    required String attachmentId,
+  }) async {
+    try {
+      await _client.channels.deleteMessageAttachment(
+        channelId: channelId,
+        messageId: messageId,
+        attachmentId: attachmentId,
+      );
+    } on DioException catch (e) {
+      throw Exception(userFacingErrorMessage(e, 'Failed to delete attachment'));
+    }
+  }
+
+  // Sent as JSON since the multipart parser drops a bare attachments field: https://feedback.fluxer.com/p/2012
+  Future<Message> editMessageAttachments({
+    required String channelId,
+    required String messageId,
+    required List<MessageAttachmentUpdate> attachmentUpdates,
+  }) async {
+    try {
+      final List<Map<String, dynamic>> attachments = attachmentUpdates
+          .map((MessageAttachmentUpdate update) => update.toJson())
+          .toList();
+      final Response<Map<String, dynamic>> response = await _dio
+          .patch<Map<String, dynamic>>(
+            '/channels/$channelId/messages/$messageId',
+            data: <String, dynamic>{'attachments': attachments},
+          );
+      final Map<String, dynamic>? data = response.data;
+      if (data == null) {
+        throw Exception('Empty response from editMessageAttachments');
+      }
+      final MessageResponseSchema schema = MessageResponseSchema.fromJson(data);
+      return await _persistSdkMessage(channelId: channelId, schema: schema);
+    } on DioException catch (e) {
+      throw Exception(userFacingErrorMessage(e, 'Failed to edit attachments'));
+    }
+  }
+
+  Future<Message> setMessageFlags({
+    required String channelId,
+    required String messageId,
+    required int flags,
+  }) async {
+    try {
+      final MessageResponseSchema schema = await _client.channels.editMessage(
+        channelId: channelId,
+        messageId: messageId,
+        flags: flags,
+      );
+      return await _persistSdkMessage(channelId: channelId, schema: schema);
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.statusMessage ?? 'Failed to update message flags',
+      );
+    }
+  }
+
+  Future<int> purgePersonalNotesMessages(String channelId) async {
+    try {
+      final response = await _client.channels.purgePersonalNotesMessages(
+        channelId: channelId,
+      );
+      await _db.messageDao.deleteMessagesForChannel(channelId);
+      return response.deletedCount;
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.statusMessage ?? 'Failed to purge personal notes',
+      );
+    }
+  }
+
+  Future<void> deleteMessage({
+    required String channelId,
+    required String messageId,
+  }) async {
+    try {
+      await _client.channels.deleteMessage(
+        channelId: channelId,
+        messageId: messageId,
+      );
+      await _db.messageDao.deleteMessages(channelId, [messageId]);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        await _db.messageDao.deleteMessages(channelId, [messageId]);
+        return;
+      }
+      throw Exception(e.response?.statusMessage ?? 'Failed to delete message');
+    }
+  }
+
+  Future<List<Message>> _upsertKeepingTranslations(
+    List<Message> messages,
+  ) async {
+    if (messages.isEmpty) {
+      return messages;
+    }
+    final Map<MessageKey, MessageTranslationSnapshot> snapshots = await _db
+        .messageDao
+        .getTranslationSnapshots(<MessageKey>[
+          for (final Message message in messages)
+            (channelId: message.channelId, id: message.id),
+        ]);
+    await _db.messageDao.upsertMessages(
+      messages.map((Message message) => message.toCompanion()).toList(),
+      snapshots: snapshots,
+    );
+    return <Message>[
+      for (final Message message in messages)
+        message.withStoredTranslation(
+          snapshots[(channelId: message.channelId, id: message.id)],
+        ),
+    ];
+  }
+
+  Future<Message> _upsertKeepingTranslation(Message message) async {
+    final List<Message> persisted = await _upsertKeepingTranslations(<Message>[
+      message,
+    ]);
+    return persisted.first;
+  }
+}

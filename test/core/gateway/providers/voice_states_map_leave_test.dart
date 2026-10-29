@@ -1,0 +1,209 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/gateway/providers/gateway_event_providers.dart';
+import 'package:fluxer_app/features/voice/utils/connection/connection_voice_state.dart';
+import 'package:fluxer_dart/gateway.dart';
+
+void main() {
+  ProviderContainer makeContainer() {
+    final ProviderContainer container = ProviderContainer();
+    addTearDown(container.dispose);
+    return container;
+  }
+
+  VoiceState voiceState({
+    required String userId,
+    required String channelId,
+    required String guildId,
+    String? connectionId,
+  }) => VoiceState(
+    userId: userId,
+    channelId: channelId,
+    guildId: guildId,
+    connectionId: connectionId,
+  );
+
+  group('VoiceStatesMap leave cleanup', () {
+    test('removes entry when leave matches stored connectionId value', () {
+      final ProviderContainer container = makeContainer();
+      const String connectionId = 'conn-mobile';
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .update(
+            const VoiceState(
+              userId: 'self',
+              channelId: 'voice-1',
+              guildId: 'g1',
+              connectionId: connectionId,
+            ),
+          );
+      expect(container.read(voiceStatesMapProvider), isNotEmpty);
+
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .update(
+            const VoiceState(
+              userId: 'self',
+              guildId: 'g1',
+              connectionId: connectionId,
+            ),
+          );
+
+      expect(container.read(voiceStatesMapProvider), isEmpty);
+    });
+
+    test('removes synthetic key when leave matches nested connectionId', () {
+      final ProviderContainer container = makeContainer();
+      const String userId = 'self';
+      const String channelId = 'voice-1';
+      const String connectionId = 'conn-1';
+      final String syntheticKey = voiceStateSyntheticStorageKey(
+        userId: userId,
+        channelId: channelId,
+      );
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .update(
+            const VoiceState(
+              userId: userId,
+              channelId: channelId,
+              guildId: 'g1',
+              connectionId: connectionId,
+            ),
+          );
+      expect(
+        container.read(voiceStatesMapProvider).containsKey(syntheticKey),
+        isFalse,
+      );
+      expect(
+        container.read(voiceStatesMapProvider).containsKey(connectionId),
+        isTrue,
+      );
+
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .update(
+            const VoiceState(
+              userId: userId,
+              guildId: 'g1',
+              connectionId: connectionId,
+            ),
+          );
+
+      expect(container.read(voiceStatesMapProvider), isEmpty);
+    });
+
+    test('leaves unrelated connections in the same channel', () {
+      final ProviderContainer container = makeContainer();
+      container.read(voiceStatesMapProvider.notifier).updateBulk([
+        voiceState(
+          userId: 'self',
+          channelId: 'voice-1',
+          guildId: 'g1',
+          connectionId: 'conn-mobile',
+        ),
+        voiceState(
+          userId: 'self',
+          channelId: 'voice-1',
+          guildId: 'g1',
+          connectionId: 'conn-desktop',
+        ),
+      ]);
+      expect(container.read(voiceStatesMapProvider), hasLength(2));
+
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .update(
+            const VoiceState(
+              userId: 'self',
+              guildId: 'g1',
+              connectionId: 'conn-mobile',
+            ),
+          );
+
+      final Map<String, VoiceState> map = container.read(
+        voiceStatesMapProvider,
+      );
+      expect(map, hasLength(1));
+      expect(map.containsKey('conn-desktop'), isTrue);
+    });
+  });
+  group('VoiceStatesMap guild snapshot', () {
+    test('replaceGuild drops states the snapshot no longer lists', () {
+      final ProviderContainer container = makeContainer();
+      container.read(voiceStatesMapProvider.notifier).updateBulk(<VoiceState>[
+        voiceState(
+          userId: 'left',
+          channelId: 'voice-1',
+          guildId: 'g1',
+          connectionId: 'conn-left',
+        ),
+        voiceState(
+          userId: 'stayed',
+          channelId: 'voice-1',
+          guildId: 'g1',
+          connectionId: 'conn-stayed',
+        ),
+        voiceState(
+          userId: 'other',
+          channelId: 'voice-9',
+          guildId: 'g2',
+          connectionId: 'conn-other',
+        ),
+      ]);
+
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .replaceGuild('g1', <VoiceState>[
+            voiceState(
+              userId: 'stayed',
+              channelId: 'voice-2',
+              guildId: 'g1',
+              connectionId: 'conn-stayed',
+            ),
+            voiceState(
+              userId: 'joined',
+              channelId: 'voice-2',
+              guildId: 'g1',
+              connectionId: 'conn-joined',
+            ),
+          ]);
+
+      final Map<String, VoiceState> state = container.read(
+        voiceStatesMapProvider,
+      );
+      expect(state.keys.toSet(), <String>{
+        'conn-stayed',
+        'conn-joined',
+        'conn-other',
+      });
+      expect(state['conn-stayed']!.channelId, 'voice-2');
+    });
+
+    test('replaceGuild with an empty snapshot empties only that guild', () {
+      final ProviderContainer container = makeContainer();
+      container.read(voiceStatesMapProvider.notifier).updateBulk(<VoiceState>[
+        voiceState(
+          userId: 'left',
+          channelId: 'voice-1',
+          guildId: 'g1',
+          connectionId: 'conn-left',
+        ),
+        voiceState(
+          userId: 'other',
+          channelId: 'voice-9',
+          guildId: 'g2',
+          connectionId: 'conn-other',
+        ),
+      ]);
+
+      container
+          .read(voiceStatesMapProvider.notifier)
+          .replaceGuild('g1', const <VoiceState>[]);
+
+      expect(container.read(voiceStatesMapProvider).keys.toSet(), <String>{
+        'conn-other',
+      });
+    });
+  });
+}

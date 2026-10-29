@@ -1,0 +1,145 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/features/chat/providers/slowmode/slowmode_tracker.dart';
+import 'package:fluxer_dart/export.dart';
+
+void main() {
+  group('SlowmodeTracker', () {
+    late ProviderContainer container;
+    late SlowmodeTracker tracker;
+
+    setUp(() {
+      container = ProviderContainer();
+      addTearDown(container.dispose);
+      tracker = container.read(slowmodeTrackerProvider.notifier);
+    });
+
+    test('remainingFor uses server cooldown when it is longer than local', () {
+      tracker
+        ..updateCooldownRemaining('channel-1', 30_000)
+        ..updateSendTimestamp('channel-1', DateTime.now());
+
+      final Duration remaining = tracker.remainingFor('channel-1', 5);
+
+      expect(remaining.inMilliseconds, greaterThan(25_000));
+    });
+
+    test('remainingFor uses local cooldown when it is longer than server', () {
+      tracker
+        ..updateCooldownRemaining('channel-1', 1_000)
+        ..updateSendTimestamp('channel-1', DateTime.now());
+
+      final Duration remaining = tracker.remainingFor('channel-1', 30);
+
+      expect(remaining.inSeconds, greaterThan(25));
+    });
+
+    test('syncFromResponse clears state when user can bypass', () {
+      tracker
+        ..updateSendTimestamp('channel-1', DateTime.now())
+        ..updateCooldownRemaining('channel-1', 30_000)
+        ..syncFromResponse(
+          'channel-1',
+          const ChannelSlowmodeStateResponse(
+            rateLimitPerUser: 30,
+            retryAfterMs: 15_000,
+            nextSendAllowedAt: null,
+            canBypass: true,
+          ),
+        );
+
+      expect(tracker.remainingFor('channel-1', 30), Duration.zero);
+    });
+
+    test(
+      'syncFromResponse clears guild cooldown when retry_after_ms is zero',
+      () {
+        tracker
+          ..updateCooldownRemaining('channel-1', 30_000)
+          ..syncFromResponse(
+            'channel-1',
+            const ChannelSlowmodeStateResponse(
+              rateLimitPerUser: 30,
+              retryAfterMs: 0,
+              nextSendAllowedAt: null,
+              canBypass: false,
+            ),
+          );
+
+        expect(tracker.remainingFor('channel-1', 30), Duration.zero);
+      },
+    );
+
+    test(
+      'syncFromResponse preserves local send when retry_after_ms is zero',
+      () {
+        tracker
+          ..updateSendTimestamp('channel-1', DateTime.now())
+          ..syncFromResponse(
+            'channel-1',
+            const ChannelSlowmodeStateResponse(
+              rateLimitPerUser: 30,
+              retryAfterMs: 0,
+              nextSendAllowedAt: null,
+              canBypass: false,
+            ),
+          );
+
+        expect(
+          tracker.remainingFor('channel-1', 30).inSeconds,
+          greaterThan(25),
+        );
+      },
+    );
+
+    test('syncFromResponse applies server cooldown', () {
+      tracker.syncFromResponse(
+        'channel-1',
+        const ChannelSlowmodeStateResponse(
+          rateLimitPerUser: 30,
+          retryAfterMs: 12_000,
+          nextSendAllowedAt: null,
+          canBypass: false,
+        ),
+      );
+
+      expect(
+        tracker.remainingFor('channel-1', 30).inMilliseconds,
+        greaterThan(10_000),
+      );
+    });
+
+    test('updateSendTimestamp applies cross-device send time', () {
+      final DateTime sentAt = DateTime.now().toUtc().subtract(
+        const Duration(seconds: 2),
+      );
+
+      tracker.updateSendTimestamp('channel-1', sentAt);
+
+      final Duration remaining = tracker.remainingFor('channel-1', 30);
+      expect(remaining.inSeconds, lessThanOrEqualTo(28));
+      expect(remaining.inSeconds, greaterThan(25));
+    });
+
+    test('updateSendTimestamp ignores older timestamps', () {
+      final DateTime recent = DateTime.now();
+      final DateTime older = recent.subtract(const Duration(seconds: 5));
+
+      tracker
+        ..updateSendTimestamp('channel-1', recent)
+        ..updateSendTimestamp('channel-1', older);
+
+      final Duration remaining = tracker.remainingFor('channel-1', 30);
+      expect(remaining.inSeconds, greaterThan(25));
+    });
+
+    test('clearChannel removes both local and server cooldown state', () {
+      tracker
+        ..updateSendTimestamp('channel-1', DateTime.now())
+        ..updateCooldownRemaining('channel-1', 30_000)
+        ..clearChannel('channel-1');
+
+      expect(tracker.remainingFor('channel-1', 30), Duration.zero);
+    });
+  });
+}

@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity-alias
+            android:name="${appIconAliasPrefix}.default_canary_brutalist"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/fluxer_icon_default_canary_brutalist"
+            android:label="${appLabel}"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+    </application>
+</manifest>

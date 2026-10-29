@@ -1,0 +1,2013 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart' as material;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_motion_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_sheet_motion.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+import '../../../helpers/test_l10n.dart';
+
+void _noop() {}
+
+const Key _insetBodyKey = ValueKey<String>('inset-body');
+
+double _maxSheetPaddingBottom(WidgetTester tester) {
+  double maxBottom = 0;
+  for (final Element element
+      in find
+          .ancestor(
+            of: find.byKey(_insetBodyKey),
+            matching: find.byType(Padding),
+          )
+          .evaluate()) {
+    final Padding padding = element.widget as Padding;
+    final EdgeInsets resolved = padding.padding.resolve(TextDirection.ltr);
+    maxBottom = math.max(maxBottom, resolved.bottom);
+  }
+  return maxBottom;
+}
+
+double _sheetAvailableHeight(WidgetTester tester) {
+  final Finder sheet = find.byType(FluxerDraggableScrollableSheet);
+  final FluxerDraggableScrollableSheet widget = tester.widget(sheet);
+  final RenderBox box = tester.renderObject(sheet);
+  return math.min(widget.maxHeight, box.constraints.maxHeight);
+}
+
+class _PopCountingObserver extends NavigatorObserver {
+  int pops = 0;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    pops += 1;
+  }
+}
+
+Widget buildTestApp(
+  Widget child, {
+  List<NavigatorObserver> observers = const <NavigatorObserver>[],
+}) {
+  final colorTheme = buildDarkColorTheme();
+  return ProviderScope(
+    child: MaterialApp(
+      locale: kTestLocale,
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      navigatorObservers: observers,
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
+void main() {
+  group('FluxerBottomSheet', () {
+    testWidgets('shows bottom sheet with title', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Test Title',
+                      builder: (context, close) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text('Sheet Content'),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Test Title'), findsOneWidget);
+      expect(find.text('Sheet Content'), findsOneWidget);
+    });
+
+    testWidgets('builder receives working close callback', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Closeable Sheet',
+                      builder: (context, close) {
+                        return ElevatedButton(
+                          onPressed: close,
+                          child: const Text('Close Me'),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Closeable Sheet'), findsOneWidget);
+
+      await tester.tap(find.text('Close Me'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Closeable Sheet'), findsNothing);
+    });
+
+    testWidgets('shows drag handle', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      builder: (context, close) {
+                        return const SizedBox(height: 100);
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FluxerBottomSheetDragHandle), findsOneWidget);
+    });
+
+    testWidgets('opens with the sheet motion over the sheet scrim', (
+      tester,
+    ) async {
+      ModalRoute<dynamic>? route;
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      builder: (context, close) {
+                        route = ModalRoute.of(context);
+                        return const SizedBox(height: 100);
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(route!.transitionDuration, FluxerMotionTheme.sheetDuration);
+      expect(route!.reverseTransitionDuration, kFluxerSheetCloseDuration);
+      final Iterable<ModalBarrier> barriers = tester
+          .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+          .where((ModalBarrier barrier) => barrier.color != null);
+      expect(
+        barriers.map((ModalBarrier barrier) => barrier.color),
+        contains(kFluxerSheetScrimColor),
+      );
+      expect(
+        tester.getSize(
+          find.descendant(
+            of: find.byType(FluxerBottomSheetDragHandle),
+            matching: find.byType(Container),
+          ),
+        ),
+        const Size(36, 4),
+      );
+    });
+
+    testWidgets('drag handle has expanded hit target', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          const Material(child: FluxerBottomSheetDragHandle(onDismiss: _noop)),
+        ),
+      );
+
+      final Size size = tester.getSize(
+        find.byType(FluxerBottomSheetDragHandle),
+      );
+      expect(size.height, greaterThanOrEqualTo(24));
+    });
+
+    testWidgets('scrollable sheet header drag resizes the sheet', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      title: 'Community Name',
+                      initialChildSize: 0.7,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final Finder handle = find.byType(FluxerBottomSheetDragHandle);
+      final double initialTop = tester.getTopLeft(handle).dy;
+
+      await tester.drag(find.text('Community Name'), const Offset(0, 80));
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(handle).dy, greaterThan(initialTop));
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+    });
+
+    testWidgets('scrollable sheet dismisses from header drag', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      title: 'Community Name',
+                      initialChildSize: 0.7,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Community Name'), findsOneWidget);
+
+      await tester.drag(find.text('Community Name'), const Offset(0, 300));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Community Name'), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+    });
+
+    testWidgets('content sheet dismisses from header drag', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Notification settings',
+                      builder: (context, close) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text('Sheet Content'),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Notification settings'), findsOneWidget);
+
+      await tester.drag(
+        find.text('Notification settings'),
+        const Offset(0, 200),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notification settings'), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+    });
+
+    testWidgets('scrollable sheet dismisses from handle without double pop', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      initialChildSize: 0.7,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        const Offset(0, 450),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+    });
+
+    testWidgets('scrollable sheet with a non-scrollable body closes from the '
+        'handle', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      initialChildSize:
+                          FluxerBottomSheet.scrollableSheetHalfSize,
+                      builder: (context, scrollController, close) =>
+                          const Center(child: Text('Nothing here')),
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Nothing here'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        const Offset(0, 200),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nothing here'), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+    });
+
+    testWidgets('scrollable sheet pops exactly once when dragged past its '
+        'min extent', (tester) async {
+      final _PopCountingObserver observer = _PopCountingObserver();
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      initialChildSize: 0.7,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+          observers: <NavigatorObserver>[observer],
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        const Offset(0, 500),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsNothing);
+      expect(observer.pops, 1);
+      expect(find.text('Open'), findsOneWidget);
+    });
+
+    testWidgets(
+      'tapping an action while the sheet is opening pops exactly once',
+      (tester) async {
+        final _PopCountingObserver observer = _PopCountingObserver();
+
+        await tester.pumpWidget(
+          buildTestApp(
+            Builder(
+              builder: (BuildContext context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(() async {
+                      final String? result =
+                          await FluxerBottomSheet.showScrollable<String>(
+                            context,
+                            builder:
+                                (
+                                  BuildContext sheetContext,
+                                  ScrollController scrollController,
+                                  VoidCallback close,
+                                ) {
+                                  return ListView(
+                                    controller: scrollController,
+                                    children: <Widget>[
+                                      ListTile(
+                                        title: const Text('Choose'),
+                                        onTap: () =>
+                                            Navigator.pop(sheetContext, 'go'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                          );
+                      if (result == null || !context.mounted) {
+                        return;
+                      }
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!context.mounted) {
+                          return;
+                        }
+                        unawaited(
+                          FluxerBottomSheet.show(
+                            context,
+                            title: 'Follow up',
+                            builder: (BuildContext _, VoidCallback close) {
+                              return const Text('Follow up body');
+                            },
+                          ),
+                        );
+                      });
+                    }());
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+            observers: <NavigatorObserver>[observer],
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 140));
+        expect(find.text('Choose'), findsOneWidget);
+
+        await tester.tap(find.text('Choose'), warnIfMissed: false);
+        await tester.pump();
+        expect(observer.pops, 0);
+
+        await tester.pump(kFluxerSheetBackdropLead + kFluxerSheetInputLockout);
+        expect(find.text('Choose').hitTestable(), findsOneWidget);
+        await tester.tap(find.text('Choose'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Open'), findsOneWidget);
+        expect(find.text('Follow up'), findsOneWidget);
+        expect(observer.pops, 1);
+      },
+    );
+
+    testWidgets(
+      'tapping an action while the sheet is opening does not pop the host route',
+      (tester) async {
+        final _PopCountingObserver observer = _PopCountingObserver();
+        final GlobalKey<NavigatorState> nestedKey = GlobalKey<NavigatorState>();
+
+        await tester.pumpWidget(
+          buildTestApp(
+            Navigator(
+              key: nestedKey,
+              observers: <NavigatorObserver>[observer],
+              onGenerateRoute: (RouteSettings settings) {
+                return MaterialPageRoute<void>(
+                  settings: settings,
+                  builder: (BuildContext context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        unawaited(() async {
+                          final String? result =
+                              await FluxerBottomSheet.showScrollable<String>(
+                                context,
+                                builder:
+                                    (
+                                      BuildContext sheetContext,
+                                      ScrollController scrollController,
+                                      VoidCallback close,
+                                    ) {
+                                      return ListView(
+                                        controller: scrollController,
+                                        children: <Widget>[
+                                          ListTile(
+                                            title: const Text('Choose'),
+                                            onTap: () => Navigator.pop(
+                                              sheetContext,
+                                              'go',
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                              );
+                          if (result == null || !context.mounted) {
+                            return;
+                          }
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            unawaited(
+                              FluxerBottomSheet.show(
+                                context,
+                                useRootNavigator: true,
+                                title: 'Follow up',
+                                builder: (BuildContext _, VoidCallback close) {
+                                  return const Text('Follow up body');
+                                },
+                              ),
+                            );
+                          });
+                        }());
+                      },
+                      child: const Text('Open'),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 140));
+        expect(find.text('Choose'), findsOneWidget);
+
+        await tester.tap(find.text('Choose'), warnIfMissed: false);
+        await tester.pump();
+        expect(observer.pops, 0);
+
+        await tester.pump(kFluxerSheetBackdropLead + kFluxerSheetInputLockout);
+        expect(find.text('Choose').hitTestable(), findsOneWidget);
+        await tester.tap(find.text('Choose'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Open'), findsOneWidget);
+        expect(find.text('Follow up'), findsOneWidget);
+        expect(observer.pops, 0);
+      },
+    );
+
+    testWidgets('partial handle drag springs the sheet back to the nearest '
+        'snap', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final Finder handle = find.byType(FluxerBottomSheetDragHandle);
+      final double restTop = tester.getTopLeft(handle).dy;
+
+      final TestGesture gesture = await tester.startGesture(
+        tester.getCenter(handle),
+      );
+      await gesture.moveBy(const Offset(0, 30));
+      await tester.pump();
+      expect(tester.getTopLeft(handle).dy, greaterThan(restTop));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+      expect(tester.getTopLeft(handle).dy, closeTo(restTop, 0.5));
+    });
+
+    testWidgets('handle drag between half and full snaps to the closer point', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final double parentHeight = _sheetAvailableHeight(tester);
+      final double fullTop = tester
+          .getTopLeft(find.byType(FluxerBottomSheetDragHandle))
+          .dy;
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        Offset(0, parentHeight * 0.35),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+      final double halfTop = tester
+          .getTopLeft(find.byType(FluxerBottomSheetDragHandle))
+          .dy;
+      expect(
+        halfTop - fullTop,
+        closeTo(
+          parentHeight *
+              (FluxerBottomSheet.scrollableSheetSize -
+                  FluxerBottomSheet.scrollableSheetHalfSize),
+          2,
+        ),
+      );
+    });
+
+    testWidgets('dragging past half keeps following the finger', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final Finder handle = find.byType(FluxerBottomSheetDragHandle);
+      final RenderBox sheetBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      final double parentHeight = _sheetAvailableHeight(tester);
+      final double fullHeight = sheetBox.size.height;
+
+      final TestGesture gesture = await tester.startGesture(
+        tester.getCenter(handle),
+      );
+      await gesture.moveBy(Offset(0, parentHeight * 0.8));
+      await tester.pump();
+
+      final RenderBox draggedBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(
+        draggedBox.size.height,
+        lessThan(parentHeight * FluxerBottomSheet.scrollableSheetHalfSize),
+      );
+      expect(draggedBox.size.height, lessThan(fullHeight * 0.55));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsNothing);
+    });
+
+    testWidgets('upward handle drag from half settles at the full snap', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      initialChildSize:
+                          FluxerBottomSheet.scrollableSheetHalfSize,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 20,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final Finder handle = find.byType(FluxerBottomSheetDragHandle);
+      final double initialTop = tester.getTopLeft(handle).dy;
+
+      final TestGesture gesture = await tester.startGesture(
+        tester.getCenter(handle),
+      );
+      await gesture.moveBy(const Offset(0, -200));
+      await tester.pump();
+      expect(tester.getTopLeft(handle).dy, lessThan(initialTop));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scroll Item 0'), findsOneWidget);
+      expect(tester.getTopLeft(handle).dy, lessThan(initialTop - 20));
+
+      final RenderBox sheetBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(
+        sheetBox.size.height,
+        closeTo(
+          _sheetAvailableHeight(tester) * FluxerBottomSheet.scrollableSheetSize,
+          2,
+        ),
+      );
+    });
+
+    testWidgets('scrolling content at half expands the sheet to full', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      initialChildSize:
+                          FluxerBottomSheet.scrollableSheetHalfSize,
+                      builder: (context, scrollController, close) {
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: 40,
+                          itemBuilder: (context, index) =>
+                              ListTile(title: Text('Scroll Item $index')),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final RenderBox initialBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      final double initialHeight = initialBox.size.height;
+      final double parentHeight = _sheetAvailableHeight(tester);
+
+      await tester.drag(find.text('Scroll Item 0'), const Offset(0, -220));
+      await tester.pumpAndSettle();
+
+      final RenderBox expandedBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(expandedBox.size.height, greaterThan(initialHeight + 20));
+      expect(
+        expandedBox.size.height,
+        closeTo(parentHeight * FluxerBottomSheet.scrollableSheetSize, 2),
+      );
+    });
+
+    testWidgets(
+      'scrollable sheet dismisses from handle when scroll controller is unattached',
+      (tester) async {
+        await tester.pumpWidget(
+          buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.showScrollable(
+                        context,
+                        title: 'Search',
+                        builder: (context, scrollController, close) {
+                          return const Column(
+                            children: [
+                              SizedBox(height: 100, child: Text('Header')),
+                              Expanded(
+                                child: Center(child: Text('Empty state')),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        expect(find.text('Search'), findsOneWidget);
+
+        await tester.drag(
+          find.byType(FluxerBottomSheetDragHandle),
+          const Offset(0, 520),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Search'), findsNothing);
+        expect(find.text('Open'), findsOneWidget);
+      },
+    );
+
+    testWidgets('non-scrollable sheet closes when dragging handle down', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Draggable Sheet',
+                      builder: (context, close) {
+                        return const SizedBox(height: 200);
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Draggable Sheet'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        const Offset(0, 240),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Draggable Sheet'), findsNothing);
+    });
+
+    testWidgets('manageKeyboardInset false skips sheet keyboard padding', (
+      tester,
+    ) async {
+      const double keyboardHeight = 300;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            viewInsets: EdgeInsets.only(bottom: keyboardHeight),
+          ),
+          child: buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.show(
+                        context,
+                        manageKeyboardInset: false,
+                        bottomGap: false,
+                        builder: (context, close) {
+                          return const SizedBox(
+                            key: _insetBodyKey,
+                            height: 100,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(_maxSheetPaddingBottom(tester), 0);
+    });
+
+    testWidgets('manageKeyboardInset true pads sheet for viewInsets', (
+      tester,
+    ) async {
+      const double keyboardHeight = 300;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            viewInsets: EdgeInsets.only(bottom: keyboardHeight),
+          ),
+          child: buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.show(
+                        context,
+                        builder: (context, close) {
+                          return const SizedBox(
+                            key: _insetBodyKey,
+                            height: 100,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(_maxSheetPaddingBottom(tester), keyboardHeight);
+    });
+
+    testWidgets('header supports back and trailing actions', (tester) async {
+      var backPressed = 0;
+      var trailingPressed = 0;
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Material(
+            child: FluxerBottomSheetHeader(
+              title: 'Sheet Title',
+              subtitle: const Text('Sheet subtitle'),
+              onBack: () => backPressed++,
+              trailing: IconButton(
+                onPressed: () => trailingPressed++,
+                icon: const Icon(Icons.add),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Sheet Title'), findsOneWidget);
+      expect(find.text('Sheet subtitle'), findsOneWidget);
+
+      await tester.tap(find.byIcon(PhosphorIconsBold.caretLeft));
+      await tester.pump();
+      expect(backPressed, 1);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pump();
+      expect(trailingPressed, 1);
+    });
+
+    testWidgets('header clips combining marks in the title', (tester) async {
+      const String zalgo =
+          'z\u030d\u030e\u0304\u0305\u033f\u0311\u0316\u0317\u0318\u0319al';
+      await tester.pumpWidget(
+        buildTestApp(
+          const Material(child: FluxerBottomSheetHeader(title: zalgo)),
+        ),
+      );
+
+      final Finder title = find.byWidgetPredicate((Widget widget) {
+        return widget is material.RichText &&
+            widget.text.toPlainText() == zalgo;
+      });
+      expect(tester.widget<material.RichText>(title).maxLines, 2);
+      expect(
+        find.ancestor(of: title, matching: find.byType(ClipRect)),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('section and footer provide reusable sheet structure', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          const Material(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FluxerBottomSheetSection(
+                  title: 'Section title',
+                  child: Text('Section content'),
+                ),
+                FluxerBottomSheetFooter(child: Text('Footer action')),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Section title'), findsOneWidget);
+      expect(find.text('Section content'), findsOneWidget);
+      expect(find.text('Footer action'), findsOneWidget);
+    });
+
+    testWidgets('scrollable footer stays above the view padding inset', (
+      tester,
+    ) async {
+      const double viewInset = 34;
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = FakeViewPadding.zero;
+      tester.view.viewPadding = const FakeViewPadding(bottom: viewInset);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (sheetContext, scrollController, close) {
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: ListView(
+                                controller: scrollController,
+                                children: const [Text('Body')],
+                              ),
+                            ),
+                            const FluxerBottomSheetFooter(
+                              child: Text('Footer action'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final double footerBottom = tester
+          .getBottomLeft(find.text('Footer action'))
+          .dy;
+      expect(footerBottom, lessThanOrEqualTo(800 - viewInset));
+    });
+
+    testWidgets('system back dismisses a default sheet', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Back Dismissible',
+                      builder: (context, close) {
+                        return const Text('Sheet body');
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Back Dismissible'), findsOneWidget);
+
+      final bool handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(find.text('Back Dismissible'), findsNothing);
+    });
+
+    testWidgets('system back invokes onBack without dismissing', (
+      tester,
+    ) async {
+      var backPressed = 0;
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Intercepted Back',
+                      onBack: () => backPressed++,
+                      builder: (context, close) {
+                        return const Text('Sheet body');
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final bool handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(backPressed, 1);
+      expect(find.text('Intercepted Back'), findsOneWidget);
+    });
+
+    testWidgets('system back invokes onBack that pops the sheet', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Pop On Back',
+                      onBack: () => Navigator.of(context).pop(),
+                      builder: (context, close) {
+                        return const Text('Sheet body');
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pop On Back'), findsOneWidget);
+
+      final bool handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(find.text('Pop On Back'), findsNothing);
+    });
+
+    testWidgets('system back is blocked when canDismissNotifier is false', (
+      tester,
+    ) async {
+      final ValueNotifier<bool> canDismissNotifier = ValueNotifier<bool>(true);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Blocked Back',
+                      canDismissNotifier: canDismissNotifier,
+                      builder: (context, close) {
+                        return const Text('Sheet body');
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      canDismissNotifier.value = false;
+      await tester.pumpAndSettle();
+
+      final bool handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(find.text('Blocked Back'), findsOneWidget);
+
+      canDismissNotifier.dispose();
+    });
+
+    testWidgets('canDismissNotifier toggle preserves sheet input state', (
+      tester,
+    ) async {
+      final ValueNotifier<bool> canDismissNotifier = ValueNotifier<bool>(true);
+      final TextEditingController controller = TextEditingController();
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.show(
+                      context,
+                      title: 'Edit username',
+                      canDismissNotifier: canDismissNotifier,
+                      builder: (context, close) {
+                        return TextField(
+                          controller: controller,
+                          autofocus: true,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'new_username');
+      await tester.pump();
+
+      canDismissNotifier.value = false;
+      await tester.pumpAndSettle();
+
+      expect(controller.text, 'new_username');
+      expect(find.text('new_username'), findsOneWidget);
+
+      canDismissNotifier.dispose();
+      controller.dispose();
+    });
+
+    testWidgets('scrollViewPadding merges scope bottom inset', (tester) async {
+      double? mergedBottom;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FluxerBottomSheetScope(
+            bottomScrollPadding: 34,
+            child: Builder(
+              builder: (context) {
+                mergedBottom = FluxerBottomSheet.scrollViewPadding(
+                  context,
+                  padding: const EdgeInsets.only(bottom: 8),
+                ).bottom;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(mergedBottom, 42);
+    });
+
+    testWidgets('menu sheet applies system inset on content', (tester) async {
+      const double systemInset = 34;
+      double? capturedInset;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            viewPadding: EdgeInsets.only(bottom: systemInset),
+          ),
+          child: buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.show(
+                        context,
+                        variant: FluxerBottomSheetVariant.menu,
+                        builder: (sheetContext, close) {
+                          capturedInset =
+                              FluxerBottomSheet.scrollBottomPaddingOf(
+                                sheetContext,
+                              );
+                          return const SizedBox(height: 100);
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open Menu'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Menu'));
+      await tester.pumpAndSettle();
+
+      expect(capturedInset, 0);
+
+      final Finder insetChild = find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is Padding &&
+            widget.padding == const EdgeInsets.only(bottom: systemInset),
+      );
+      expect(insetChild, findsOneWidget);
+    });
+
+    testWidgets('showScrollable uses max of system bottom inset sources', (
+      tester,
+    ) async {
+      const double expectedInset = 48;
+      double? capturedInset;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            viewPadding: EdgeInsets.only(bottom: 20),
+            padding: EdgeInsets.only(bottom: expectedInset),
+            systemGestureInsets: EdgeInsets.only(bottom: 10),
+          ),
+          child: buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.showScrollable(
+                        context,
+                        builder: (sheetContext, scrollController, close) {
+                          capturedInset =
+                              FluxerBottomSheet.scrollBottomPaddingOf(
+                                sheetContext,
+                              );
+                          return const SizedBox(height: 100);
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open Scrollable'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Scrollable'));
+      await tester.pumpAndSettle();
+
+      expect(capturedInset, expectedInset);
+    });
+
+    testWidgets('showScrollable does not compound maxHeight and maxChildSize', (
+      tester,
+    ) async {
+      const Size screenSize = Size(400, 800);
+      const double cap = 0.8;
+
+      Future<double> measureSheetHeight({
+        double? maxHeight,
+        double maxChildSize = cap,
+      }) async {
+        await tester.pumpWidget(
+          MediaQuery(
+            data: const MediaQueryData(size: screenSize),
+            child: buildTestApp(
+              Builder(
+                builder: (context) {
+                  return ElevatedButton(
+                    onPressed: () {
+                      unawaited(
+                        FluxerBottomSheet.showScrollable(
+                          context,
+                          maxHeight: maxHeight,
+                          maxChildSize: maxChildSize,
+                          builder: (context, scrollController, close) {
+                            return ListView(
+                              controller: scrollController,
+                              children: const [SizedBox(height: 2000)],
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    child: const Text('Open'),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+
+        final Finder sheetMaterial = find.descendant(
+          of: find.byType(FluxerDraggableScrollableSheet),
+          matching: find.byType(Material),
+        );
+        final double height = tester.getSize(sheetMaterial).height;
+
+        await tester.tapAt(const Offset(20, 20));
+        await tester.pumpAndSettle();
+
+        return height;
+      }
+
+      final double maxChildOnlyHeight = await measureSheetHeight();
+      final double bothParamsHeight = await measureSheetHeight(maxHeight: cap);
+
+      expect(bothParamsHeight, closeTo(maxChildOnlyHeight, 1));
+    });
+
+    testWidgets('showScrollable opens at 95% of available height by default', (
+      tester,
+    ) async {
+      const Size screenSize = Size(400, 800);
+      const double topInset = 40;
+      tester.view.physicalSize = screenSize;
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: topInset);
+      tester.view.viewPadding = const FakeViewPadding(top: topInset);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (context, scrollController, close) {
+                        return ListView(
+                          controller: scrollController,
+                          children: const [SizedBox(height: 2000)],
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final FluxerDraggableScrollableSheet sheet = tester.widget(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(sheet.initialChildSize, FluxerBottomSheet.scrollableSheetSize);
+      expect(sheet.maxChildSize, FluxerBottomSheet.scrollableSheetSize);
+
+      final RenderBox sheetBox = tester.renderObject(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(
+        sheetBox.size.height,
+        closeTo(
+          _sheetAvailableHeight(tester) * FluxerBottomSheet.scrollableSheetSize,
+          1,
+        ),
+      );
+    });
+
+    testWidgets('system bottom inset is zero while keyboard is open', (
+      tester,
+    ) async {
+      double? capturedInset;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            viewInsets: EdgeInsets.only(bottom: 300),
+            viewPadding: EdgeInsets.only(bottom: 34),
+          ),
+          child: buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    unawaited(
+                      FluxerBottomSheet.show(
+                        context,
+                        variant: FluxerBottomSheetVariant.menu,
+                        builder: (sheetContext, close) {
+                          capturedInset =
+                              FluxerBottomSheet.scrollBottomPaddingOf(
+                                sheetContext,
+                              );
+                          return const SizedBox(height: 100);
+                        },
+                      ),
+                    );
+                  },
+                  child: const Text('Open Keyboard'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Keyboard'));
+      await tester.pumpAndSettle();
+
+      expect(capturedInset, 0);
+    });
+
+    testWidgets('scrollable sheet with short content sizes to the content', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      title: 'Mutual communities',
+                      builder: (context, scrollController, close) {
+                        return ListView(
+                          controller: scrollController,
+                          children: <Widget>[
+                            for (int i = 0; i < 6; i++)
+                              SizedBox(height: 50, child: Text('Community $i')),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final double available = _sheetAvailableHeight(tester);
+      final Rect sheet = tester.getRect(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      final Rect lastRow = tester.getRect(find.text('Community 5'));
+      expect(
+        sheet.height,
+        lessThan(available * FluxerBottomSheet.scrollableSheetSize - 150),
+      );
+      expect(sheet.bottom - lastRow.bottom, lessThan(60));
+      expect(lastRow.bottom, lessThanOrEqualTo(sheet.bottom));
+
+      await tester.drag(
+        find.byType(FluxerBottomSheetDragHandle),
+        const Offset(0, -200),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.byType(FluxerDraggableScrollableSheet)).height,
+        closeTo(sheet.height, 1),
+      );
+    });
+
+    testWidgets('scrollable sheet grows when its content loads', (
+      tester,
+    ) async {
+      final ValueNotifier<int> count = ValueNotifier<int>(1);
+      addTearDown(count.dispose);
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (context, scrollController, close) {
+                        return ValueListenableBuilder<int>(
+                          valueListenable: count,
+                          builder: (context, value, _) => ListView(
+                            controller: scrollController,
+                            children: <Widget>[
+                              for (int i = 0; i < value; i++)
+                                SizedBox(height: 50, child: Text('Row $i')),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      final double shortHeight = tester
+          .getRect(find.byType(FluxerDraggableScrollableSheet))
+          .height;
+
+      count.value = 4;
+      await tester.pumpAndSettle();
+      final Rect sheet = tester.getRect(
+        find.byType(FluxerDraggableScrollableSheet),
+      );
+      expect(sheet.height, closeTo(shortHeight + 150, 1));
+      expect(
+        tester.getRect(find.text('Row 3')).bottom,
+        lessThanOrEqualTo(sheet.bottom),
+      );
+
+      count.value = 60;
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.byType(FluxerDraggableScrollableSheet)).height,
+        closeTo(
+          _sheetAvailableHeight(tester) * FluxerBottomSheet.scrollableSheetSize,
+          2,
+        ),
+      );
+    });
+
+    testWidgets('content sheet leaves a gap above the navigation bar at '
+        'inset 0', (tester) async {
+      await _openInsetSheet(tester);
+
+      expect(_insetBodyBottom(tester), lessThanOrEqualTo(800 - 16));
+    });
+
+    testWidgets('sheet adds no extra gap when it covers a system inset', (
+      tester,
+    ) async {
+      await _openInsetSheet(tester, viewPaddingBottom: 34);
+
+      expect(_insetBodyBottom(tester), 800 - 34);
+    });
+
+    testWidgets('bottomGap false lets content reach the sheet bottom', (
+      tester,
+    ) async {
+      await _openInsetSheet(tester, bottomGap: false);
+
+      expect(_insetBodyBottom(tester), 800);
+    });
+
+    testWidgets('keyboard open keeps the gap above the keyboard', (
+      tester,
+    ) async {
+      await _openInsetSheet(
+        tester,
+        viewPaddingBottom: 34,
+        viewInsetsBottom: 300,
+      );
+
+      expect(_insetBodyBottom(tester), 800 - 300 - 16);
+    });
+
+    testWidgets('scrollable list ends a gap above the bottom at inset 0', (
+      tester,
+    ) async {
+      _setInsetView(tester);
+      ScrollController? controller;
+      await tester.pumpWidget(
+        buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  unawaited(
+                    FluxerBottomSheet.showScrollable(
+                      context,
+                      builder: (sheetContext, scrollController, close) {
+                        controller = scrollController;
+                        return ListView(
+                          controller: scrollController,
+                          padding: FluxerBottomSheet.scrollViewPadding(
+                            sheetContext,
+                          ),
+                          children: <Widget>[
+                            for (int i = 0; i < 39; i++)
+                              SizedBox(height: 50, child: Text('Row $i')),
+                            const SizedBox(key: _insetBodyKey, height: 50),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      controller!.jumpTo(controller!.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      expect(_insetBodyBottom(tester), lessThanOrEqualTo(800 - 16));
+    });
+  });
+}
+
+void _setInsetView(
+  WidgetTester tester, {
+  double viewPaddingBottom = 0,
+  double viewInsetsBottom = 0,
+}) {
+  tester.view.physicalSize = const Size(400, 800);
+  tester.view.devicePixelRatio = 1;
+  tester.view.padding = FakeViewPadding(bottom: viewPaddingBottom);
+  tester.view.viewPadding = FakeViewPadding(bottom: viewPaddingBottom);
+  tester.view.viewInsets = FakeViewPadding(bottom: viewInsetsBottom);
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPadding);
+  addTearDown(tester.view.resetViewPadding);
+  addTearDown(tester.view.resetViewInsets);
+}
+
+Future<void> _openInsetSheet(
+  WidgetTester tester, {
+  double viewPaddingBottom = 0,
+  double viewInsetsBottom = 0,
+  bool bottomGap = true,
+}) async {
+  _setInsetView(
+    tester,
+    viewPaddingBottom: viewPaddingBottom,
+    viewInsetsBottom: viewInsetsBottom,
+  );
+  await tester.pumpWidget(
+    buildTestApp(
+      Builder(
+        builder: (context) {
+          return ElevatedButton(
+            onPressed: () {
+              unawaited(
+                FluxerBottomSheet.show(
+                  context,
+                  bottomGap: bottomGap,
+                  builder: (context, close) {
+                    return const SizedBox(key: _insetBodyKey, height: 100);
+                  },
+                ),
+              );
+            },
+            child: const Text('Open'),
+          );
+        },
+      ),
+    ),
+  );
+  await tester.tap(find.text('Open'));
+  await tester.pumpAndSettle();
+}
+
+double _insetBodyBottom(WidgetTester tester) {
+  return tester.getRect(find.byKey(_insetBodyKey)).bottom;
+}

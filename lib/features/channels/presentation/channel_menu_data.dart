@@ -1,0 +1,494 @@
+import 'package:fluxer_app/core/permissions/permission.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/utils/channel_invite_capability.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/mature_content/utils/content_warning_utils.dart';
+import 'package:fluxer_app/features/ui/action_menu/fluxer_action_menu.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+enum ChannelMenuAction {
+  openChat,
+  startP2pCall,
+  markAsRead,
+  toggleFavorite,
+  invitePeople,
+  openLink,
+  copyLink,
+  copyRedirectLink,
+  mute,
+  notificationSettings,
+  editChannel,
+  moveToCategory,
+  duplicateChannel,
+  debugChannel,
+  resetMatureContentAgree,
+  copyChannelId,
+  deleteChannel,
+  deleteMyMessages,
+  follow,
+}
+
+class ChannelMenuEntry {
+  const ChannelMenuEntry({
+    required this.label,
+    required this.action,
+    this.icon,
+    this.isDanger = false,
+    this.hint,
+    this.enabled = true,
+  });
+
+  final String label;
+  final ChannelMenuAction action;
+  final PhosphorIconData? icon;
+  final bool isDanger;
+  final String? hint;
+  final bool enabled;
+}
+
+typedef ChannelMenuGroup = List<ChannelMenuEntry>;
+
+class ChannelMenuState {
+  const ChannelMenuState({
+    required this.isTextChannel,
+    required this.isVoiceChannel,
+    required this.isLinkChannel,
+    required this.isThreadOnlyChannel,
+    required this.showOpenChat,
+    required this.showStartP2pCall,
+    required this.showMarkAsRead,
+    required this.showFavorites,
+    required this.isFavorite,
+    required this.canInvite,
+    required this.useVanityInvite,
+    required this.canOpenLink,
+    required this.canCopyRedirectLink,
+    required this.showMute,
+    required this.isMuted,
+    required this.showNotificationSettings,
+    required this.showEditChannel,
+    required this.showMoveToCategory,
+    required this.showDuplicateChannel,
+    required this.showDebugChannel,
+    required this.showResetMatureContent,
+    required this.showDeleteChannel,
+    required this.showDeleteMyMessages,
+    required this.showFollow,
+    this.mutedHint,
+    this.vanityUrlCode,
+  });
+
+  final bool isTextChannel;
+  final bool isVoiceChannel;
+  final bool isLinkChannel;
+  final bool isThreadOnlyChannel;
+  final bool showOpenChat;
+  final bool showStartP2pCall;
+  final bool showMarkAsRead;
+  final bool showFavorites;
+  final bool isFavorite;
+  final bool canInvite;
+  final bool useVanityInvite;
+  final bool canOpenLink;
+  final bool canCopyRedirectLink;
+  final bool showMute;
+  final bool isMuted;
+  final bool showNotificationSettings;
+  final bool showEditChannel;
+  final bool showMoveToCategory;
+  final bool showDuplicateChannel;
+  final bool showDebugChannel;
+  final bool showResetMatureContent;
+  final bool showDeleteChannel;
+  final bool showDeleteMyMessages;
+  final bool showFollow;
+  final String? mutedHint;
+  final String? vanityUrlCode;
+}
+
+ChannelMenuState resolveChannelMenuState({
+  required Channel channel,
+  required Guild? guild,
+  required Channel? parentCategory,
+  required int? permissionBits,
+  required bool hasUnread,
+  required bool showFavorites,
+  required bool isFavorite,
+  required bool isMuted,
+  required bool developerMode,
+  required bool nsfwAllowed,
+  required bool hasAgreedToMatureContent,
+  required bool voiceChannelJoinRequiresDoubleClick,
+  String? vanityUrlCode,
+  String? mutedHint,
+  bool canFollow = false,
+  bool canOfferP2pCall = false,
+}) {
+  final bool isTextChannel = isAnnouncementConvertibleChannel(channel.type);
+  final bool isVoiceChannel = channel.type == ChannelType.guildVoice;
+  final bool isLinkChannel = channel.type == ChannelType.guildLink;
+  final bool isThreadOnlyChannel = channel.isThreadOnly;
+  final bool isGuildChannel =
+      isTextChannel || isVoiceChannel || isLinkChannel || isThreadOnlyChannel;
+  final int bits = permissionBits ?? 0;
+  final bool canManageChannels = hasPermission(bits, Permission.manageChannels);
+  final bool canUpdateRtcRegion =
+      isVoiceChannel && hasPermission(bits, Permission.updateRtcRegion);
+  final bool canEditChannel = canManageChannels || canUpdateRtcRegion;
+  final bool channelIsNsfw =
+      isGuildChannel &&
+      getEffectiveChannelMatureContent(
+        channel: channel,
+        guild: guild,
+        parentCategory: parentCategory,
+      );
+  final bool nsfwBlockedForMinor = channelIsNsfw && !nsfwAllowed;
+  final ChannelInviteCapability inviteCapability =
+      resolveChannelInviteCapability(
+        permissionBits: permissionBits,
+        channel: channel,
+        guildId: channel.guildId,
+        vanityUrlCode: vanityUrlCode,
+      );
+  final bool showOpenChat =
+      isVoiceChannel && !voiceChannelJoinRequiresDoubleClick;
+  final bool canOpenLink = isLinkChannel && (channel.url?.isNotEmpty ?? false);
+  final bool showMute = isTextChannel || isVoiceChannel || isThreadOnlyChannel;
+  return ChannelMenuState(
+    isTextChannel: isTextChannel,
+    isVoiceChannel: isVoiceChannel,
+    isLinkChannel: isLinkChannel,
+    isThreadOnlyChannel: isThreadOnlyChannel,
+    showOpenChat: showOpenChat,
+    showStartP2pCall:
+        isVoiceChannel &&
+        canOfferP2pCall &&
+        !channel.rtcP2p &&
+        hasPermission(bits, Permission.connect),
+    showMarkAsRead: isGuildChannel && hasUnread,
+    showFavorites: showFavorites && !isThreadOnlyChannel,
+    isFavorite: isFavorite,
+    canInvite: inviteCapability.canInvite && !isThreadOnlyChannel,
+    useVanityInvite: inviteCapability.useVanityUrl,
+    vanityUrlCode: inviteCapability.vanityUrlCode,
+    canOpenLink: canOpenLink,
+    canCopyRedirectLink: canOpenLink,
+    showMute: showMute,
+    isMuted: isMuted,
+    mutedHint: mutedHint,
+    showNotificationSettings: isGuildChannel,
+    showEditChannel: canEditChannel && !nsfwBlockedForMinor,
+    showMoveToCategory: canManageChannels,
+    showDuplicateChannel: canManageChannels && !nsfwBlockedForMinor,
+    showDebugChannel: developerMode,
+    showResetMatureContent: developerMode && hasAgreedToMatureContent,
+    showDeleteChannel: canManageChannels,
+    showDeleteMyMessages: isTextChannel || isVoiceChannel,
+    showFollow: canFollow && isGuildAnnouncementChannelType(channel.type),
+  );
+}
+
+List<ChannelMenuGroup> buildChannelMenuGroups({
+  required FluxerLocalizations l10n,
+  required ChannelMenuState state,
+}) {
+  if (!state.isTextChannel &&
+      !state.isVoiceChannel &&
+      !state.isLinkChannel &&
+      !state.isThreadOnlyChannel) {
+    return const <ChannelMenuGroup>[];
+  }
+  final List<ChannelMenuGroup> groups = <ChannelMenuGroup>[];
+  final List<ChannelMenuEntry> voiceItems = <ChannelMenuEntry>[
+    if (state.showOpenChat)
+      ChannelMenuEntry(
+        label: l10n.channelMenuOpenChat,
+        icon: PhosphorIconsFill.chatCircle,
+        action: ChannelMenuAction.openChat,
+      ),
+    if (state.showStartP2pCall)
+      ChannelMenuEntry(
+        label: l10n.channelMenuJoinP2p,
+        icon: PhosphorIconsFill.shareNetwork,
+        action: ChannelMenuAction.startP2pCall,
+      ),
+  ];
+  if (voiceItems.isNotEmpty) {
+    groups.add(voiceItems);
+  }
+  final List<ChannelMenuEntry> metaItems = <ChannelMenuEntry>[];
+  if (state.showMarkAsRead) {
+    metaItems.add(
+      ChannelMenuEntry(
+        label: l10n.dmMarkAsRead,
+        icon: PhosphorIconsFill.envelopeOpen,
+        action: ChannelMenuAction.markAsRead,
+      ),
+    );
+  }
+  if (state.showFavorites) {
+    metaItems.add(
+      ChannelMenuEntry(
+        label: state.isFavorite
+            ? l10n.favoritesRemoveFromFavorites
+            : l10n.favoritesAddToFavorites,
+        icon: state.isFavorite
+            ? PhosphorIconsFill.star
+            : PhosphorIconsBold.star,
+        action: ChannelMenuAction.toggleFavorite,
+      ),
+    );
+  }
+  if (metaItems.isNotEmpty) {
+    groups.add(metaItems);
+  }
+  final List<ChannelMenuEntry> inviteItems = <ChannelMenuEntry>[];
+  if (state.canInvite) {
+    inviteItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelDetailsInvitePeople,
+        icon: PhosphorIconsFill.userPlus,
+        action: ChannelMenuAction.invitePeople,
+      ),
+    );
+  }
+  if (state.showFollow) {
+    inviteItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelMenuFollow,
+        icon: PhosphorIconsFill.megaphone,
+        action: ChannelMenuAction.follow,
+      ),
+    );
+  }
+  if (state.canOpenLink) {
+    inviteItems.add(
+      ChannelMenuEntry(
+        label: l10n.matureContentOpenLinkButton,
+        icon: PhosphorIconsFill.arrowSquareOut,
+        action: ChannelMenuAction.openLink,
+      ),
+    );
+  }
+  if (state.canCopyRedirectLink) {
+    inviteItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelMenuCopyRedirectLink,
+        icon: PhosphorIconsFill.copy,
+        action: ChannelMenuAction.copyRedirectLink,
+      ),
+    );
+  }
+  inviteItems.add(
+    ChannelMenuEntry(
+      label: state.isLinkChannel
+          ? l10n.channelMenuCopyChannelLink
+          : l10n.channelDetailsCopyLink,
+      icon: PhosphorIconsBold.link,
+      action: ChannelMenuAction.copyLink,
+    ),
+  );
+  groups.add(inviteItems);
+  final List<ChannelMenuEntry> notificationItems = <ChannelMenuEntry>[];
+  if (state.showMute) {
+    notificationItems.add(
+      ChannelMenuEntry(
+        label: state.isMuted
+            ? l10n.notificationUnmuteChannel
+            : l10n.notificationMuteChannel,
+        icon: state.isMuted
+            ? PhosphorIconsFill.bell
+            : PhosphorIconsFill.bellSlash,
+        hint: state.mutedHint,
+        action: ChannelMenuAction.mute,
+      ),
+    );
+  }
+  if (state.showNotificationSettings) {
+    notificationItems.add(
+      ChannelMenuEntry(
+        label: l10n.notificationSettings,
+        icon: PhosphorIconsFill.bell,
+        action: ChannelMenuAction.notificationSettings,
+      ),
+    );
+  }
+  groups.add(notificationItems);
+  if (state.showEditChannel ||
+      state.showMoveToCategory ||
+      state.showDuplicateChannel) {
+    final List<ChannelMenuEntry> manageItems = <ChannelMenuEntry>[];
+    if (state.showEditChannel) {
+      manageItems.add(
+        ChannelMenuEntry(
+          label: l10n.channelDetailsEditChannel,
+          icon: PhosphorIconsFill.pencilSimple,
+          action: ChannelMenuAction.editChannel,
+        ),
+      );
+    }
+    if (state.showMoveToCategory) {
+      manageItems.add(
+        ChannelMenuEntry(
+          label: l10n.channelMenuMoveToCategory,
+          icon: PhosphorIconsFill.folderSimple,
+          action: ChannelMenuAction.moveToCategory,
+        ),
+      );
+    }
+    if (state.showDuplicateChannel) {
+      manageItems.add(
+        ChannelMenuEntry(
+          label: l10n.channelMenuDuplicateChannel,
+          icon: PhosphorIconsFill.copy,
+          action: ChannelMenuAction.duplicateChannel,
+        ),
+      );
+    }
+    if (manageItems.isNotEmpty) {
+      groups.add(manageItems);
+    }
+  }
+  final List<ChannelMenuEntry> debugItems = <ChannelMenuEntry>[];
+  if (state.showDebugChannel) {
+    debugItems.add(
+      ChannelMenuEntry(
+        label: l10n.dmDebugChannel,
+        icon: PhosphorIconsFill.bugBeetle,
+        action: ChannelMenuAction.debugChannel,
+      ),
+    );
+  }
+  if (state.showResetMatureContent) {
+    debugItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelMenuResetMatureContentAgreeState,
+        icon: PhosphorIconsFill.bugBeetle,
+        action: ChannelMenuAction.resetMatureContentAgree,
+      ),
+    );
+  }
+  debugItems.add(
+    ChannelMenuEntry(
+      label: l10n.dmCopyChannelId,
+      icon: PhosphorIconsFill.copy,
+      action: ChannelMenuAction.copyChannelId,
+    ),
+  );
+  groups.add(debugItems);
+  final List<ChannelMenuEntry> destructiveItems = <ChannelMenuEntry>[];
+  if (state.showDeleteChannel) {
+    destructiveItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelDetailsDeleteChannel,
+        icon: PhosphorIconsFill.trash,
+        isDanger: true,
+        action: ChannelMenuAction.deleteChannel,
+      ),
+    );
+  }
+  if (state.showDeleteMyMessages) {
+    destructiveItems.add(
+      ChannelMenuEntry(
+        label: l10n.channelMenuDeleteMyMessagesConfirm,
+        icon: PhosphorIconsFill.trash,
+        isDanger: true,
+        action: ChannelMenuAction.deleteMyMessages,
+      ),
+    );
+  }
+  if (destructiveItems.isNotEmpty) {
+    groups.add(destructiveItems);
+  }
+  return groups;
+}
+
+Widget channelMenuGroupsToBottomSheetContent({
+  required BuildContext context,
+  required ScrollController scrollController,
+  required List<ChannelMenuGroup> groups,
+  required ChannelMenuState menuState,
+  required void Function(ChannelMenuAction action) onAction,
+}) {
+  final layout = context.layout;
+  final List<Widget> menuGroups = <Widget>[
+    for (final ChannelMenuGroup group in groups)
+      FluxerMenuGroup(
+        children: [
+          for (final ChannelMenuEntry entry in group)
+            _channelMenuBottomSheetItem(
+              context: context,
+              entry: entry,
+              menuState: menuState,
+              onAction: onAction,
+            ),
+        ],
+      ),
+  ];
+  return ListView(
+    controller: scrollController,
+    padding: FluxerBottomSheet.scrollViewPadding(
+      context,
+      padding: EdgeInsets.symmetric(horizontal: layout.s4),
+    ),
+    children: [FluxerBottomSheetGroupColumn(children: menuGroups)],
+  );
+}
+
+FluxerBottomSheetMenuItem _channelMenuBottomSheetItem({
+  required BuildContext context,
+  required ChannelMenuEntry entry,
+  required ChannelMenuState menuState,
+  required void Function(ChannelMenuAction action) onAction,
+}) {
+  final Color? iconColor =
+      entry.action == ChannelMenuAction.toggleFavorite && menuState.isFavorite
+      ? context.colors.statusIdle
+      : null;
+  return FluxerBottomSheetMenuItem(
+    label: entry.label,
+    hint: entry.hint,
+    icon: entry.icon,
+    iconColor: iconColor,
+    enabled: entry.enabled,
+    isDanger: entry.isDanger,
+    onTap: () => onAction(entry.action),
+  );
+}
+
+List<Widget> channelMenuGroupsToWidgets({
+  required BuildContext context,
+  required List<ChannelMenuGroup> groups,
+  required ChannelMenuState menuState,
+  required void Function(ChannelMenuAction action) onAction,
+}) {
+  final List<Widget> widgets = <Widget>[];
+  for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    if (groupIndex > 0) {
+      widgets.add(const FluxerMenuDivider());
+    }
+    for (final ChannelMenuEntry entry in groups[groupIndex]) {
+      final Color? iconColor =
+          entry.action == ChannelMenuAction.toggleFavorite &&
+              menuState.isFavorite
+          ? context.colors.statusIdle
+          : null;
+      widgets.add(
+        FluxerMenuItem(
+          label: entry.label,
+          icon: entry.icon,
+          iconColor: iconColor,
+          hint: entry.hint,
+          enabled: entry.enabled,
+          isDanger: entry.isDanger,
+          onPressed: () => onAction(entry.action),
+        ),
+      );
+    }
+  }
+  return widgets;
+}

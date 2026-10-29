@@ -1,0 +1,126 @@
+import 'package:fluxer_app/material_ui.dart';
+
+class FluxerLayoutTheme extends ThemeExtension<FluxerLayoutTheme> {
+  const FluxerLayoutTheme({
+    required this.s1,
+    required this.s1_5,
+    required this.s2,
+    required this.s3,
+    required this.s4,
+    required this.s5,
+    required this.s6,
+    required this.s8,
+    required this.s10,
+    required this.s12,
+    required this.s16,
+    required this.s20,
+    required this.radiusSm,
+    required this.radiusMd,
+    required this.radiusLg,
+    required this.radiusXl,
+    required this.radiusXxl,
+    required this.radiusFull,
+    required this.sidebarWidth,
+    required this.headerHeight,
+    required this.guildListWidth,
+    required this.mobileBottomNavHeight,
+    required this.userAreaHeight,
+    required this.switchTrackWidth,
+    required this.switchTrackHeight,
+    required this.switchThumbSize,
+    required this.switchThumbInset,
+    required this.switchIconSize,
+    required this.settingsSwitchRowMinHeight,
+    required this.settingsSwitchGroupedRowMinHeight,
+    required this.touchTargetMin,
+    required this.pageGutter,
+    required this.groupRowInset,
+  });
+
+  factory FluxerLayoutTheme.scaled() {
+    double s(double base) => base;
+    BorderRadius r(double base) => BorderRadius.all(Radius.circular(base));
+
+    return FluxerLayoutTheme(
+      s1: s(4),
+      s1_5: s(6),
+      s2: s(8),
+      s3: s(12),
+      s4: s(16),
+      s5: s(20),
+      s6: s(24),
+      s8: s(32),
+      s10: s(40),
+      s12: s(48),
+      s16: s(64),
+      s20: s(80),
+      radiusSm: r(4),
+      radiusMd: r(6),
+      radiusLg: r(8),
+      radiusXl: r(12),
+      radiusXxl: r(16),
+      radiusFull: r(9999),
+      sidebarWidth: s(270),
+      headerHeight: s(56),
+      guildListWidth: s(72),
+      mobileBottomNavHeight: s(60),
+      userAreaHeight: s(72),
+      switchTrackWidth: s(44),
+      switchTrackHeight: s(24),
+      switchThumbSize: s(20),
+      switchThumbInset: s(2),
+      switchIconSize: s(12),
+      settingsSwitchRowMinHeight: s(44),
+      settingsSwitchGroupedRowMinHeight: s(68),
+      touchTargetMin: s(44),
+      pageGutter: s(16),
+      groupRowInset: s(16),
+    );
+  }
+
+  final double s1;
+  final double s1_5;
+  final double s2;
+  final double s3;
+  final double s4;
+  final double s5;
+  final double s6;
+  final double s8;
+  final double s10;
+  final double s12;
+  final double s16;
+  final double s20;
+
+  final BorderRadius radiusSm;
+  final BorderRadius radiusMd;
+  final BorderRadius radiusLg;
+  final BorderRadius radiusXl;
+  final BorderRadius radiusXxl;
+  final BorderRadius radiusFull;
+
+  final double sidebarWidth;
+  final double headerHeight;
+  final double guildListWidth;
+  final double mobileBottomNavHeight;
+  final double userAreaHeight;
+
+  final double switchTrackWidth;
+  final double switchTrackHeight;
+  final double switchThumbSize;
+  final double switchThumbInset;
+  final double switchIconSize;
+
+  final double settingsSwitchRowMinHeight;
+  final double settingsSwitchGroupedRowMinHeight;
+
+  final double touchTargetMin;
+
+  final double pageGutter;
+  final double groupRowInset;
+
+  @override
+  FluxerLayoutTheme copyWith() => this;
+
+  @override
+  FluxerLayoutTheme lerp(FluxerLayoutTheme? other, double t) => this;
+}

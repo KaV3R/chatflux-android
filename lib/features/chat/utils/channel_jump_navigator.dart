@@ -1,0 +1,407 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_ready_provider.dart';
+import 'package:fluxer_app/core/push/notification/pending_path_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/router/navigate_to_content.dart';
+import 'package:fluxer_app/core/router/route_names.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_app/core/talker.dart';
+import 'package:fluxer_app/core/utils/channel_jump_link.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/utils/navigation/link_channel_navigator.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/channel_access_denied_sheet.dart';
+import 'package:fluxer_app/features/chat/providers/core/chat_view_model.dart';
+import 'package:fluxer_app/features/mature_content/utils/channel_gate_navigator.dart';
+import 'package:fluxer_app/features/shell/utils/shell_popup_navigation.dart';
+import 'package:fluxer_app/features/threads/data/threads_repository.dart';
+
+String buildChannelJumpRoutePath({
+  required String channelId,
+  String? guildId,
+  String? messageId,
+}) {
+  final bool isDm = guildId == null || guildId.isEmpty;
+  if (isDm) {
+    if (messageId != null && messageId.isNotEmpty) {
+      return RoutePaths.dmChannelMessage(channelId, messageId);
+    }
+    return RoutePaths.dmChannel(channelId);
+  }
+  if (messageId != null && messageId.isNotEmpty) {
+    return RoutePaths.guildChannelMessage(guildId, channelId, messageId);
+  }
+  return RoutePaths.guildChannel(guildId, channelId);
+}
+
+ChannelJumpLink? channelJumpLinkFromPathSegments(List<String> segments) {
+  if (segments.isEmpty || segments.first != 'channels') {
+    return null;
+  }
+  if (segments.length >= 4) {
+    return MessageJumpLink(
+      scope: segments[1],
+      channelId: segments[2],
+      messageId: segments[3],
+    );
+  }
+  if (segments.length >= 3) {
+    return ChannelJumpLink(scope: segments[1], channelId: segments[2]);
+  }
+  return null;
+}
+
+sealed class ChannelJumpResolution {
+  const ChannelJumpResolution();
+}
+
+final class ChannelJumpAccessDenied extends ChannelJumpResolution {
+  const ChannelJumpAccessDenied();
+}
+
+final class ChannelJumpPending extends ChannelJumpResolution {
+  const ChannelJumpPending({required this.path});
+
+  final String path;
+}
+
+final class ChannelJumpInPlace extends ChannelJumpResolution {
+  const ChannelJumpInPlace({required this.channelId, required this.messageId});
+
+  final String channelId;
+  final String messageId;
+}
+
+final class ChannelJumpOpenLink extends ChannelJumpResolution {
+  const ChannelJumpOpenLink({required this.channelId});
+
+  final String channelId;
+}
+
+final class ChannelJumpRedirectGuild extends ChannelJumpResolution {
+  const ChannelJumpRedirectGuild({required this.guildId});
+
+  final String guildId;
+}
+
+final class ChannelJumpNavigate extends ChannelJumpResolution {
+  const ChannelJumpNavigate({
+    required this.path,
+    required this.channelId,
+    this.messageId,
+  });
+
+  final String path;
+  final String channelId;
+  final String? messageId;
+}
+
+Future<ChannelJumpResolution> resolveChannelJumpLink({
+  required ProviderContainer container,
+  required ChannelJumpLink link,
+}) async {
+  final String? messageId = link is MessageJumpLink ? link.messageId : null;
+  talker.debug(
+    '[ChannelJump] resolve scope=${link.scope} channel=${link.channelId} message=$messageId',
+  );
+  if (!link.isDm) {
+    final db.FluxerDatabase database = container.read(fluxerDatabaseProvider);
+    db.Channel? channel = await database.channelDao.getChannelById(
+      link.channelId,
+    );
+    if (channel == null) {
+      final bool isGatewayReady = container.read(gatewayReadyProvider);
+      talker.debug(
+        '[ChannelJump] channel not found; gatewayReady=$isGatewayReady',
+      );
+      if (!isGatewayReady) {
+        final String path = buildChannelJumpRoutePath(
+          channelId: link.channelId,
+          guildId: link.scope,
+          messageId: messageId,
+        );
+        talker.debug('[ChannelJump] pending path=$path');
+        return ChannelJumpPending(path: path);
+      }
+      channel = await container
+          .read(threadsRepositoryProvider)
+          .ensureThreadInDatabase(
+            guildId: link.scope,
+            threadId: link.channelId,
+          );
+      if (channel == null) {
+        return const ChannelJumpAccessDenied();
+      }
+    }
+    if (ChannelType.fromWire(channel.type) == ChannelType.guildLink) {
+      return ChannelJumpOpenLink(channelId: link.channelId);
+    }
+    if (ChannelType.fromWire(channel.type) == ChannelType.guildCategory) {
+      return ChannelJumpRedirectGuild(guildId: channel.guildId);
+    }
+    final String path = buildChannelJumpRoutePath(
+      channelId: link.channelId,
+      guildId: channel.guildId,
+      messageId: messageId,
+    );
+    return _resolveNavigation(
+      container: container,
+      channelId: link.channelId,
+      messageId: messageId,
+      path: path,
+    );
+  }
+  final String path = buildChannelJumpRoutePath(
+    channelId: link.channelId,
+    messageId: messageId,
+  );
+  return _resolveNavigation(
+    container: container,
+    channelId: link.channelId,
+    messageId: messageId,
+    path: path,
+  );
+}
+
+ChannelJumpResolution _resolveNavigation({
+  required ProviderContainer container,
+  required String channelId,
+  required String? messageId,
+  required String path,
+}) {
+  final String? activeChannelId = container.read(activeChannelIdProvider);
+  final bool isInPlace =
+      messageId != null && messageId.isNotEmpty && activeChannelId == channelId;
+  talker.debug(
+    '[ChannelJump] activeChannel=$activeChannelId channel=$channelId inPlace=$isInPlace',
+  );
+  if (isInPlace) {
+    return ChannelJumpInPlace(channelId: channelId, messageId: messageId);
+  }
+  talker.debug('[ChannelJump] navigate path=$path');
+  return ChannelJumpNavigate(
+    path: path,
+    channelId: channelId,
+    messageId: messageId,
+  );
+}
+
+Future<bool> _urlTargetsLinkChannel(
+  ProviderContainer container,
+  String? url,
+) async {
+  final ChannelJumpLink? link = url == null
+      ? null
+      : parseChannelJumpLink(url.trim());
+  if (link == null || link.isDm) {
+    return false;
+  }
+  final db.Channel? target = await container
+      .read(fluxerDatabaseProvider)
+      .channelDao
+      .getChannelById(link.channelId);
+  return target != null &&
+      ChannelType.fromWire(target.type) == ChannelType.guildLink;
+}
+
+Future<void> _applyChannelJumpResolution({
+  required ProviderContainer container,
+  required ChannelJumpResolution resolution,
+  required bool dismissCoveringPages,
+  BuildContext? context,
+}) async {
+  switch (resolution) {
+    case ChannelJumpAccessDenied():
+      final BuildContext? sheetContext = (context != null && context.mounted)
+          ? context
+          : _rootContext();
+      if (sheetContext != null) {
+        await showChannelAccessDeniedSheet(sheetContext);
+      } else {
+        talker.debug(
+          '[ChannelJump] access denied with no context to report it',
+        );
+      }
+    case ChannelJumpPending(:final path):
+      container.read(pendingPushNotificationPathProvider.notifier).store(path);
+    case ChannelJumpInPlace(:final channelId, :final messageId):
+      container
+          .read(channelJumpTargetLedgerProvider.notifier)
+          .request(channelId: channelId, messageId: messageId);
+      if (dismissCoveringPages) {
+        popShellCoveringPages();
+      }
+      await container
+          .read(chatViewModelProvider.notifier)
+          .goToRepliedMessage(channelId: channelId, messageId: messageId);
+    case ChannelJumpOpenLink(:final channelId):
+      final db.Channel? channel = await container
+          .read(fluxerDatabaseProvider)
+          .channelDao
+          .getChannelById(channelId);
+      if (channel == null) {
+        return;
+      }
+      final bool targetsLinkChannel = await _urlTargetsLinkChannel(
+        container,
+        channel.url,
+      );
+      final BuildContext? linkContext = (context != null && context.mounted)
+          ? context
+          : _rootContext();
+      if (linkContext == null || !linkContext.mounted) {
+        return;
+      }
+      await tryOpenLinkChannel(
+        context: linkContext,
+        container: container,
+        channel: Channel.fromRow(channel),
+        openChannelLinksInApp: !targetsLinkChannel,
+      );
+    case ChannelJumpRedirectGuild(:final guildId):
+      if (dismissCoveringPages) {
+        popShellCoveringPages();
+      }
+      _navigateToPathViaContainer(container, RoutePaths.guild(guildId));
+    case ChannelJumpNavigate(:final path, :final channelId, :final messageId):
+      final db.Channel? channel = await container
+          .read(fluxerDatabaseProvider)
+          .channelDao
+          .getChannelById(channelId);
+      final BuildContext? gateContext = (context != null && context.mounted)
+          ? context
+          : _rootContext();
+      final bool canProceed = await promptForChannelGateIfNeeded(
+        context: (gateContext != null && gateContext.mounted)
+            ? gateContext
+            : null,
+        container: container,
+        channelId: channelId,
+        guildId: channel?.guildId,
+        channelType: channel == null
+            ? null
+            : ChannelType.fromWire(channel.type),
+      );
+      if (!canProceed) {
+        return;
+      }
+      if (messageId != null && messageId.isNotEmpty) {
+        container
+            .read(channelJumpTargetLedgerProvider.notifier)
+            .request(channelId: channelId, messageId: messageId);
+      }
+      if (dismissCoveringPages) {
+        popShellCoveringPages();
+      }
+      _navigateToPathViaContainer(container, path);
+  }
+}
+
+BuildContext? _rootContext() {
+  final BuildContext? root = rootNavigatorKey.currentContext;
+  return (root != null && root.mounted) ? root : null;
+}
+
+void _navigateToPathViaContainer(ProviderContainer container, String path) {
+  navigateToContentViaContainer(container, path);
+}
+
+Future<void> navigateToChannelJumpLink({
+  required ProviderContainer container,
+  required ChannelJumpLink link,
+  BuildContext? context,
+  bool dismissCoveringPages = false,
+}) {
+  return _navigateToChannelJumpLink(
+    container: container,
+    context: context,
+    link: link,
+    dismissCoveringPages: dismissCoveringPages,
+  );
+}
+
+Future<void> navigateToChannelJumpLinkFromContext({
+  required BuildContext context,
+  required ChannelJumpLink link,
+  bool dismissCoveringPages = false,
+}) {
+  if (!context.mounted) {
+    return Future<void>.value();
+  }
+  return _navigateToChannelJumpLink(
+    container: ProviderScope.containerOf(context),
+    context: context,
+    link: link,
+    dismissCoveringPages: dismissCoveringPages,
+  );
+}
+
+Future<void> _navigateToChannelJumpLink({
+  required ProviderContainer container,
+  required ChannelJumpLink link,
+  required bool dismissCoveringPages,
+  BuildContext? context,
+}) async {
+  talker.debug('[ChannelJump] link=$link');
+  final ChannelJumpResolution resolution = await resolveChannelJumpLink(
+    container: container,
+    link: link,
+  );
+  await _applyChannelJumpResolution(
+    container: container,
+    resolution: resolution,
+    dismissCoveringPages: dismissCoveringPages,
+    context: (context != null && context.mounted) ? context : null,
+  );
+}
+
+Future<void> navigateToChannelMessage({
+  required Ref ref,
+  required String channelId,
+  required String messageId,
+  BuildContext? context,
+}) async {
+  final db.FluxerDatabase database = ref.read(fluxerDatabaseProvider);
+  final db.Channel? guildChannel = await database.channelDao.getChannelById(
+    channelId,
+  );
+  if (context != null && !context.mounted) {
+    return;
+  }
+  if (guildChannel == null) {
+    talker.warning(
+      '[ChannelJump] navigateToChannelMessage channel=$channelId not found; '
+      'aborting jump',
+    );
+    return;
+  }
+  final ChannelJumpLink link = MessageJumpLink(
+    scope: guildChannel.guildId,
+    channelId: channelId,
+    messageId: messageId,
+  );
+  await navigateToChannelJumpLinkVia(ref: ref, link: link, context: context);
+}
+
+Future<void> navigateToChannelJumpLinkVia({
+  required Ref ref,
+  required ChannelJumpLink link,
+  BuildContext? context,
+}) async {
+  talker.debug('[ChannelJump] via link=$link');
+  final ProviderContainer container = ref.container;
+  final ChannelJumpResolution resolution = await resolveChannelJumpLink(
+    container: container,
+    link: link,
+  );
+  await _applyChannelJumpResolution(
+    container: container,
+    resolution: resolution,
+    dismissCoveringPages: false,
+    context: (context != null && context.mounted) ? context : null,
+  );
+}

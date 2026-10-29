@@ -1,0 +1,3990 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:fluxer_app/core/api/api_exception.dart';
+import 'package:fluxer_app/core/api/fluxer_client_provider.dart';
+import 'package:fluxer_app/core/api/retry_interceptor.dart';
+import 'package:fluxer_app/core/audio/enums/fluxer_sfx_clip.dart';
+import 'package:fluxer_app/core/gateway/providers/gateway_event_providers.dart';
+import 'package:fluxer_app/core/permissions/channel_permission_cache_provider.dart';
+import 'package:fluxer_app/core/permissions/permission.dart';
+import 'package:fluxer_app/core/platform/fluxer_platform.dart';
+import 'package:fluxer_app/core/providers/app/app_ui_lifecycle_provider.dart';
+import 'package:fluxer_app/core/providers/app/fluxer_sfx_provider.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_connection_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/system_permissions/system_permission_kind.dart';
+import 'package:fluxer_app/core/system_permissions/system_permission_result.dart';
+import 'package:fluxer_app/core/system_permissions/system_permission_service.dart';
+import 'package:fluxer_app/core/talker.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_list_view_model.dart';
+import 'package:fluxer_app/features/mature_content/utils/channel_gate_navigator.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/sound_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/voice_settings_provider.dart';
+import 'package:fluxer_app/features/settings/utils/sound/sound_sfx_playback.dart';
+import 'package:fluxer_app/features/voice/domain/local_voice_state_data.dart';
+import 'package:fluxer_app/features/voice/domain/voice_connect_failed_target.dart';
+import 'package:fluxer_app/features/voice/domain/voice_settings_state.dart';
+import 'package:fluxer_app/features/voice/providers/local_voice_state_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_call_display_preferences_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_call_layout_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_callkit_engine_gate_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_capability_providers.dart';
+import 'package:fluxer_app/features/voice/providers/voice_channel_participants_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_channel_permissions_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_join_eligibility_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_priority_speaker_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_screen_share_fullscreen_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_screen_share_watch_tile_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_state.dart';
+import 'package:fluxer_app/features/voice/services/mesh/voice_mesh_transport.dart';
+import 'package:fluxer_app/features/voice/services/voice_settings_applicator.dart';
+import 'package:fluxer_app/features/voice/utils/audio/audio_publish_options.dart';
+import 'package:fluxer_app/features/voice/utils/audio/audio_route_recovery.dart';
+import 'package:fluxer_app/features/voice/utils/audio/effective_audio_state.dart';
+import 'package:fluxer_app/features/voice/utils/audio/entrance_sound_playback.dart';
+import 'package:fluxer_app/features/voice/utils/audio/microphone_permission.dart';
+import 'package:fluxer_app/features/voice/utils/audio/participant_volume_utils.dart';
+import 'package:fluxer_app/features/voice/utils/audio/speaker_route.dart';
+import 'package:fluxer_app/features/voice/utils/audio/volume_utils.dart';
+import 'package:fluxer_app/features/voice/utils/callkit/callkit_policy.dart';
+import 'package:fluxer_app/features/voice/utils/connection/channel_join_guard.dart';
+import 'package:fluxer_app/features/voice/utils/connection/channel_permissions.dart';
+import 'package:fluxer_app/features/voice/utils/connection/connection_voice_state.dart';
+import 'package:fluxer_app/features/voice/utils/connection/join_timing.dart';
+import 'package:fluxer_app/features/voice/utils/connection/media_teardown.dart';
+import 'package:fluxer_app/features/voice/utils/connection/server_update_decision.dart';
+import 'package:fluxer_app/features/voice/utils/e2ee/e2ee_status.dart';
+import 'package:fluxer_app/features/voice/utils/e2ee/p2p_mode.dart';
+import 'package:fluxer_app/features/voice/utils/lifecycle/lifecycle_log.dart';
+import 'package:fluxer_app/features/voice/utils/media/camera_platform.dart';
+import 'package:fluxer_app/features/voice/utils/screen_share/android_screen_share_background.dart';
+import 'package:fluxer_app/features/voice/voice_session_errors.dart';
+import 'package:fluxer_app/l10n/app_locale_provider.dart';
+import 'package:fluxer_app/shared/utils/api_error_presentation.dart';
+import 'package:fluxer_dart/export.dart';
+import 'package:fluxer_dart/gateway.dart';
+import 'package:livekit_client/livekit_client.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'voice_session_provider.g.dart';
+
+const Duration _kVoiceJoinWatchdogDuration = Duration(seconds: 15);
+const Duration _kDeferredServerDisconnectDuration = Duration(seconds: 5);
+const List<Duration> _kMicPublishRetryDelays = <Duration>[
+  Duration(seconds: 2),
+  Duration(seconds: 5),
+];
+const Duration _kScreenSharePublicationTimeout = Duration(seconds: 8);
+const Timeouts _kE2eeConnectTimeouts = Timeouts(
+  connection: Duration(seconds: 20),
+  debounce: Duration(milliseconds: 20),
+  publish: Duration(seconds: 30),
+  subscribe: Duration(seconds: 15),
+  peerConnection: Duration(seconds: 30),
+  iceRestart: Duration(seconds: 15),
+);
+const Duration _kLiveKitConnectWatchdogDuration = Duration(seconds: 35);
+const Duration _kRegionHotSwapTimeoutDuration = Duration(seconds: 10);
+const Duration _kMeshConversionTimeoutDuration = Duration(seconds: 10);
+
+String? _normalizeVoiceGuildId(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  return value;
+}
+
+@Riverpod(keepAlive: true)
+class VoiceSession extends _$VoiceSession {
+  int _connectGeneration = 0;
+  String? _expectedGuildId;
+  String? _expectedChannelId;
+  Timer? _connectWatchdogTimer;
+  int _connectWatchdogArmedGeneration = 0;
+  Timer? _liveKitConnectWatchdogTimer;
+  int _liveKitConnectWatchdogArmedGeneration = 0;
+  DateTime? _lastConnectRequestAt;
+  bool _pendingRingAfterConnect = false;
+  bool _pendingRingSilently = false;
+  List<String>? _outboundRingRecipients;
+  bool _togglingVideo = false;
+  bool _togglingScreenShare = false;
+  bool _reconcilingSelfStream = false;
+  bool _selfStreamReconcileDirty = false;
+  bool? _lastReportedSelfStream;
+  int? _handledRoomConnectedAttempt;
+  bool _startWithVideoAfterConnect = false;
+  DateTime? _lastCameraOrientationRefresh;
+  Listenable? _observedLocalParticipant;
+  EventsListener<RoomEvent>? _roomEventsListener;
+  Room? _managedLiveKitRoom;
+  VoiceMeshTransport? _managedMesh;
+  Timer? _meshConversionTimer;
+  String? _voiceMovePreviousChannelId;
+  bool _intentionalLiveKitTeardown = false;
+  ChannelE2eeStatus? _lastLoggedE2eeChannelStatus;
+  Future<void>? _connectLiveKitInFlight;
+  Future<void>? _regionHotSwapInFlight;
+  Room? _regionHotSwapPendingRoom;
+  Timer? _regionHotSwapTimeoutTimer;
+  Future<void>? _leaveVoiceInFlight;
+  bool _endCallRequested = false;
+  String? _leaveChannelId;
+  Timer? _deferredServerDisconnectTimer;
+  String? _pendingServerDisconnectConnectionId;
+  int? _boundRoomAttemptId;
+  bool _pendingSelfMute = false;
+  bool _pendingSelfDeaf = false;
+  bool _ensuringMicrophone = false;
+  StreamSubscription<List<MediaDevice>>? _mediaDeviceChangeSubscription;
+  Timer? _audioRouteRecoveryTimer;
+  final List<Timer> _speakerOutputRetryTimers = <Timer>[];
+  Set<String>? _lastKnownInputDeviceIds;
+  Set<String>? _lastKnownOutputDeviceIds;
+  Set<String>? _pendingRecoveryInputIds;
+  Set<String>? _pendingRecoveryOutputIds;
+  bool _isRecoveringAudioRoute = false;
+  VoiceChannelPermissions? _channelPermissions;
+  VoiceJoinTiming? _joinTiming;
+  Future<void>? _liveKitTeardownTail;
+
+  @override
+  VoiceSessionState build() {
+    ref
+      ..onDispose(_teardownOnDispose)
+      ..listen<ChannelPermissionCaches>(channelPermissionCacheProvider, (
+        ChannelPermissionCaches? _,
+        ChannelPermissionCaches _,
+      ) {
+        unawaited(_onChannelPermissionsChanged());
+      })
+      ..listen<VoiceSettingsState>(voiceSettingsProvider, (
+        VoiceSettingsState? previous,
+        VoiceSettingsState next,
+      ) {
+        if (previous == next) {
+          return;
+        }
+        unawaited(_onVoiceSettingsChanged(previous, next));
+      })
+      ..listen<Map<String, VoiceState>>(voiceStatesMapProvider, (
+        Map<String, VoiceState>? _,
+        Map<String, VoiceState> next,
+      ) {
+        _syncMeshRoster(next);
+      })
+      ..listen<bool>(voiceCallKitEngineSuppressedProvider, (
+        bool? previous,
+        bool next,
+      ) {
+        if (previous != true || next) {
+          return;
+        }
+        if (!state.isInVoice) {
+          return;
+        }
+        unawaited(
+          _reconcileRemoteAudioForSelfConnection(
+            reason: 'callkit_engine_restored',
+          ),
+        );
+        unawaited(
+          _reconcileLocalAudioPublish(
+            reason: 'callkit_engine_restored',
+            attempt: _connectGeneration,
+          ),
+        );
+      });
+    return const VoiceSessionState();
+  }
+
+  void _runVoiceAsync(Future<void> Function() body, {String? label}) {
+    unawaited(() async {
+      try {
+        await body();
+      } on Object catch (error, stackTrace) {
+        final String tag = label ?? 'async voice work';
+        final String message = '[Voice] $tag: $error';
+        if (isTransientNetworkError(error)) {
+          talker.debug(message, error, stackTrace);
+        } else {
+          talker.warning(message, error, stackTrace);
+        }
+      }
+    }());
+  }
+
+  void _cancelConnectWatchdog() {
+    _connectWatchdogTimer?.cancel();
+    _connectWatchdogTimer = null;
+  }
+
+  void _cancelLiveKitConnectWatchdog() {
+    _liveKitConnectWatchdogTimer?.cancel();
+    _liveKitConnectWatchdogTimer = null;
+  }
+
+  void _armLiveKitConnectWatchdog(int generation) {
+    _cancelLiveKitConnectWatchdog();
+    _liveKitConnectWatchdogArmedGeneration = generation;
+    _liveKitConnectWatchdogTimer = Timer(_kLiveKitConnectWatchdogDuration, () {
+      if (_liveKitConnectWatchdogArmedGeneration != generation) {
+        return;
+      }
+      if (_connectGeneration != generation) {
+        return;
+      }
+      if (!state.isConnecting || state.isConnected) {
+        return;
+      }
+      talker.warning(
+        '[Voice] LiveKit connect timed out after '
+        '${_kLiveKitConnectWatchdogDuration.inSeconds}s '
+        '(generation=$generation, channelId=${state.channelId}).',
+      );
+      unawaited(
+        _handleLiveKitConnectFailure(
+          generation: generation,
+          errorMessage: kVoiceSessionErrorTransportFailed,
+          reason: 'livekit_watchdog',
+        ),
+      );
+    });
+  }
+
+  bool _isTransportConnected() {
+    if (state.mesh != null) {
+      return true;
+    }
+    final Room? room = state.liveKitRoom;
+    return room != null && room.connectionState == ConnectionState.connected;
+  }
+
+  bool _hasTransport() => state.liveKitRoom != null || state.mesh != null;
+
+  bool _shouldDeferWebRtcMediaWork(String operation) {
+    if (!readVoiceWebRtcEngineSuppressed(ref)) {
+      return false;
+    }
+    talker.debug(
+      '[Voice] Deferred $operation: CallKit WebRTC engine suppressed.',
+    );
+    return true;
+  }
+
+  bool _hasLiveConnectionToChannel(String channelId) {
+    return voiceSessionHasLiveConnection(
+      state: state,
+      channelId: channelId,
+      hasLiveKitRoom: _hasTransport(),
+      isRoomConnected: _isTransportConnected(),
+    );
+  }
+
+  bool _shouldSkipDuplicateJoin(String channelId) {
+    return shouldSkipVoiceChannelJoin(
+      state: state,
+      channelId: channelId,
+      hasLiveKitRoom: _hasTransport(),
+      isRoomConnected: _isTransportConnected(),
+      expectedChannelId: _expectedChannelId,
+      liveKitConnectInFlight: _connectLiveKitInFlight != null,
+    );
+  }
+
+  Future<void> _clearStaleVoiceSessionIfNeeded(String channelId) async {
+    if (!shouldClearStaleVoiceSession(
+      state: state,
+      channelId: channelId,
+      hasLiveKitRoom: _hasTransport(),
+      isRoomConnected: _isTransportConnected(),
+      expectedChannelId: _expectedChannelId,
+      liveKitConnectInFlight: _connectLiveKitInFlight != null,
+    )) {
+      return;
+    }
+    talker.warning(
+      '[Voice] Clearing stale voice session before reconnect '
+      '(channelId=$channelId, isConnected=${state.isConnected}, '
+      'isConnecting=${state.isConnecting}, '
+      'room=${state.liveKitRoom?.connectionState.name ?? 'null'}).',
+    );
+    await leaveVoice(endCall: false);
+  }
+
+  Future<void> _handleLiveKitConnectFailure({
+    required int generation,
+    required String errorMessage,
+    required String reason,
+  }) async {
+    if (generation != _connectGeneration) {
+      return;
+    }
+    _cancelLiveKitConnectWatchdog();
+    _cancelConnectWatchdog();
+    _connectGeneration++;
+    _expectedGuildId = null;
+    _expectedChannelId = null;
+    _pendingRingAfterConnect = false;
+    _pendingRingSilently = false;
+    _outboundRingRecipients = null;
+    _resetPendingSelfAudioFlags();
+    final String? channelId = state.channelId;
+    final String? guildId = state.guildId;
+    final String? connectionId = state.activeConnectionId;
+    if (channelId != null) {
+      _clearOutgoingCallInitiator(channelId);
+    }
+    _detachMediaDeviceChangeListener();
+    _detachRoomEventsListener();
+    _detachLocalParticipantListener();
+    final Room? roomToDisconnect = _managedLiveKitRoom ?? state.liveKitRoom;
+    _managedLiveKitRoom = null;
+    if (roomToDisconnect != null) {
+      _sendVoiceDisconnectState(guildId: guildId, connectionId: connectionId);
+      await _prepareVoiceMediaTeardownBeforeRoomDisconnect();
+      await _disconnectAndDisposeRoom(roomToDisconnect, reason: reason);
+    }
+    state = state.copyWith(
+      isConnecting: false,
+      isConnected: false,
+      isReconnecting: false,
+      errorMessage: errorMessage,
+      clearRoom: true,
+      clearActiveConnectionId: true,
+      clearE2eeKey: true,
+      connectFailed: true,
+      connectFailedTarget: channelId == null
+          ? null
+          : VoiceConnectFailedTarget(channelId: channelId, guildId: guildId),
+      guildId: guildId,
+      channelId: channelId,
+    );
+  }
+
+  void _armConnectWatchdog(int generation) {
+    _cancelConnectWatchdog();
+    _connectWatchdogArmedGeneration = generation;
+    _connectWatchdogTimer = Timer(_kVoiceJoinWatchdogDuration, () {
+      if (_connectWatchdogArmedGeneration != generation) {
+        return;
+      }
+      if (_connectGeneration != generation) {
+        return;
+      }
+      if (!state.isConnecting || state.isConnected) {
+        return;
+      }
+      final String? channelId = _expectedChannelId;
+      final String? guildId = _expectedGuildId;
+      final String? connectionId = state.activeConnectionId;
+      talker.warning(
+        '[Voice] Join timed out after '
+        '${_kVoiceJoinWatchdogDuration.inSeconds}s '
+        '(generation=$generation, channelId=$channelId, '
+        'guildId=$guildId).',
+      );
+      _connectGeneration++;
+      _expectedGuildId = null;
+      _expectedChannelId = null;
+      _pendingRingAfterConnect = false;
+      _pendingRingSilently = false;
+      _outboundRingRecipients = null;
+      _resetPendingSelfAudioFlags();
+      _clearOutgoingCallInitiator(channelId);
+      if (connectionId != null && guildId != null) {
+        _sendVoiceDisconnectState(guildId: guildId, connectionId: connectionId);
+      } else if (channelId != null) {
+        _sendVoiceLeaveChannelState(guildId: guildId);
+      }
+      _detachLocalParticipantListener();
+      unawaited(_disconnectRoomOnly());
+      state = state.copyWith(
+        isConnecting: false,
+        isConnected: false,
+        errorMessage: 'Voice connection timed out.',
+        clearRoom: true,
+        clearChannel: true,
+        clearActiveConnectionId: true,
+      );
+    });
+  }
+
+  void _resetPendingSelfAudioFlags() {
+    final local = ref.read(localVoiceStateProvider);
+    _pendingSelfMute = local.selfMute;
+    _pendingSelfDeaf = local.selfDeaf;
+  }
+
+  void _syncPendingSelfAudioFlags({
+    required bool selfMute,
+    required bool selfDeaf,
+  }) {
+    _pendingSelfMute = selfMute;
+    _pendingSelfDeaf = selfDeaf;
+  }
+
+  EffectiveAudioState _effectiveAudioStateForSelfConnection() {
+    return effectiveAudioStateFromVoiceState(
+      voiceState: _selfConnectionVoiceState(),
+      fallbackSelfMute: _pendingSelfMute,
+      fallbackSelfDeaf: _pendingSelfDeaf,
+    );
+  }
+
+  Future<void> _reconcileRemoteAudioForSelfConnection({
+    required String reason,
+  }) async {
+    final EffectiveAudioState audio = _effectiveAudioStateForSelfConnection();
+    await _reconcileRemoteAudioSubscriptions(
+      deaf: audio.effectiveDeaf,
+      reason: reason,
+    );
+  }
+
+  void reportJoinError(String errorMessage) {
+    final String? channelId = state.channelId ?? _expectedChannelId;
+    final String? guildId = state.guildId ?? _expectedGuildId;
+    state = state.copyWith(
+      errorMessage: errorMessage,
+      isConnecting: false,
+      isConnected: false,
+      connectFailed: channelId != null,
+      connectFailedTarget: channelId == null
+          ? null
+          : VoiceConnectFailedTarget(channelId: channelId, guildId: guildId),
+    );
+  }
+
+  Future<void> retryFailedVoiceConnection() async {
+    final VoiceConnectFailedTarget? target = state.connectFailedTarget;
+    if (target == null) {
+      return;
+    }
+    state = state.copyWith(
+      clearError: true,
+      clearConnectFailed: true,
+      clearConnectFailedTarget: true,
+    );
+    await connectToVoiceChannel(
+      guildId: target.guildId,
+      channelId: target.channelId,
+      forceJoin: true,
+      skipChannelGate: true,
+    );
+  }
+
+  void dismissFailedVoiceConnection() {
+    if (!state.connectFailed) {
+      return;
+    }
+    state = state.copyWith(
+      clearError: true,
+      clearChannel: true,
+      clearConnectFailed: true,
+      clearConnectFailedTarget: true,
+    );
+  }
+
+  Future<bool> connectToVoiceChannel({
+    required String? guildId,
+    required String channelId,
+    bool startOutgoingCall = false,
+    bool ringSilently = false,
+    List<String>? outboundRingRecipients,
+    bool initialSelfMute = false,
+    bool initialSelfDeaf = false,
+    bool initialSelfVideo = false,
+    bool forceJoin = false,
+    bool skipChannelGate = false,
+    bool p2p = false,
+  }) async {
+    _startWithVideoAfterConnect = false;
+    talker.info(
+      '[Voice] Join requested (guildId=$guildId, channelId=$channelId, '
+      'startOutgoingCall=$startOutgoingCall, forceJoin=$forceJoin, '
+      'p2p=$p2p).',
+    );
+    if (forceJoin) {
+      await _clearStaleVoiceSessionIfNeeded(channelId);
+      if (_hasLiveConnectionToChannel(channelId)) {
+        talker.info(
+          '[Voice] Force join skipped: already live on channelId=$channelId.',
+        );
+        return true;
+      }
+      if (voiceSessionIsJoinInFlight(
+        state: state,
+        channelId: channelId,
+        expectedChannelId: _expectedChannelId,
+        liveKitConnectInFlight: _connectLiveKitInFlight != null,
+      )) {
+        talker.warning(
+          '[Voice] Force join: clearing in-flight session for '
+          'channelId=$channelId.',
+        );
+        await leaveVoice(endCall: false);
+      }
+    } else if (_shouldSkipDuplicateJoin(channelId)) {
+      if (_hasLiveConnectionToChannel(channelId)) {
+        talker.info(
+          '[Voice] Join skipped: already connected to channelId=$channelId.',
+        );
+      } else {
+        talker.info(
+          '[Voice] Join skipped: join already in progress for '
+          'channelId=$channelId.',
+        );
+      }
+      return false;
+    }
+    if (!forceJoin) {
+      await _clearStaleVoiceSessionIfNeeded(channelId);
+    }
+    final bool isGuildVoiceJoin = guildId != null && guildId.isNotEmpty;
+    final VoiceJoinEligibility eligibility = readCachedVoiceJoinEligibility(
+      ref,
+      guildId: guildId,
+      channelId: channelId,
+    );
+    if (!eligibility.canJoin) {
+      talker.warning(
+        '[Voice] Join aborted: not eligible to join '
+        '(channelId=$channelId, guildId=$guildId).',
+      );
+      state = state.copyWith(
+        errorMessage: switch (eligibility.blockReason) {
+          VoiceJoinBlockReason.timedOut => kVoiceSessionErrorTimedOut,
+          VoiceJoinBlockReason.unclaimed =>
+            isGuildVoiceJoin
+                ? kVoiceSessionErrorUnclaimed
+                : kVoiceSessionErrorUnclaimedDirectCall,
+          VoiceJoinBlockReason.userLimit => kVoiceSessionErrorUserLimit,
+          VoiceJoinBlockReason.noPermission =>
+            kVoiceSessionErrorNoConnectPermission,
+          null =>
+            isGuildVoiceJoin
+                ? kVoiceSessionErrorNoConnectPermission
+                : kVoiceSessionErrorDirectCallNotEligible,
+        },
+      );
+      return false;
+    }
+    if (!skipChannelGate &&
+        await isChannelGateBlocking(
+          container: ref.container,
+          channelId: channelId,
+        )) {
+      talker.info(
+        '[Voice] Join aborted: content warning gate required '
+        '(channelId=$channelId).',
+      );
+      return false;
+    }
+    final DateTime now = DateTime.now();
+    if (!forceJoin &&
+        _lastConnectRequestAt != null &&
+        now.difference(_lastConnectRequestAt!) < const Duration(seconds: 1)) {
+      talker.warning(
+        '[Voice] Connect request throttled (< 1s since last attempt).',
+      );
+      return false;
+    }
+    final GatewayConnection gateway = ref.read(gatewayConnectionProvider);
+    if (gateway.state != GatewayState.connected) {
+      talker.warning(
+        '[Voice] Cannot join voice: gateway state is '
+        '${gateway.state.name} (${GatewayState.connected.name} '
+        'required). Voice join opcode was not sent — no '
+        '`VOICE_SERVER_UPDATE` will follow.',
+      );
+      state = state.copyWith(
+        errorMessage:
+            'Chat is reconnecting. Please wait until you are online, then try '
+            'again.',
+      );
+      return false;
+    }
+    _lastConnectRequestAt = now;
+    _startWithVideoAfterConnect = initialSelfVideo;
+    final local = ref.read(localVoiceStateProvider);
+    bool resolvedSelfMute = initialSelfDeaf || initialSelfMute;
+    bool resolvedSelfDeaf = initialSelfDeaf;
+    if (!initialSelfMute && !initialSelfDeaf) {
+      resolvedSelfMute = local.selfDeaf || local.selfMute;
+      resolvedSelfDeaf = local.selfDeaf;
+    }
+    if (guildId != null) {
+      final int? permissionBits = ref
+          .read(channelPermissionCacheProvider.notifier)
+          .getChannelBits(channelId);
+      if (permissionBits != null &&
+          !hasPermission(permissionBits, Permission.speak)) {
+        resolvedSelfMute = true;
+      }
+    }
+    _pendingSelfMute = resolvedSelfMute;
+    _pendingSelfDeaf = resolvedSelfDeaf;
+    _connectGeneration++;
+    logVoiceLifecycle(
+      'connect_requested',
+      connectGeneration: _connectGeneration,
+      channelId: channelId,
+      reason: forceJoin ? 'force_join' : 'join',
+    );
+    _voiceMovePreviousChannelId =
+        state.isConnected &&
+            state.channelId != null &&
+            state.channelId != channelId
+        ? state.channelId
+        : null;
+    _expectedGuildId = _normalizeVoiceGuildId(guildId);
+    _expectedChannelId = channelId;
+    _pendingRingAfterConnect = startOutgoingCall;
+    _pendingRingSilently = startOutgoingCall && ringSilently;
+    if (startOutgoingCall && !ringSilently) {
+      _outboundRingRecipients =
+          outboundRingRecipients == null || outboundRingRecipients.isEmpty
+          ? null
+          : List<String>.from(outboundRingRecipients);
+    } else {
+      _outboundRingRecipients = null;
+    }
+    if (startOutgoingCall) {
+      ref
+          .read(outgoingVoiceCallInitiatorProvider.notifier)
+          .markInitiated(
+            channelId: channelId,
+            outboundRingRecipients: outboundRingRecipients ?? const [],
+          );
+    }
+    state = state.copyWith(
+      isConnecting: true,
+      isConnected: false,
+      clearError: true,
+      guildId: _expectedGuildId,
+      channelId: channelId,
+    );
+    _joinTiming = VoiceJoinTiming(channelId: channelId);
+    _joinTiming?.mark('opcode');
+    final bool selfMute = resolvedSelfMute;
+    final bool selfDeaf = resolvedSelfDeaf;
+    final bool joinSent = gateway.updateVoiceState(
+      GatewayVoiceStateUpdate(
+        guildId: _expectedGuildId,
+        channelId: channelId,
+        selfMute: selfMute,
+        selfDeaf: selfDeaf,
+        selfVideo: false,
+        selfStream: false,
+        isMobile: isFluxerMobileOs,
+        p2p: p2p ? true : null,
+      ),
+    );
+    talker.info(
+      '[Voice] Voice join opcode sent (channelId=$channelId, '
+      'guildId=$_expectedGuildId, generation=$_connectGeneration).',
+    );
+    if (!joinSent) {
+      talker.warning(
+        '[Voice] Voice join opcode dropped (gateway disconnected between '
+        'check and send, state=${gateway.state}).',
+      );
+      _connectGeneration--;
+      _expectedGuildId = null;
+      _expectedChannelId = null;
+      _pendingRingAfterConnect = false;
+      _pendingRingSilently = false;
+      _outboundRingRecipients = null;
+      _startWithVideoAfterConnect = false;
+      _voiceMovePreviousChannelId = null;
+      _clearOutgoingCallInitiator(channelId);
+      state = state.copyWith(
+        isConnecting: false,
+        isConnected: false,
+        errorMessage:
+            'Lost connection before joining voice. Please try again in a '
+            'moment.',
+        clearChannel: true,
+        clearActiveConnectionId: true,
+        clearRoom: true,
+      );
+      return false;
+    }
+    _armConnectWatchdog(_connectGeneration);
+    unawaited(_warmupMicrophoneForJoin(channelId: channelId));
+    if (initialSelfVideo) {
+      unawaited(requestSystemPermission(SystemPermissionKind.camera));
+    }
+    prefetchVoiceParticipantsForChannel(
+      ref,
+      guildId: _expectedGuildId,
+      channelId: channelId,
+    );
+    return true;
+  }
+
+  Future<void> _warmupMicrophoneForJoin({required String channelId}) async {
+    final SystemPermissionOutcome outcome = await requestSystemPermission(
+      SystemPermissionKind.microphone,
+    );
+    if (outcome == SystemPermissionOutcome.granted) {
+      return;
+    }
+    talker.info(
+      '[Voice] Microphone warmup denied; joining listen-only '
+      '(channelId=$channelId).',
+    );
+    if (outcome == SystemPermissionOutcome.requiresSettings) {
+      await ensureSystemPermission(
+        resolveSystemPermissionContext(null),
+        SystemPermissionKind.microphone,
+      );
+    }
+  }
+
+  String? _acceptedVoiceServerChannelId({
+    required String? guildId,
+    required String? channelId,
+  }) {
+    final String? expectedChannelId = _expectedChannelId;
+    if (expectedChannelId == null) {
+      talker.warning(
+        '[Voice] Ignoring VOICE_SERVER_UPDATE: no expected channel '
+        '(event guildId=$guildId channelId=$channelId).',
+      );
+      return null;
+    }
+    final String resolvedChannelId = channelId ?? expectedChannelId;
+    if (resolvedChannelId != expectedChannelId) {
+      talker.warning(
+        '[Voice] Ignoring VOICE_SERVER_UPDATE: channelId mismatch '
+        '(expected=$expectedChannelId, '
+        'resolved=$resolvedChannelId, '
+        'event.channelId=$channelId).',
+      );
+      return null;
+    }
+    final String? expectedGuildNorm = _normalizeVoiceGuildId(_expectedGuildId);
+    final String? incomingGuildNorm = _normalizeVoiceGuildId(guildId);
+    final bool guildMatches =
+        expectedGuildNorm == incomingGuildNorm ||
+        expectedGuildNorm == null ||
+        incomingGuildNorm == null;
+    if (!guildMatches) {
+      talker.warning(
+        '[Voice] Ignoring VOICE_SERVER_UPDATE: guildId mismatch '
+        '(expected=$_expectedGuildId, event=$guildId, '
+        'channel expected=$expectedChannelId, '
+        'event channel=$channelId).',
+      );
+      return null;
+    }
+    if (expectedGuildNorm == null && incomingGuildNorm != null) {
+      talker.info(
+        '[Voice] Accepting VOICE_SERVER_UPDATE guild from server for '
+        'null-guild join (channelId=$resolvedChannelId, '
+        'guildId=$incomingGuildNorm).',
+      );
+    } else if (expectedGuildNorm != null && incomingGuildNorm == null) {
+      talker.debug(
+        '[Voice] Accepting VOICE_SERVER_UPDATE with omitted guild_id; '
+        'using expected guildId=$expectedGuildNorm '
+        '(channelId=$resolvedChannelId).',
+      );
+    }
+    return resolvedChannelId;
+  }
+
+  void _adoptServerVoiceMove(String channelId) {
+    talker.info(
+      '[Voice] VOICE_SERVER_UPDATE: server moved this connection '
+      '(from=${state.channelId}, to=$channelId).',
+    );
+    _connectGeneration++;
+    _voiceMovePreviousChannelId = state.channelId;
+    _expectedChannelId = channelId;
+    state = voiceSessionStateAfterServerMove(
+      state: state,
+      channelId: channelId,
+    );
+    prefetchVoiceParticipantsForChannel(
+      ref,
+      guildId: _expectedGuildId,
+      channelId: channelId,
+    );
+  }
+
+  void handleVoiceServerUpdate(VoiceServerUpdateEvent event) {
+    final String? moveChannelId = event.channelId;
+    if (moveChannelId != null &&
+        event.token.isNotEmpty &&
+        event.endpoint.isNotEmpty &&
+        isServerInitiatedVoiceMove(
+          state: state,
+          expectedGuildId: _normalizeVoiceGuildId(_expectedGuildId),
+          expectedChannelId: _expectedChannelId,
+          incomingGuildId: _normalizeVoiceGuildId(event.guildId),
+          incomingChannelId: moveChannelId,
+        )) {
+      _adoptServerVoiceMove(moveChannelId);
+    }
+    final String? resolvedChannelId = _acceptedVoiceServerChannelId(
+      guildId: event.guildId,
+      channelId: event.channelId,
+    );
+    if (resolvedChannelId == null) {
+      return;
+    }
+    if (event.token.isEmpty || event.endpoint.isEmpty) {
+      talker.warning(
+        '[Voice] VOICE_SERVER_UPDATE missing token or endpoint '
+        '(guildId=${event.guildId}, channelId=$resolvedChannelId).',
+      );
+      _cancelConnectWatchdog();
+      state = state.copyWith(
+        isConnecting: false,
+        errorMessage: 'Voice server did not return connection details.',
+      );
+      return;
+    }
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (mesh != null &&
+        mesh.connectionId == event.connectionId &&
+        mesh.channelId == resolvedChannelId) {
+      talker.info(
+        '[Voice] VOICE_SERVER_UPDATE: P2P call switched to a standard call '
+        '(channelId=$resolvedChannelId).',
+      );
+      _startWithVideoAfterConnect =
+          _selfConnectionVoiceState()?.selfVideo ?? false;
+      _connectGeneration++;
+      _detachLocalParticipantListener();
+      if (mesh.hasScreenShare) {
+        unawaited(disableAndroidScreenShareBackground());
+      }
+      unawaited(_closeMesh(mesh, handOffAudioSession: true));
+      unawaited(_reconcileSelfStreamState(reason: 'p2p_conversion'));
+    }
+    final Room? existingRoom = state.liveKitRoom;
+    if (isVoiceServerRegionChange(
+      state: state,
+      resolvedChannelId: resolvedChannelId,
+      hasLiveKitRoom: _hasTransport(),
+      isRoomConnected: _isTransportConnected(),
+      incomingEndpoint: event.endpoint,
+      incomingToken: event.token,
+      incomingChannelId: event.channelId,
+      e2eeKey: event.e2eeKey,
+    )) {
+      if (existingRoom == null) {
+        talker.warning(
+          '[Voice] Region change requested but no LiveKit room is active.',
+        );
+        return;
+      }
+      talker.info(
+        '[Voice] VOICE_SERVER_UPDATE: region change '
+        '(channelId=$resolvedChannelId, '
+        'previous=${state.voiceServerEndpoint}, new=${event.endpoint}).',
+      );
+      _cancelDeferredServerDisconnect();
+      final int attempt = _connectGeneration;
+      unawaited(
+        _regionHotSwapLiveKit(
+          event: event,
+          resolvedChannelId: resolvedChannelId,
+          existingRoom: existingRoom,
+          attempt: attempt,
+        ),
+      );
+      return;
+    }
+    if (shouldIgnoreVoiceServerUpdateForStableSession(
+      state: state,
+      resolvedChannelId: resolvedChannelId,
+      hasLiveKitRoom: _hasTransport(),
+      isRoomConnected: _isTransportConnected(),
+      incomingEndpoint: event.endpoint,
+      incomingToken: event.token,
+      incomingChannelId: event.channelId,
+      e2eeKey: event.e2eeKey,
+    )) {
+      talker.info(
+        '[Voice] Ignoring VOICE_SERVER_UPDATE: already connected to '
+        'channelId=$resolvedChannelId.',
+      );
+      return;
+    }
+    if (isDuplicateVoiceServerUpdateInFlight(
+      state: state,
+      connectionId: event.connectionId,
+      endpoint: event.endpoint,
+    )) {
+      talker.debug('[Voice] Ignoring duplicate VOICE_SERVER_UPDATE in-flight.');
+      return;
+    }
+    _cancelDeferredServerDisconnect();
+    final bool hasE2eeKey = event.e2eeKey != null && event.e2eeKey!.isNotEmpty;
+    talker.info(
+      '[Voice] VOICE_SERVER_UPDATE accepted; starting LiveKit '
+      '(channelId=$resolvedChannelId, connectionId=${event.connectionId}, '
+      'e2eeKey=$hasE2eeKey).',
+    );
+    _joinTiming?.mark('voice_server_update');
+    _cancelConnectWatchdog();
+    _cancelLiveKitConnectWatchdog();
+    final int attempt = _connectGeneration;
+    unawaited(
+      _connectLiveKit(
+        event: event,
+        resolvedChannelId: resolvedChannelId,
+        attempt: attempt,
+      ),
+    );
+  }
+
+  void handleVoiceServerP2pUpdate(VoiceServerP2pUpdateEvent event) {
+    final String? resolvedChannelId = _acceptedVoiceServerChannelId(
+      guildId: event.guildId,
+      channelId: event.channelId,
+    );
+    if (resolvedChannelId == null) {
+      return;
+    }
+    final VoiceMeshTransport? current = state.mesh;
+    if (current != null &&
+        current.connectionId == event.connectionId &&
+        current.channelId == resolvedChannelId) {
+      talker.debug('[Voice] Ignoring duplicate P2P VOICE_SERVER_UPDATE.');
+      return;
+    }
+    talker.info(
+      '[Voice] P2P VOICE_SERVER_UPDATE accepted '
+      '(channelId=$resolvedChannelId, connectionId=${event.connectionId}).',
+    );
+    _cancelDeferredServerDisconnect();
+    _joinTiming?.mark('voice_server_update');
+    _cancelConnectWatchdog();
+    _cancelLiveKitConnectWatchdog();
+    unawaited(
+      _connectMesh(
+        event: event,
+        resolvedChannelId: resolvedChannelId,
+        attempt: _connectGeneration,
+      ),
+    );
+  }
+
+  Future<void> _connectMesh({
+    required VoiceServerP2pUpdateEvent event,
+    required String resolvedChannelId,
+    required int attempt,
+  }) async {
+    while (_connectLiveKitInFlight != null) {
+      await _connectLiveKitInFlight;
+      if (attempt != _connectGeneration) {
+        return;
+      }
+    }
+    while (_regionHotSwapInFlight != null) {
+      await _regionHotSwapInFlight;
+      if (attempt != _connectGeneration) {
+        return;
+      }
+    }
+    final String? moveFromChannelId = _voiceMovePreviousChannelId;
+    _voiceMovePreviousChannelId = null;
+    await _disconnectRoomOnly();
+    if (attempt != _connectGeneration) {
+      return;
+    }
+    if (moveFromChannelId != null &&
+        moveFromChannelId.isNotEmpty &&
+        moveFromChannelId != resolvedChannelId) {
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: FluxerSfxClip.userMove,
+        ),
+      );
+    }
+    final String? resolvedGuildId =
+        _normalizeVoiceGuildId(event.guildId) ?? _expectedGuildId;
+    final VoiceMeshTransport mesh = VoiceMeshTransport(
+      connectionId: event.connectionId,
+      userId: ref.read(currentUserIdProvider),
+      guildId: resolvedGuildId,
+      channelId: resolvedChannelId,
+      iceServers: event.iceServers,
+      sendSignal:
+          ({
+            required String? guildId,
+            required String channelId,
+            required String to,
+            required Map<String, Object?> data,
+          }) => ref
+              .read(gatewayConnectionProvider)
+              .sendVoiceSignal(
+                guildId: guildId,
+                channelId: channelId,
+                to: to,
+                data: data,
+              ),
+      sendConnectionReports:
+          (List<VoiceP2pConnectionReportsRequestReports> reports) {
+            unawaited(_sendVoiceP2pConnectionReports(reports));
+          },
+      onRemoteAudioTrack: (String userId) {
+        unawaited(applyParticipantVolume(userId));
+      },
+    );
+    _managedMesh = mesh;
+    _boundRoomAttemptId = attempt;
+    _intentionalLiveKitTeardown = false;
+    state = state.copyWith(
+      isConnecting: true,
+      isReconnecting: false,
+      activeConnectionId: event.connectionId,
+      mesh: mesh,
+      channelId: resolvedChannelId,
+      guildId: resolvedGuildId,
+    );
+    await mesh.start();
+    if (attempt != _connectGeneration || !identical(state.mesh, mesh)) {
+      return;
+    }
+    mesh.syncRoster(ref.read(voiceStatesMapProvider).values);
+    logVoiceLifecycle(
+      'mesh_connected',
+      connectGeneration: attempt,
+      channelId: resolvedChannelId,
+      connectionId: event.connectionId,
+    );
+    _onTransportConnected(
+      attempt: attempt,
+      resolvedChannelId: resolvedChannelId,
+      resolvedGuildId: resolvedGuildId,
+      connectionId: event.connectionId,
+      localParticipant: mesh.local,
+    );
+    if (_startWithVideoAfterConnect) {
+      _startWithVideoAfterConnect = false;
+      unawaited(_enableCameraAfterConnect(attempt: attempt));
+    }
+  }
+
+  Future<void> _closeMesh(
+    VoiceMeshTransport mesh, {
+    bool handOffAudioSession = false,
+  }) async {
+    _meshConversionTimer?.cancel();
+    _meshConversionTimer = null;
+    if (identical(_managedMesh, mesh)) {
+      _managedMesh = null;
+    }
+    if (identical(state.mesh, mesh)) {
+      state = state.copyWith(clearRoom: true);
+      await waitForVoiceMediaWidgetsToRelease();
+      await drainVoiceMediaHandoffs(ref);
+    }
+    await mesh.close(handOffAudioSession: handOffAudioSession);
+  }
+
+  void _syncMeshRoster(Map<String, VoiceState> voiceStates) {
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (mesh == null || !state.isConnected) {
+      return;
+    }
+    final ({int added, int removed}) change = mesh.syncRoster(
+      voiceStates.values,
+    );
+    final VoiceState? own = voiceStates[mesh.connectionId];
+    if (own == null || own.channelId != mesh.channelId) {
+      return;
+    }
+    if (own.p2p) {
+      if (change.added > 0 || change.removed > 0) {
+        unawaited(
+          playFluxerSoundEffect(
+            prefs: ref.read(soundPreferencesProvider),
+            sfx: ref.read(fluxerSfxProvider),
+            clip: change.added > 0
+                ? FluxerSfxClip.userJoin
+                : FluxerSfxClip.userLeave,
+          ),
+        );
+      }
+      return;
+    }
+    _meshConversionTimer ??= Timer(_kMeshConversionTimeoutDuration, () {
+      _meshConversionTimer = null;
+      if (!identical(state.mesh, mesh)) {
+        return;
+      }
+      talker.warning(
+        '[Voice] Standard call did not start '
+        '${_kMeshConversionTimeoutDuration.inSeconds}s after leaving P2P.',
+      );
+      unawaited(_leaveAfterFailedConversion());
+    });
+  }
+
+  Future<void> _leaveAfterFailedConversion() async {
+    await leaveVoice(endCall: false);
+    state = state.copyWith(errorMessage: kVoiceSessionErrorTransportFailed);
+  }
+
+  void handleVoiceSignal(VoiceSignalEvent event) {
+    state.mesh?.handleSignal(event);
+  }
+
+  Future<void> _sendVoiceP2pConnectionReports(
+    List<VoiceP2pConnectionReportsRequestReports> reports,
+  ) async {
+    if (!ref.mounted) {
+      return;
+    }
+    try {
+      await ref
+          .read(fluxerClientProvider)
+          .voice
+          .createVoiceP2pConnectionReports(
+            body: VoiceP2pConnectionReportsRequest(reports: reports),
+          );
+    } on Object catch (error) {
+      talker.debug('[Voice][Mesh] Connection reports dropped: $error');
+    }
+  }
+
+  void handleGatewayResumed() {
+    state.mesh?.handleGatewayResumed();
+  }
+
+  void switchToStandardCall() {
+    final VoiceSessionState s = state;
+    if (s.mesh == null || !s.isConnected || s.channelId == null) {
+      return;
+    }
+    final VoiceState? current = _selfConnectionVoiceState();
+    talker.info('[Voice] Switching P2P call to a standard call.');
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: s.guildId,
+            channelId: s.channelId,
+            selfMute: current?.selfMute ?? false,
+            selfDeaf: current?.selfDeaf ?? false,
+            selfVideo: current?.selfVideo ?? false,
+            selfStream: current?.selfStream ?? false,
+            connectionId: s.activeConnectionId,
+            isMobile: isFluxerMobileOs,
+            p2p: false,
+          ),
+        );
+  }
+
+  bool _guildHasVoiceE2ee(String? guildId) {
+    if (guildId == null) {
+      return true;
+    }
+    return ref
+        .read(guildListViewModelProvider)
+        .guilds
+        .any((g) => g.id == guildId && g.hasVoiceE2ee);
+  }
+
+  void _logVoiceE2eeSnapshot(
+    String reason, {
+    Room? room,
+    String? channelId,
+    String? guildId,
+  }) {
+    final Room? activeRoom = room ?? state.liveKitRoom;
+    final String? resolvedChannelId = channelId ?? state.channelId;
+    final String? resolvedGuildId = guildId ?? state.guildId;
+    final bool hasServerKey =
+        state.e2eeKey != null && state.e2eeKey!.isNotEmpty;
+    final bool liveKitManagerReady = activeRoom?.e2eeManager != null;
+    ChannelE2eeStatus? channelStatus;
+    if (resolvedChannelId != null) {
+      channelStatus = computeChannelE2eeStatus(
+        voiceStates: ref.read(voiceStatesMapProvider),
+        guildId: resolvedGuildId,
+        channelId: resolvedChannelId,
+        guildHasVoiceE2ee: _guildHasVoiceE2ee(resolvedGuildId),
+      );
+    }
+    talker.info(
+      '[Voice][E2EE] $reason | '
+      'serverKey=$hasServerKey '
+      'liveKitManager=$liveKitManagerReady '
+      'channelStatus=${channelStatus?.name ?? 'n/a'} '
+      'connected=${state.isConnected} '
+      'channelId=$resolvedChannelId',
+    );
+  }
+
+  void syncE2eeFromVoiceStates() {
+    if (!state.isConnected || state.channelId == null) {
+      return;
+    }
+    final Room? room = state.liveKitRoom;
+    if (room == null) {
+      return;
+    }
+    final String channelId = state.channelId!;
+    final String? guildId = state.guildId;
+    final ChannelE2eeStatus status = computeChannelE2eeStatus(
+      voiceStates: ref.read(voiceStatesMapProvider),
+      guildId: guildId,
+      channelId: channelId,
+      guildHasVoiceE2ee: _guildHasVoiceE2ee(guildId),
+    );
+    if (_lastLoggedE2eeChannelStatus != status) {
+      _lastLoggedE2eeChannelStatus = status;
+      switch (status) {
+        case ChannelE2eeStatus.encrypted:
+          talker.info(
+            '[Voice][E2EE] Channel is fully E2EE-capable; '
+            'ensuring LiveKit encryption stays on.',
+          );
+        case ChannelE2eeStatus.broken:
+          talker.warning(
+            '[Voice][E2EE] Mixed E2EE capability in channel; '
+            'falling back to plaintext for interop.',
+          );
+        case ChannelE2eeStatus.none:
+          talker.debug('[Voice][E2EE] Channel has no active E2EE mix.');
+      }
+    }
+    if (status == ChannelE2eeStatus.encrypted && state.e2eeKey != null) {
+      unawaited(
+        room
+            .setE2EEEnabled(true)
+            .then((_) {
+              talker.info(
+                '[Voice][E2EE] LiveKit encryption enabled (runtime sync).',
+              );
+            })
+            .catchError((Object error) {
+              talker.warning(
+                '[Voice][E2EE] Failed to enable LiveKit E2EE: $error',
+              );
+            }),
+      );
+    } else if (status == ChannelE2eeStatus.broken) {
+      final bool keepE2eeOnGuildChannel =
+          state.e2eeKey != null &&
+          state.e2eeKey!.isNotEmpty &&
+          _guildHasVoiceE2ee(guildId);
+      if (keepE2eeOnGuildChannel) {
+        talker.debug(
+          '[Voice][E2EE] Mixed capability but keeping encryption on '
+          'active guild E2EE session.',
+        );
+        return;
+      }
+      unawaited(
+        room
+            .setE2EEEnabled(false)
+            .then((_) {
+              talker.info(
+                '[Voice][E2EE] LiveKit encryption disabled (runtime sync).',
+              );
+            })
+            .catchError((Object error) {
+              talker.warning(
+                '[Voice][E2EE] Failed to disable LiveKit E2EE: $error',
+              );
+            }),
+      );
+    }
+  }
+
+  void handleSelfVoiceStateUpdate(VoiceState voiceState) {
+    final String? userId = ref.read(currentUserIdProvider);
+    if (userId == null || voiceState.userId != userId) {
+      return;
+    }
+    final String? connectionId = state.activeConnectionId;
+    if (connectionId == null) {
+      return;
+    }
+    if (voiceState.connectionId != null &&
+        voiceState.connectionId != connectionId) {
+      return;
+    }
+    if (voiceState.channelId == null) {
+      _scheduleDeferredServerDisconnect(connectionId);
+      return;
+    }
+    _cancelDeferredServerDisconnect();
+    _syncPendingSelfAudioFlags(
+      selfMute: voiceState.selfMute,
+      selfDeaf: voiceState.selfDeaf,
+    );
+    if (state.isConnected || state.isConnecting) {
+      unawaited(
+        _reconcileRemoteAudioSubscriptions(
+          deaf: effectiveAudioStateFromVoiceState(
+            voiceState: voiceState,
+            fallbackSelfMute: _pendingSelfMute,
+            fallbackSelfDeaf: _pendingSelfDeaf,
+          ).effectiveDeaf,
+          reason: 'voice_state_update',
+        ),
+      );
+    }
+    if (state.isConnected) {
+      unawaited(_reconcileLocalAudioPublish(reason: 'voice_state_update'));
+    }
+  }
+
+  void handleGuildDeleted(String guildId) {
+    if (!voiceSessionIsInGuild(state: state, guildId: guildId)) {
+      return;
+    }
+    talker.info(
+      '[Voice] Leaving voice: guild is gone or unavailable '
+      '(guildId=$guildId, channelId=${state.channelId}).',
+    );
+    unawaited(leaveVoice(endCall: false));
+  }
+
+  void handleEntranceSoundPlay(EntranceSoundPlayEvent event) {
+    if (!state.isConnected || state.channelId != event.channelId) {
+      return;
+    }
+    if (_effectiveAudioStateForSelfConnection().effectiveDeaf) {
+      return;
+    }
+    final SoundPreferencesState prefs = ref.read(soundPreferencesProvider);
+    if (prefs.allSoundsDisabled) {
+      return;
+    }
+    final double volume = entranceSoundPlayerVolume(
+      masterVolumePercent: prefs.masterVolume,
+      outputVolumePercent: ref.read(voiceSettingsProvider).outputVolume,
+    );
+    if (volume <= 0) {
+      return;
+    }
+    unawaited(
+      ref
+          .read(entranceSoundPlayerProvider)
+          .play(url: event.url, volume: volume),
+    );
+  }
+
+  void handleGatewayError(GatewayErrorEvent event) {
+    final String? errorMessage = kVoiceGatewayJoinErrors[event.code];
+    if (errorMessage == null) {
+      return;
+    }
+    if (!state.isConnecting || state.isConnected) {
+      return;
+    }
+    talker.warning('[Voice] Join rejected: ${event.code}');
+    final String? channelId = state.channelId;
+    final bool consentRequired =
+        errorMessage == kVoiceSessionErrorP2pConsentRequired;
+    _cancelConnectWatchdog();
+    _connectGeneration++;
+    _expectedGuildId = null;
+    _expectedChannelId = null;
+    _pendingRingAfterConnect = false;
+    _pendingRingSilently = false;
+    _outboundRingRecipients = null;
+    _resetPendingSelfAudioFlags();
+    _detachRoomEventsListener();
+    _detachLocalParticipantListener();
+    unawaited(_disconnectRoomOnly());
+    state = state.copyWith(
+      isConnecting: false,
+      isConnected: false,
+      isReconnecting: false,
+      errorMessage: errorMessage,
+      connectFailed: consentRequired ? true : null,
+      connectFailedTarget: consentRequired && channelId != null
+          ? VoiceConnectFailedTarget(
+              channelId: channelId,
+              guildId: state.guildId,
+            )
+          : null,
+      clearRoom: true,
+      clearE2eeKey: true,
+      clearChannel: true,
+      clearActiveConnectionId: true,
+    );
+  }
+
+  Future<void> _connectLiveKit({
+    required VoiceServerUpdateEvent event,
+    required String resolvedChannelId,
+    required int attempt,
+  }) async {
+    while (_connectLiveKitInFlight != null) {
+      await _connectLiveKitInFlight;
+      if (attempt != _connectGeneration) {
+        return;
+      }
+    }
+    final Completer<void> inFlightCompleter = Completer<void>();
+    _connectLiveKitInFlight = inFlightCompleter.future;
+    try {
+      await _connectLiveKitImpl(
+        event: event,
+        resolvedChannelId: resolvedChannelId,
+        attempt: attempt,
+      );
+    } finally {
+      if (!inFlightCompleter.isCompleted) {
+        inFlightCompleter.complete();
+      }
+      _connectLiveKitInFlight = null;
+    }
+  }
+
+  Future<void> _connectLiveKitImpl({
+    required VoiceServerUpdateEvent event,
+    required String resolvedChannelId,
+    required int attempt,
+  }) async {
+    while (_regionHotSwapInFlight != null) {
+      await _regionHotSwapInFlight;
+      if (attempt != _connectGeneration) {
+        return;
+      }
+    }
+    final String? moveFromChannelId = _voiceMovePreviousChannelId;
+    _voiceMovePreviousChannelId = null;
+    if (_hasLiveConnectionToChannel(resolvedChannelId)) {
+      talker.info(
+        '[Voice] Skipping LiveKit reconnect: already connected to '
+        'channelId=$resolvedChannelId.',
+      );
+      return;
+    }
+    await _disconnectRoomOnly(
+      skipGatewayDisconnect: !shouldSendVoiceDisconnectForReplacedRoom(
+        state: state,
+        incomingConnectionId: event.connectionId,
+      ),
+    );
+    if (attempt != _connectGeneration) {
+      return;
+    }
+    if (moveFromChannelId != null &&
+        moveFromChannelId.isNotEmpty &&
+        moveFromChannelId != resolvedChannelId) {
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: FluxerSfxClip.userMove,
+        ),
+      );
+    }
+    final String? e2eeKey = event.e2eeKey;
+    final bool useE2ee = e2eeKey != null && e2eeKey.isNotEmpty;
+    final RoomOptions roomOptions;
+    try {
+      roomOptions = await _roomOptionsForVoice(
+        resolvedChannelId: resolvedChannelId,
+        e2eeKey: e2eeKey,
+        guildId: _normalizeVoiceGuildId(event.guildId) ?? _expectedGuildId,
+      );
+    } on Object catch (e) {
+      talker.error('[Voice][E2EE] Key provider setup failed: $e');
+      if (attempt == _connectGeneration) {
+        _cancelConnectWatchdog();
+        state = state.copyWith(
+          isConnecting: false,
+          errorMessage: 'Could not connect to voice.',
+        );
+      }
+      return;
+    }
+    final VoiceSettingsState voiceSettings = ref.read(voiceSettingsProvider);
+    final Room room = Room(roomOptions: roomOptions);
+    _managedLiveKitRoom = room;
+    if (attempt != _connectGeneration) {
+      talker.warning(
+        '[Voice] LiveKit connect superseded after room creation '
+        '(attempt=$attempt, generation=$_connectGeneration).',
+      );
+      _managedLiveKitRoom = null;
+      await _disconnectAndDisposeRoom(room, reason: 'superseded_after_create');
+      if (identical(state.liveKitRoom, room)) {
+        state = state.copyWith(clearRoom: true);
+      }
+      return;
+    }
+    final String? resolvedGuildId =
+        _normalizeVoiceGuildId(event.guildId) ?? _expectedGuildId;
+    state = state.copyWith(
+      isConnecting: true,
+      isReconnecting: false,
+      voiceServerEndpoint: event.endpoint,
+      activeConnectionId: event.connectionId,
+      liveKitRoom: room,
+      e2eeKey: e2eeKey,
+      channelId: resolvedChannelId,
+      guildId: resolvedGuildId,
+    );
+    _bindVoiceRoomEvents(
+      room: room,
+      attempt: attempt,
+      resolvedChannelId: resolvedChannelId,
+      resolvedGuildId: resolvedGuildId,
+      connectionId: event.connectionId,
+    );
+    final ConnectOptions connectOptions = ConnectOptions(
+      autoSubscribe: false,
+      timeouts: useE2ee ? _kE2eeConnectTimeouts : Timeouts.defaultTimeouts,
+    );
+    _armLiveKitConnectWatchdog(attempt);
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator(
+      channelId: resolvedChannelId,
+    );
+    try {
+      unawaited(applicator.applySpeakerOutput(settings: voiceSettings));
+      await restoreAutomaticAudioSessionAfterMesh();
+      await room.connect(
+        event.endpoint,
+        event.token,
+        connectOptions: connectOptions,
+      );
+      _joinTiming?.mark('room.connect');
+      if (useE2ee) {
+        await room.setE2EEEnabled(true);
+        _logVoiceE2eeSnapshot(
+          'LiveKit transport connected with E2EE',
+          room: room,
+          channelId: resolvedChannelId,
+          guildId: resolvedGuildId,
+        );
+        talker.info(
+          '[Voice][E2EE] Transport connected: end-to-end encryption is active.',
+        );
+      } else {
+        talker.info(
+          '[Voice][E2EE] Transport connected: plaintext voice '
+          '(gateway did not send e2ee_key).',
+        );
+      }
+      if (attempt != _connectGeneration) {
+        talker.warning(
+          '[Voice] LiveKit connect superseded after room.connect '
+          '(attempt=$attempt, generation=$_connectGeneration).',
+        );
+        _detachRoomEventsListener();
+        _detachLocalParticipantListener();
+        logVoiceLifecycle(
+          'livekit_connect_superseded',
+          connectGeneration: _connectGeneration,
+          channelId: resolvedChannelId,
+          connectionId: event.connectionId,
+          reason: 'superseded_after_connect',
+          connectionState: room.connectionState.name,
+        );
+        if (identical(_managedLiveKitRoom, room)) {
+          _managedLiveKitRoom = null;
+        }
+        if (identical(state.liveKitRoom, room)) {
+          state = state.copyWith(clearRoom: true);
+        }
+        unawaited(
+          _disconnectAndDisposeRoom(room, reason: 'superseded_after_connect'),
+        );
+        return;
+      }
+      if (room.connectionState == ConnectionState.connected) {
+        _cancelLiveKitConnectWatchdog();
+        await _onLiveKitRoomConnected(
+          room: room,
+          attempt: attempt,
+          resolvedChannelId: resolvedChannelId,
+          resolvedGuildId: resolvedGuildId,
+          connectionId: event.connectionId,
+        );
+      }
+      if (_startWithVideoAfterConnect && attempt == _connectGeneration) {
+        _startWithVideoAfterConnect = false;
+        unawaited(_enableCameraAfterConnect(attempt: attempt));
+      }
+    } on Object catch (e) {
+      talker.error('[Voice] LiveKit transport connect failed: $e');
+      if (useE2ee) {
+        talker.error(
+          '[Voice][E2EE] Encrypted transport failed. '
+          'Check logs above for key setup or LiveKit E2EE errors.',
+        );
+      }
+      if (attempt == _connectGeneration) {
+        _startWithVideoAfterConnect = false;
+        await _handleLiveKitConnectFailure(
+          generation: attempt,
+          errorMessage: kVoiceSessionErrorTransportFailed,
+          reason: 'livekit_connect',
+        );
+      }
+    }
+  }
+
+  void _cancelRegionHotSwapTimeout() {
+    _regionHotSwapTimeoutTimer?.cancel();
+    _regionHotSwapTimeoutTimer = null;
+  }
+
+  Future<void> _abortRegionHotSwap({Room? pendingRoom}) async {
+    _cancelRegionHotSwapTimeout();
+    final Room? room = pendingRoom ?? _regionHotSwapPendingRoom;
+    _regionHotSwapPendingRoom = null;
+    if (room == null) {
+      return;
+    }
+    await _disconnectAndDisposeRoom(room, reason: 'region_hotswap_abort');
+  }
+
+  Future<void> _regionHotSwapLiveKit({
+    required VoiceServerUpdateEvent event,
+    required String resolvedChannelId,
+    required Room existingRoom,
+    required int attempt,
+  }) async {
+    while (_regionHotSwapInFlight != null) {
+      await _regionHotSwapInFlight;
+      if (attempt != _connectGeneration) {
+        return;
+      }
+    }
+    final Completer<void> inFlightCompleter = Completer<void>();
+    _regionHotSwapInFlight = inFlightCompleter.future;
+    try {
+      await _regionHotSwapLiveKitImpl(
+        event: event,
+        resolvedChannelId: resolvedChannelId,
+        existingRoom: existingRoom,
+        attempt: attempt,
+      );
+    } finally {
+      if (!inFlightCompleter.isCompleted) {
+        inFlightCompleter.complete();
+      }
+      _regionHotSwapInFlight = null;
+    }
+  }
+
+  Future<void> _regionHotSwapLiveKitImpl({
+    required VoiceServerUpdateEvent event,
+    required String resolvedChannelId,
+    required Room existingRoom,
+    required int attempt,
+  }) async {
+    if (attempt != _connectGeneration) {
+      return;
+    }
+    logVoiceLifecycle(
+      'region_hotswap_start',
+      connectGeneration: attempt,
+      channelId: resolvedChannelId,
+      connectionId: event.connectionId,
+    );
+    await _abortRegionHotSwap();
+    final String? e2eeKey = _e2eeKeyForRegionHotSwap(event.e2eeKey);
+    final RoomOptions roomOptions;
+    try {
+      roomOptions = await _roomOptionsForVoice(
+        resolvedChannelId: resolvedChannelId,
+        e2eeKey: e2eeKey,
+        guildId: _normalizeVoiceGuildId(event.guildId) ?? state.guildId,
+      );
+    } on Object catch (e, st) {
+      talker.error('[Voice][E2EE] Region change key setup failed: $e', e, st);
+      if (attempt == _connectGeneration) {
+        state = state.copyWith(isReconnecting: false);
+      }
+      return;
+    }
+    final Room newRoom = Room(roomOptions: roomOptions);
+    _regionHotSwapPendingRoom = newRoom;
+    state = state.copyWith(isReconnecting: true, clearError: true);
+    _cancelRegionHotSwapTimeout();
+    _regionHotSwapTimeoutTimer = Timer(_kRegionHotSwapTimeoutDuration, () {
+      if (_regionHotSwapPendingRoom != newRoom) {
+        return;
+      }
+      talker.warning('[Voice] LiveKit region change timed out.');
+      unawaited(_abortRegionHotSwap(pendingRoom: newRoom));
+      if (attempt == _connectGeneration) {
+        state = state.copyWith(isReconnecting: false);
+      }
+    });
+    try {
+      await newRoom.connect(
+        event.endpoint,
+        event.token,
+        connectOptions: ConnectOptions(
+          autoSubscribe: false,
+          timeouts: e2eeKey != null
+              ? _kE2eeConnectTimeouts
+              : Timeouts.defaultTimeouts,
+        ),
+      );
+      if (attempt != _connectGeneration ||
+          _regionHotSwapPendingRoom != newRoom) {
+        await _disconnectAndDisposeRoom(
+          newRoom,
+          reason: 'region_hotswap_superseded',
+        );
+        return;
+      }
+      if (e2eeKey != null) {
+        await newRoom.setE2EEEnabled(true);
+        _logVoiceE2eeSnapshot(
+          'region change connected with E2EE',
+          room: newRoom,
+          channelId: resolvedChannelId,
+          guildId: state.guildId,
+        );
+      }
+      await _disconnectRegionHotSwapPreviousRoom(existingRoom);
+      if (attempt != _connectGeneration ||
+          _regionHotSwapPendingRoom != newRoom) {
+        await _disconnectAndDisposeRoom(
+          newRoom,
+          reason: 'region_hotswap_cancelled',
+        );
+        return;
+      }
+      _managedLiveKitRoom = newRoom;
+      state = state.copyWith(liveKitRoom: newRoom, e2eeKey: e2eeKey);
+      final bool shareDropped = await _restoreLocalMediaAfterRegionHotSwap(
+        newRoom: newRoom,
+        resolvedChannelId: resolvedChannelId,
+        attempt: attempt,
+      );
+      if (attempt != _connectGeneration ||
+          _regionHotSwapPendingRoom != newRoom) {
+        await _disconnectAndDisposeRoom(
+          newRoom,
+          reason: 'region_hotswap_cancelled',
+        );
+        return;
+      }
+      _cancelRegionHotSwapTimeout();
+      _regionHotSwapPendingRoom = null;
+      _detachRoomEventsListener();
+      _detachLocalParticipantListener();
+      _managedLiveKitRoom = newRoom;
+      final String? resolvedGuildId =
+          _normalizeVoiceGuildId(event.guildId) ?? state.guildId;
+      state = state.copyWith(
+        isReconnecting: false,
+        voiceServerEndpoint: event.endpoint,
+        activeConnectionId: event.connectionId,
+        liveKitRoom: newRoom,
+        e2eeKey: e2eeKey,
+      );
+      _bindVoiceRoomEvents(
+        room: newRoom,
+        attempt: attempt,
+        resolvedChannelId: resolvedChannelId,
+        resolvedGuildId: resolvedGuildId,
+        connectionId: event.connectionId,
+      );
+      _attachLocalParticipantListener(newRoom.localParticipant);
+      unawaited(
+        _reconcileRemoteAudioForSelfConnection(
+          reason: 'region_endpoint_change',
+        ),
+      );
+      unawaited(applyAllParticipantVolumes());
+      unawaited(
+        _reconcileLocalAudioPublish(
+          reason: 'region_endpoint_change',
+          attempt: attempt,
+        ),
+      );
+      if (shareDropped) {
+        unawaited(
+          _reconcileSelfStreamState(reason: 'region_share_not_restored'),
+        );
+      }
+      talker.info(
+        '[Voice] LiveKit region change complete (endpoint=${event.endpoint}).',
+      );
+    } on Object catch (e, st) {
+      talker.error('[Voice] LiveKit region change failed: $e', e, st);
+      await _abortRegionHotSwap(pendingRoom: newRoom);
+      if (attempt == _connectGeneration) {
+        state = state.copyWith(isReconnecting: false);
+      }
+    }
+  }
+
+  Future<bool> _restoreLocalMediaAfterRegionHotSwap({
+    required Room newRoom,
+    required String resolvedChannelId,
+    required int attempt,
+  }) async {
+    if (attempt != _connectGeneration) {
+      return false;
+    }
+    final LocalParticipant? participant = newRoom.localParticipant;
+    if (participant == null) {
+      return false;
+    }
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator(
+      channelId: resolvedChannelId,
+    );
+    final int? channelBitrate = await _bitrateForChannel(resolvedChannelId);
+    final EffectiveAudioState audio = _effectiveAudioStateForSelfConnection();
+    if (audio.micShouldPublish) {
+      await applicator.setMicrophoneEnabled(
+        room: newRoom,
+        settings: settings,
+        enabled: true,
+        channelBitrate: channelBitrate,
+      );
+    }
+    final VoiceState? voiceState = _selfConnectionVoiceState();
+    if (voiceState?.selfVideo ?? false) {
+      await participant.setCameraEnabled(
+        true,
+        cameraCaptureOptions: _cameraCaptureOptions(),
+      );
+    }
+    var shareDropped = false;
+    if (voiceState?.selfStream ?? false) {
+      final String notificationText = ref
+          .read(appLocalizationsProvider)
+          .voiceScreenShareNotificationText;
+      final bool hasBackground = await enableAndroidScreenShareBackground(
+        notificationText: notificationText,
+      );
+      if (!hasBackground) {
+        shareDropped = true;
+        talker.warning(
+          '[Voice] Screen-share background service could not be restarted '
+          'after region change.',
+        );
+      } else {
+        await applicator.setScreenShareEnabled(
+          participant: participant,
+          room: newRoom,
+          settings: settings,
+          enabled: true,
+          captureScreenAudio: true,
+        );
+      }
+    }
+    return shareDropped;
+  }
+
+  String? _e2eeKeyForRegionHotSwap(String? incomingKey) {
+    if (incomingKey != null && incomingKey.isNotEmpty) {
+      return incomingKey;
+    }
+    final String? current = state.e2eeKey;
+    if (current != null && current.isNotEmpty) {
+      return current;
+    }
+    return null;
+  }
+
+  VoiceSettingsApplicator _voiceSettingsApplicator({
+    String? channelId,
+    String? guildId,
+  }) {
+    final VoiceSettingsApplicator base = ref.read(
+      voiceSettingsApplicatorProvider,
+    );
+    final String? resolvedChannelId =
+        channelId ?? (state.isInVoice ? state.channelId : null);
+    if (resolvedChannelId == null || resolvedChannelId.isEmpty) {
+      return base;
+    }
+    final String? resolvedGuildId = _normalizeVoiceGuildId(
+      guildId ?? state.guildId,
+    );
+    final VoiceChannelMode mode = voiceChannelMode(
+      voiceStatesForChannel(
+        voiceStates: ref.read(voiceStatesMapProvider),
+        channelId: resolvedChannelId,
+        guildId: resolvedGuildId,
+      ),
+    );
+    return base.forChannelMode(mode);
+  }
+
+  Future<RoomOptions> _roomOptionsForVoice({
+    required String resolvedChannelId,
+    required String? e2eeKey,
+    String? guildId,
+  }) async {
+    final bool useE2ee = e2eeKey != null && e2eeKey.isNotEmpty;
+    BaseKeyProvider? keyProvider;
+    if (useE2ee) {
+      keyProvider = await BaseKeyProvider.create();
+      await keyProvider.setSharedKey(e2eeKey);
+      talker.info('[Voice][E2EE] Shared key configured on BaseKeyProvider.');
+    }
+    final VoiceSettingsState voiceSettings = ref.read(voiceSettingsProvider);
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator(
+      channelId: resolvedChannelId,
+      guildId: guildId,
+    );
+    final int? channelBitrate = await _bitrateForChannel(resolvedChannelId);
+    final RoomOptions baseRoomOptions = applicator.buildRoomOptions(
+      voiceSettings,
+      channelBitrate: channelBitrate,
+    );
+    return RoomOptions(
+      dynacast: baseRoomOptions.dynacast,
+      encryption: keyProvider != null
+          ? E2EEOptions(keyProvider: keyProvider)
+          : null,
+      defaultAudioCaptureOptions: baseRoomOptions.defaultAudioCaptureOptions,
+      defaultAudioPublishOptions: baseRoomOptions.defaultAudioPublishOptions,
+      defaultCameraCaptureOptions: baseRoomOptions.defaultCameraCaptureOptions,
+      defaultScreenShareCaptureOptions:
+          baseRoomOptions.defaultScreenShareCaptureOptions,
+    );
+  }
+
+  Future<void> _disconnectRegionHotSwapPreviousRoom(Room previousRoom) async {
+    await _disconnectAndDisposeRoom(
+      previousRoom,
+      reason: 'region_hotswap_previous',
+      releaseLocalCapture: false,
+    );
+  }
+
+  Future<void> _ringAfterConnect(
+    String channelId, {
+    required bool silently,
+  }) async {
+    final List<String>? explicitRecipients = silently
+        ? null
+        : _outboundRingRecipients;
+    _outboundRingRecipients = null;
+    try {
+      final FluxerClient client = ref.read(fluxerClientProvider);
+      final List<String>? bodyRecipients = silently
+          ? <String>[]
+          : (explicitRecipients != null && explicitRecipients.isNotEmpty
+                ? explicitRecipients
+                : null);
+      await client.channels.ringCallRecipients(
+        channelId: channelId,
+        body: CallRingBodySchema(recipients: bodyRecipients),
+      );
+    } on Object catch (e) {
+      talker.warning('[Voice] ringCallRecipients: $e');
+      final String? code = ApiException.from(e).code;
+      if (code == 'NEW_CONVERSATIONS_LIMITED' || code == 'ACCOUNT_LIMITED') {
+        unawaited(showApiErrorFromRoot(ApiErrorAction.openDm, e));
+        await leaveVoice();
+      }
+    }
+  }
+
+  void _clearOutgoingCallInitiator(String? channelId) {
+    if (channelId == null) {
+      return;
+    }
+    ref
+        .read(outgoingVoiceCallInitiatorProvider.notifier)
+        .clearChannel(channelId);
+  }
+
+  Future<void> _setSessionCameraEnabled({required bool enabled}) async {
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (mesh != null) {
+      await mesh.setCamera(enabled ? _cameraCaptureOptions() : null);
+      return;
+    }
+    await state.liveKitRoom?.localParticipant?.setCameraEnabled(
+      enabled,
+      cameraCaptureOptions: _cameraCaptureOptions(),
+    );
+  }
+
+  Future<void> _enableCameraAfterConnect({required int attempt}) async {
+    if (_togglingVideo || !_hasTransport()) {
+      return;
+    }
+    final SystemPermissionOutcome cameraOutcome = await requestSystemPermission(
+      SystemPermissionKind.camera,
+    );
+    if (cameraOutcome != SystemPermissionOutcome.granted ||
+        attempt != _connectGeneration) {
+      if (attempt == _connectGeneration) {
+        if (cameraOutcome == SystemPermissionOutcome.denied) {
+          state = state.copyWith(
+            errorMessage: kVoiceSessionErrorCameraPermission,
+          );
+        } else if (cameraOutcome == SystemPermissionOutcome.requiresSettings) {
+          await ensureSystemPermission(
+            resolveSystemPermissionContext(null),
+            SystemPermissionKind.camera,
+          );
+        }
+      }
+      return;
+    }
+    _togglingVideo = true;
+    try {
+      try {
+        await _setSessionCameraEnabled(enabled: true);
+      } on Object catch (e) {
+        talker.error('[Voice] setCameraEnabled on connect: $e');
+        return;
+      }
+      if (attempt != _connectGeneration) {
+        return;
+      }
+      final VoiceState? vs = _selfConnectionVoiceState();
+      await _applySelfVoiceState(
+        selfMute: vs?.selfMute ?? false,
+        selfDeaf: vs?.selfDeaf ?? false,
+        selfVideo: true,
+      );
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: FluxerSfxClip.cameraOn,
+        ),
+      );
+    } finally {
+      _togglingVideo = false;
+    }
+  }
+
+  Future<void> leaveVoice({bool endCall = true}) async {
+    if (endCall) {
+      _endCallRequested = true;
+    }
+    if (_leaveVoiceInFlight != null) {
+      await _leaveVoiceInFlight;
+      await _finishRequestedEndCall();
+      return;
+    }
+    final Completer<void> leaveCompleter = Completer<void>();
+    _leaveVoiceInFlight = leaveCompleter.future;
+    try {
+      await _leaveVoiceImpl();
+    } on Object catch (error, stackTrace) {
+      if (isTransientNetworkError(error)) {
+        talker.debug('[Voice] leaveVoice: $error', error, stackTrace);
+      } else {
+        talker.warning('[Voice] leaveVoice: $error', error, stackTrace);
+      }
+    } finally {
+      try {
+        await _finishRequestedEndCall();
+      } finally {
+        if (!leaveCompleter.isCompleted) {
+          leaveCompleter.complete();
+        }
+        _leaveVoiceInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _finishRequestedEndCall() async {
+    if (!_endCallRequested) {
+      return;
+    }
+    _endCallRequested = false;
+    final String? channelId = _leaveChannelId;
+    if (channelId == null) {
+      return;
+    }
+    try {
+      final FluxerClient client = ref.read(fluxerClientProvider);
+      await client.channels.endCall(channelId: channelId);
+    } on Object catch (e) {
+      talker.warning('[Voice] endCall: $e');
+    }
+  }
+
+  Future<void> _leaveVoiceImpl() async {
+    _joinTiming = null;
+    _intentionalLiveKitTeardown = true;
+    _leaveChannelId = state.channelId;
+    logVoiceLifecycle(
+      'leave_voice',
+      connectGeneration: _connectGeneration,
+      channelId: state.channelId,
+      connectionId: state.activeConnectionId,
+      reason: _endCallRequested ? 'end_call' : 'leave_only',
+    );
+    _cancelConnectWatchdog();
+    _cancelLiveKitConnectWatchdog();
+    _cancelRegionHotSwapTimeout();
+    _cancelDeferredServerDisconnect();
+    _cancelSpeakerOutputRetry();
+    _startWithVideoAfterConnect = false;
+    unawaited(
+      playFluxerSoundEffect(
+        prefs: ref.read(soundPreferencesProvider),
+        sfx: ref.read(fluxerSfxProvider),
+        clip: FluxerSfxClip.voiceDisconnect,
+      ),
+    );
+    ref.read(voiceScreenShareWatchTileProvider.notifier).setActiveTileId(null);
+    ref.read(voiceScreenShareFullscreenProvider.notifier).reset();
+    ref.read(voiceCallLayoutProvider.notifier).reset();
+    ref.read(voiceCallDisplayPreferencesProvider.notifier).reset();
+    ref.read(voicePrioritySpeakerProvider.notifier).resetPrioritySpeakerState();
+    _channelPermissions = null;
+    await disableAndroidScreenShareBackground();
+    final String? channelId = state.channelId;
+    final String? guildId = state.guildId;
+    final String? connectionId = state.activeConnectionId;
+    _connectGeneration++;
+    _expectedGuildId = null;
+    _expectedChannelId = null;
+    _pendingRingAfterConnect = false;
+    _pendingRingSilently = false;
+    _outboundRingRecipients = null;
+    _lastLoggedE2eeChannelStatus = null;
+    _resetPendingSelfAudioFlags();
+    while (_regionHotSwapInFlight != null) {
+      await _regionHotSwapInFlight;
+    }
+    while (_connectLiveKitInFlight != null) {
+      await _connectLiveKitInFlight;
+    }
+    await _abortRegionHotSwap();
+    if (channelId != null) {
+      _clearOutgoingCallInitiator(channelId);
+    }
+    if (connectionId != null && guildId != null) {
+      _sendVoiceDisconnectState(guildId: guildId, connectionId: connectionId);
+    } else if (channelId != null) {
+      _sendVoiceLeaveChannelState(guildId: guildId);
+    }
+    await _disconnectRoomOnly(
+      guildId: guildId,
+      connectionId: connectionId,
+      skipGatewayDisconnect: true,
+    );
+    _lastReportedSelfStream = null;
+    _selfStreamReconcileDirty = false;
+    _handledRoomConnectedAttempt = null;
+    state = const VoiceSessionState();
+  }
+
+  void _teardownOnDispose() {
+    _intentionalLiveKitTeardown = true;
+    _connectGeneration++;
+    logVoiceLifecycle(
+      'session_provider_dispose',
+      connectGeneration: _connectGeneration,
+      channelId: _expectedChannelId,
+      connectionId: _pendingServerDisconnectConnectionId,
+      reason: 'teardown_on_dispose',
+    );
+    _cancelConnectWatchdog();
+    _cancelLiveKitConnectWatchdog();
+    _cancelRegionHotSwapTimeout();
+    unawaited(_abortRegionHotSwap());
+    _cancelDeferredServerDisconnect();
+    _cancelSpeakerOutputRetry();
+    unawaited(disableAndroidScreenShareBackground());
+    _detachMediaDeviceChangeListener();
+    _detachLocalParticipantListener();
+    _detachRoomEventsListener();
+    _meshConversionTimer?.cancel();
+    _meshConversionTimer = null;
+    final VoiceMeshTransport? meshToClose = _managedMesh;
+    _managedMesh = null;
+    if (meshToClose != null) {
+      unawaited(meshToClose.close());
+    }
+    final Room? roomToDisconnect = _managedLiveKitRoom;
+    _managedLiveKitRoom = null;
+    if (roomToDisconnect == null) {
+      return;
+    }
+    unawaited(_disconnectAndDisposeRoom(roomToDisconnect));
+  }
+
+  Future<void> _prepareVoiceMediaTeardownBeforeRoomDisconnect() async {
+    if (state.isInVoice) {
+      state = state.copyWith(
+        isConnecting: false,
+        isConnected: false,
+        isReconnecting: false,
+        clearRoom: true,
+        clearE2eeKey: true,
+      );
+      await waitForVoiceMediaWidgetsToRelease();
+    }
+    await drainVoiceMediaHandoffs(ref);
+  }
+
+  Future<void> _enqueueLiveKitTeardown(Future<void> Function() action) {
+    final Future<void> previous = _liveKitTeardownTail ?? Future<void>.value();
+    final Future<void> next = previous.then((_) => action());
+    _liveKitTeardownTail = next.catchError((Object _, StackTrace _) {});
+    return next;
+  }
+
+  Future<void> _disconnectAndDisposeRoom(
+    Room room, {
+    String? reason,
+    bool releaseLocalCapture = true,
+  }) {
+    return _enqueueLiveKitTeardown(
+      () => _disconnectAndDisposeRoomImpl(
+        room,
+        reason: reason,
+        releaseLocalCapture: releaseLocalCapture,
+      ),
+    );
+  }
+
+  Future<void> _disconnectAndDisposeRoomImpl(
+    Room room, {
+    String? reason,
+    bool releaseLocalCapture = true,
+  }) async {
+    logVoiceLifecycle(
+      'livekit_room_teardown',
+      connectGeneration: _connectGeneration,
+      channelId: state.channelId,
+      connectionId: state.activeConnectionId,
+      reason: reason,
+      connectionState: room.connectionState.name,
+    );
+    final bool teardownAlreadyArmed = _intentionalLiveKitTeardown;
+    _intentionalLiveKitTeardown = true;
+    final String reasonSuffix = reason == null ? '' : ' after $reason';
+    try {
+      final LocalParticipant? localParticipant = room.localParticipant;
+      if (localParticipant != null && releaseLocalCapture) {
+        try {
+          await localParticipant.setScreenShareEnabled(false);
+        } on Object catch (error) {
+          talker.debug(
+            '[Voice] failed to disable screen share on disconnect: $error',
+          );
+        }
+        try {
+          await localParticipant.setCameraEnabled(false);
+        } on Object catch (error) {
+          talker.debug(
+            '[Voice] failed to disable camera on disconnect: $error',
+          );
+        }
+      }
+      await room.disconnect();
+    } on Object catch (e) {
+      talker.warning('[Voice] failed to disconnect$reasonSuffix: $e');
+    } finally {
+      try {
+        await room.dispose();
+      } on Object catch (e) {
+        talker.warning('[Voice] failed to dispose room$reasonSuffix: $e');
+      }
+      if (!teardownAlreadyArmed) {
+        _intentionalLiveKitTeardown = false;
+      }
+    }
+  }
+
+  Future<void> _disconnectRoomOnly({
+    String? guildId,
+    String? connectionId,
+    bool skipGatewayDisconnect = false,
+  }) async {
+    _detachMediaDeviceChangeListener();
+    _detachRoomEventsListener();
+    _detachLocalParticipantListener();
+    final VoiceSessionState sessionState = state;
+    final VoiceMeshTransport? meshToClose = _managedMesh;
+    final Room? roomToDisconnect =
+        _managedLiveKitRoom ?? sessionState.liveKitRoom;
+    _managedLiveKitRoom = null;
+    if (roomToDisconnect == null && meshToClose == null) {
+      return;
+    }
+    if (roomToDisconnect != null && !_intentionalLiveKitTeardown) {
+      final LocalParticipant? localParticipant =
+          roomToDisconnect.localParticipant;
+      if (localParticipant != null) {
+        try {
+          await localParticipant.setMicrophoneEnabled(false);
+        } on Object catch (error) {
+          talker.debug('[Voice] failed to disable mic on disconnect: $error');
+        }
+      }
+    }
+    if (!skipGatewayDisconnect) {
+      _sendVoiceDisconnectState(
+        guildId: guildId ?? sessionState.guildId,
+        connectionId: connectionId ?? sessionState.activeConnectionId,
+      );
+    }
+    await _prepareVoiceMediaTeardownBeforeRoomDisconnect();
+    if (meshToClose != null) {
+      await _closeMesh(meshToClose);
+    }
+    if (roomToDisconnect != null) {
+      await _disconnectAndDisposeRoom(roomToDisconnect);
+    }
+  }
+
+  void _sendVoiceDisconnectState({
+    required String? guildId,
+    required String? connectionId,
+  }) {
+    if (guildId == null || connectionId == null) {
+      return;
+    }
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: guildId,
+            selfMute: true,
+            selfDeaf: true,
+            selfVideo: false,
+            selfStream: false,
+            connectionId: connectionId,
+            isMobile: isFluxerMobileOs,
+          ),
+        );
+  }
+
+  void _sendVoiceLeaveChannelState({required String? guildId}) {
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: guildId,
+            selfMute: false,
+            selfDeaf: false,
+            selfVideo: false,
+            selfStream: false,
+            isMobile: isFluxerMobileOs,
+          ),
+        );
+  }
+
+  Future<bool> _ensureSystemPermissionForVoice(
+    SystemPermissionKind kind, {
+    required String deniedErrorCode,
+  }) async {
+    final SystemPermissionOutcome outcome = await requestSystemPermission(kind);
+    if (outcome == SystemPermissionOutcome.granted) {
+      return true;
+    }
+    if (outcome == SystemPermissionOutcome.requiresSettings) {
+      await ensureSystemPermission(resolveSystemPermissionContext(null), kind);
+      return false;
+    }
+    state = state.copyWith(errorMessage: deniedErrorCode);
+    return false;
+  }
+
+  void clearError() {
+    if (state.errorMessage == null && !state.connectFailed) {
+      return;
+    }
+    if (!state.isConnected) {
+      _connectGeneration++;
+      _expectedGuildId = null;
+      _expectedChannelId = null;
+      _pendingRingAfterConnect = false;
+      _pendingRingSilently = false;
+      _outboundRingRecipients = null;
+      _resetPendingSelfAudioFlags();
+      final String? ch = state.channelId;
+      if (ch != null) {
+        _clearOutgoingCallInitiator(ch);
+      }
+      _cancelConnectWatchdog();
+    }
+    state = state.copyWith(
+      clearError: true,
+      isConnecting: false,
+      clearConnectFailed: true,
+      clearConnectFailedTarget: true,
+      clearChannel: state.connectFailed,
+    );
+  }
+
+  VoiceState? _selfConnectionVoiceState() {
+    return resolveSelfConnectionVoiceState(
+      voiceStates: ref.read(voiceStatesMapProvider),
+      activeConnectionId: state.activeConnectionId,
+      userId: ref.read(currentUserIdProvider),
+      channelId: state.channelId,
+    );
+  }
+
+  Future<void> toggleSelfMute() async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      await ref.read(localVoiceStateProvider.notifier).toggleSelfMute();
+      final bool muted = ref.read(localVoiceStateProvider).selfMute;
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: muted ? FluxerSfxClip.mute : FluxerSfxClip.unmute,
+        ),
+      );
+      return;
+    }
+    final VoiceState? vs = _selfConnectionVoiceState();
+    final bool nextMute = !(vs?.selfMute ?? false);
+    await setSelfMute(isMuted: nextMute, playSound: true);
+    await ref
+        .read(localVoiceStateProvider.notifier)
+        .setSelfMute(muted: nextMute);
+  }
+
+  Future<void> setSelfMute({
+    required bool isMuted,
+    bool playSound = false,
+  }) async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      return;
+    }
+    final VoiceState? vs = _selfConnectionVoiceState();
+    if ((vs?.selfMute ?? false) == isMuted) {
+      return;
+    }
+    final bool nextDeaf = vs?.selfDeaf ?? false;
+    await _applySelfVoiceState(
+      selfMute: isMuted,
+      selfDeaf: nextDeaf,
+      selfVideo: vs?.selfVideo ?? false,
+    );
+    if (playSound) {
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: isMuted ? FluxerSfxClip.mute : FluxerSfxClip.unmute,
+        ),
+      );
+    }
+  }
+
+  Future<void> toggleSelfDeafen() async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      final bool wasDeaf = ref.read(localVoiceStateProvider).selfDeaf;
+      await ref.read(localVoiceStateProvider.notifier).toggleSelfDeaf();
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: wasDeaf ? FluxerSfxClip.undeaf : FluxerSfxClip.deaf,
+        ),
+      );
+      return;
+    }
+    final VoiceState? vs = _selfConnectionVoiceState();
+    final bool isDeaf = vs?.selfDeaf ?? false;
+    await ref
+        .read(localVoiceStateProvider.notifier)
+        .setSelfDeaf(deafened: !isDeaf);
+    final LocalVoiceStateData local = ref.read(localVoiceStateProvider);
+    await _applySelfVoiceState(
+      selfMute: local.selfMute,
+      selfDeaf: local.selfDeaf,
+      selfVideo: vs?.selfVideo ?? false,
+    );
+    unawaited(
+      playFluxerSoundEffect(
+        prefs: ref.read(soundPreferencesProvider),
+        sfx: ref.read(fluxerSfxProvider),
+        clip: isDeaf ? FluxerSfxClip.undeaf : FluxerSfxClip.deaf,
+      ),
+    );
+  }
+
+  Future<void> toggleSelfVideo() async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null || !s.isConnected) {
+      return;
+    }
+    if (_togglingVideo) {
+      return;
+    }
+    final VoiceState? vs = _selfConnectionVoiceState();
+    final bool nextVideo = !(vs?.selfVideo ?? false);
+    if (!_hasTransport()) {
+      return;
+    }
+    if (nextVideo) {
+      final bool camOk = await _ensureSystemPermissionForVoice(
+        SystemPermissionKind.camera,
+        deniedErrorCode: kVoiceSessionErrorCameraPermission,
+      );
+      if (!camOk) {
+        return;
+      }
+    }
+    _togglingVideo = true;
+    try {
+      try {
+        await _setSessionCameraEnabled(enabled: nextVideo);
+      } on Object catch (e) {
+        talker.error('[Voice] setCameraEnabled: $e');
+        return;
+      }
+      await _applySelfVoiceState(
+        selfMute: vs?.selfMute ?? false,
+        selfDeaf: vs?.selfDeaf ?? false,
+        selfVideo: nextVideo,
+      );
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: nextVideo ? FluxerSfxClip.cameraOn : FluxerSfxClip.cameraOff,
+        ),
+      );
+    } finally {
+      _togglingVideo = false;
+    }
+  }
+
+  Future<void> flipCamera() async {
+    if (!isMobileVoiceCameraPlatform()) {
+      return;
+    }
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null || !s.isConnected) {
+      return;
+    }
+    final VoiceState? vs = _selfConnectionVoiceState();
+    if (!(vs?.selfVideo ?? false)) {
+      return;
+    }
+    if (_togglingVideo) {
+      return;
+    }
+    _togglingVideo = true;
+    try {
+      final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+      final VoiceCameraFacing nextFacing = settings.cameraFacing.switched();
+      await ref
+          .read(voiceSettingsProvider.notifier)
+          .setCameraFacing(nextFacing);
+      final VoiceMeshTransport? mesh = s.mesh;
+      final Room? room = s.liveKitRoom;
+      if (mesh != null) {
+        await mesh.applyCameraOptions(_cameraCaptureOptions());
+      } else if (room != null) {
+        await _voiceSettingsApplicator().refreshCamera(
+          room: room,
+          settings: ref.read(voiceSettingsProvider),
+          cameraEnabled: true,
+        );
+      }
+    } finally {
+      _togglingVideo = false;
+    }
+  }
+
+  Future<void> toggleSelfStream({
+    required String screenShareNotificationText,
+  }) async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null || !s.isConnected) {
+      return;
+    }
+    if (_togglingScreenShare) {
+      return;
+    }
+    final bool isSupported = ref
+        .read(screenShareCapabilityProvider)
+        .maybeWhen(data: (bool value) => value, orElse: () => false);
+    if (!isSupported) {
+      talker.warning(
+        '[Voice] toggleSelfStream blocked: screen sharing is not supported '
+        'on this platform/device.',
+      );
+      state = state.copyWith(
+        errorMessage: kVoiceSessionErrorScreenShareUnsupported,
+      );
+      return;
+    }
+    final VoiceMeshTransport? mesh = s.mesh;
+    if (mesh != null && Platform.isIOS) {
+      state = state.copyWith(
+        errorMessage: kVoiceSessionErrorP2pScreenShareUnavailable,
+      );
+      return;
+    }
+    final bool nextSelfStream = !_hasPublishedLocalScreenShareVideo(
+      requireTrack: false,
+    );
+    final Room? room = s.liveKitRoom;
+    final LocalParticipant? lp = room?.localParticipant;
+    if (mesh == null && (room == null || lp == null)) {
+      return;
+    }
+    talker.debug('[Voice] toggleSelfStream requested: enable=$nextSelfStream');
+    _togglingScreenShare = true;
+    try {
+      final bool hasCapturePermission = await _requestScreenCapturePermission(
+        shouldEnableScreenShare: nextSelfStream,
+      );
+      if (!hasCapturePermission) {
+        state = state.copyWith(
+          errorMessage: kVoiceSessionErrorScreenSharePermissionDenied,
+        );
+        return;
+      }
+      if (nextSelfStream) {
+        final bool hasScreenShareAudioPermission =
+            await _ensureScreenShareAudioPermission();
+        if (!hasScreenShareAudioPermission) {
+          state = state.copyWith(
+            errorMessage: kVoiceSessionErrorScreenSharePermissionDenied,
+          );
+          return;
+        }
+        final bool hasBackground = await enableAndroidScreenShareBackground(
+          notificationText: screenShareNotificationText,
+        );
+        if (!hasBackground || !await isAndroidScreenShareBackgroundRunning()) {
+          talker.warning(
+            '[Voice] Screen-share background service could not be started '
+            'or is not running.',
+          );
+          await disableAndroidScreenShareBackground();
+          state = state.copyWith(
+            errorMessage: kVoiceSessionErrorScreenShareToggle,
+          );
+          return;
+        }
+        talker.debug('[Voice] Screen-share background service is running.');
+      }
+      try {
+        final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+        final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+        if (mesh != null) {
+          await mesh.setScreenShare(
+            nextSelfStream
+                ? applicator.buildScreenShareCaptureOptions(settings)
+                : null,
+          );
+        } else if (room != null && lp != null) {
+          await applicator.setScreenShareEnabled(
+            participant: lp,
+            room: room,
+            settings: settings,
+            enabled: nextSelfStream,
+            captureScreenAudio: nextSelfStream,
+          );
+        }
+      } on Object catch (e, st) {
+        talker.error(
+          '[Voice] setScreenShareEnabled failed '
+          '(enable=$nextSelfStream): $e',
+          e,
+          st,
+        );
+        if (nextSelfStream) {
+          await disableAndroidScreenShareBackground();
+        }
+        state = state.copyWith(errorMessage: _classifyScreenShareException(e));
+        return;
+      }
+      if (!nextSelfStream) {
+        await disableAndroidScreenShareBackground();
+      }
+      talker.debug(
+        '[Voice] setScreenShareEnabled completed: enable=$nextSelfStream',
+      );
+      await _reconcileSelfStreamState(
+        reason: nextSelfStream ? 'toggle_enable' : 'toggle_disable',
+        waitForPublication: nextSelfStream,
+      );
+      final bool published = _hasPublishedLocalScreenShareVideo(
+        requireTrack: true,
+      );
+      if (nextSelfStream && !published) {
+        talker.warning(
+          '[Voice] Screen-share track did not publish within the wait window.',
+        );
+        await disableAndroidScreenShareBackground();
+        state = state.copyWith(
+          errorMessage: kVoiceSessionErrorScreenShareToggle,
+        );
+        return;
+      }
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: nextSelfStream
+              ? FluxerSfxClip.streamStart
+              : FluxerSfxClip.streamStop,
+        ),
+      );
+    } finally {
+      _togglingScreenShare = false;
+    }
+  }
+
+  Future<bool> _requestScreenCapturePermission({
+    required bool shouldEnableScreenShare,
+  }) async {
+    final bool requiresCapturePermission =
+        Platform.isAndroid ||
+        Platform.isMacOS ||
+        (Platform.isLinux && !isFluxerRuntimeMobileFormFactor);
+    if (!shouldEnableScreenShare || !requiresCapturePermission) {
+      return true;
+    }
+    final bool hasCapturePermission = await Helper.requestCapturePermission();
+    if (!hasCapturePermission) {
+      talker.warning('[Voice] Screen-share capture permission denied by user.');
+    }
+    return hasCapturePermission;
+  }
+
+  Future<bool> _ensureScreenShareAudioPermission() async {
+    if (!Platform.isAndroid) {
+      return true;
+    }
+    final bool hasMicrophonePermission =
+        await hasMicrophonePermissionForVoice();
+    if (hasMicrophonePermission) {
+      return true;
+    }
+    talker.warning(
+      '[Voice] Screen-share audio requires microphone permission; requesting.',
+    );
+    return _ensureSystemPermissionForVoice(
+      SystemPermissionKind.microphone,
+      deniedErrorCode: kVoiceSessionErrorScreenSharePermissionDenied,
+    );
+  }
+
+  String _classifyScreenShareException(Object error) {
+    final String msg = error.toString().toLowerCase();
+    talker.debug('[Voice] classifying screen share exception: $msg');
+    if (msg.contains('permission') && msg.contains('deni')) {
+      return kVoiceSessionErrorScreenSharePermissionDenied;
+    }
+    if (msg.contains('mediaprojection') ||
+        msg.contains('media projection') ||
+        msg.contains('projection') && msg.contains('denied')) {
+      return kVoiceSessionErrorScreenSharePermissionDenied;
+    }
+    if (msg.contains('securityexception') ||
+        msg.contains('not allowed') ||
+        msg.contains('user cancel') ||
+        msg.contains('user denied')) {
+      return kVoiceSessionErrorScreenSharePermissionDenied;
+    }
+    if (msg.contains('foreground') && msg.contains('service') ||
+        msg.contains('background execution') ||
+        msg.contains('media_projection')) {
+      return kVoiceSessionErrorScreenShareToggle;
+    }
+    return kVoiceSessionErrorScreenShareToggle;
+  }
+
+  Future<void> _applySelfVoiceState({
+    required bool selfMute,
+    required bool selfDeaf,
+    required bool selfVideo,
+  }) async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      return;
+    }
+    _syncPendingSelfAudioFlags(selfMute: selfMute, selfDeaf: selfDeaf);
+    final String? connectionId = s.activeConnectionId;
+    final VoiceState? current = _selfConnectionVoiceState();
+    final bool selfStream = current?.selfStream ?? false;
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: s.guildId,
+            channelId: s.channelId,
+            selfMute: selfMute,
+            selfDeaf: selfDeaf,
+            selfVideo: selfVideo,
+            selfStream: selfStream,
+            connectionId: connectionId,
+            isMobile: isFluxerMobileOs,
+          ),
+        );
+    final EffectiveAudioState audio = computeEffectiveAudioState(
+      selfMute: selfMute,
+      selfDeaf: selfDeaf,
+      serverMute: (current?.mute ?? false) || (current?.suppress ?? false),
+      serverDeaf: current?.deaf ?? false,
+    );
+    if (_hasTransport() && state.isConnected) {
+      final bool micOn = audio.micShouldPublish && _canPublishAudioInChannel();
+      try {
+        await _setSessionMicrophoneEnabled(enabled: micOn);
+      } on Object catch (e) {
+        if (isTrackPublishFailure(e)) {
+          talker.warning('[Voice] setMicrophoneEnabled failed: $e');
+          state = state.copyWith(errorMessage: kVoiceSessionErrorMicPublish);
+        } else {
+          talker.error('[Voice] setMicrophoneEnabled: $e');
+        }
+      }
+    }
+    if (_hasTransport() && (state.isConnected || state.isConnecting)) {
+      unawaited(
+        _reconcileRemoteAudioSubscriptions(
+          deaf: audio.effectiveDeaf,
+          reason: 'self_voice_state',
+        ),
+      );
+    }
+  }
+
+  Future<void> _applySelfStreamState({required bool selfStream}) async {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      return;
+    }
+    final VoiceState? current = _selfConnectionVoiceState();
+    if (current?.selfStream == selfStream) {
+      return;
+    }
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: s.guildId,
+            channelId: s.channelId,
+            selfMute: current?.selfMute ?? false,
+            selfDeaf: current?.selfDeaf ?? false,
+            selfVideo: current?.selfVideo ?? false,
+            selfStream: selfStream,
+            connectionId: s.activeConnectionId,
+            isMobile: isFluxerMobileOs,
+          ),
+        );
+  }
+
+  bool _hasPublishedLocalScreenShareVideo({required bool requireTrack}) {
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (mesh != null) {
+      return mesh.hasScreenShare;
+    }
+    final LocalParticipant? lp = state.liveKitRoom?.localParticipant;
+    if (lp == null) {
+      return false;
+    }
+    for (final LocalTrackPublication<LocalVideoTrack> publication
+        in lp.videoTrackPublications) {
+      if (!publication.isScreenShare || publication.muted) {
+        continue;
+      }
+      if (requireTrack && publication.track == null) {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _waitForScreenSharePublication() async {
+    if (_hasPublishedLocalScreenShareVideo(requireTrack: true)) {
+      return;
+    }
+    final VoiceMeshTransport? mesh = state.mesh;
+    final Listenable? participant = mesh != null
+        ? mesh.local
+        : state.liveKitRoom?.localParticipant;
+    if (participant == null) {
+      return;
+    }
+    final Completer<void> published = Completer<void>();
+    void onChanged() {
+      if (published.isCompleted) {
+        return;
+      }
+      if (_hasPublishedLocalScreenShareVideo(requireTrack: true)) {
+        published.complete();
+      }
+    }
+
+    participant.addListener(onChanged);
+    onChanged();
+    try {
+      await published.future.timeout(
+        _kScreenSharePublicationTimeout,
+        onTimeout: () {},
+      );
+    } finally {
+      participant.removeListener(onChanged);
+    }
+  }
+
+  Future<void> _reconcileSelfStreamState({
+    required String reason,
+    bool waitForPublication = false,
+  }) async {
+    if (_reconcilingSelfStream) {
+      _selfStreamReconcileDirty = true;
+      return;
+    }
+    _reconcilingSelfStream = true;
+    try {
+      if (waitForPublication) {
+        await _waitForScreenSharePublication();
+      }
+      final bool actualSelfStream = _hasPublishedLocalScreenShareVideo(
+        requireTrack: false,
+      );
+      final bool currentSelfStream =
+          _selfConnectionVoiceState()?.selfStream ?? false;
+      if (actualSelfStream == currentSelfStream) {
+        return;
+      }
+      if (_lastReportedSelfStream == actualSelfStream) {
+        return;
+      }
+      talker.debug(
+        '[Voice] selfStream reconcile ($reason): '
+        '$currentSelfStream -> $actualSelfStream',
+      );
+      _lastReportedSelfStream = actualSelfStream;
+      await _applySelfStreamState(selfStream: actualSelfStream);
+    } finally {
+      _reconcilingSelfStream = false;
+      if (_selfStreamReconcileDirty) {
+        _selfStreamReconcileDirty = false;
+        unawaited(_reconcileSelfStreamState(reason: reason));
+      }
+    }
+  }
+
+  void _handleLocalParticipantChanged() {
+    if (_reconcilingSelfStream) {
+      final bool published = _hasPublishedLocalScreenShareVideo(
+        requireTrack: false,
+      );
+      if (published != _lastReportedSelfStream) {
+        _selfStreamReconcileDirty = true;
+      }
+      return;
+    }
+    unawaited(_reconcileSelfStreamState(reason: 'local_participant_changed'));
+  }
+
+  void _attachLocalParticipantListener(Listenable? participant) {
+    if (participant == _observedLocalParticipant) {
+      return;
+    }
+    _detachLocalParticipantListener();
+    if (participant == null) {
+      return;
+    }
+    _observedLocalParticipant = participant;
+    participant.addListener(_handleLocalParticipantChanged);
+  }
+
+  void _detachLocalParticipantListener() {
+    final Listenable? participant = _observedLocalParticipant;
+    if (participant == null) {
+      return;
+    }
+    participant.removeListener(_handleLocalParticipantChanged);
+    _observedLocalParticipant = null;
+  }
+
+  bool _isLatestRoomAttempt(int attempt) {
+    return attempt == _connectGeneration && attempt == _boundRoomAttemptId;
+  }
+
+  void _cancelDeferredServerDisconnect() {
+    _deferredServerDisconnectTimer?.cancel();
+    _deferredServerDisconnectTimer = null;
+    _pendingServerDisconnectConnectionId = null;
+  }
+
+  void _scheduleDeferredServerDisconnect(String connectionId) {
+    _cancelDeferredServerDisconnect();
+    if (!state.isConnected && !state.isConnecting) {
+      return;
+    }
+    _pendingServerDisconnectConnectionId = connectionId;
+    _deferredServerDisconnectTimer = Timer(
+      _kDeferredServerDisconnectDuration,
+      () {
+        if (_pendingServerDisconnectConnectionId != connectionId) {
+          return;
+        }
+        if (state.activeConnectionId != connectionId) {
+          return;
+        }
+        if (!state.isConnected) {
+          return;
+        }
+        talker.info(
+          '[Voice] Deferred server disconnect executing '
+          '(connectionId=$connectionId).',
+        );
+        unawaited(leaveVoice(endCall: false));
+      },
+    );
+  }
+
+  Future<void> _onLiveKitRoomConnected({
+    required Room room,
+    required int attempt,
+    required String resolvedChannelId,
+    required String? resolvedGuildId,
+    required String connectionId,
+  }) async {
+    if (!_isLatestRoomAttempt(attempt)) {
+      return;
+    }
+    if (_handledRoomConnectedAttempt == attempt) {
+      unawaited(
+        _reconcileLocalAudioPublish(reason: 'room_connected_duplicate'),
+      );
+      return;
+    }
+    _handledRoomConnectedAttempt = attempt;
+    _intentionalLiveKitTeardown = false;
+    logVoiceLifecycle(
+      'livekit_room_connected',
+      connectGeneration: attempt,
+      channelId: resolvedChannelId,
+      connectionId: connectionId,
+      connectionState: room.connectionState.name,
+    );
+    _cancelLiveKitConnectWatchdog();
+    _onTransportConnected(
+      attempt: attempt,
+      resolvedChannelId: resolvedChannelId,
+      resolvedGuildId: resolvedGuildId,
+      connectionId: connectionId,
+      localParticipant: room.localParticipant,
+    );
+  }
+
+  void _onTransportConnected({
+    required int attempt,
+    required String resolvedChannelId,
+    required String? resolvedGuildId,
+    required String connectionId,
+    required Listenable? localParticipant,
+  }) {
+    _attachLocalParticipantListener(localParticipant);
+    state = state.copyWith(
+      isConnecting: false,
+      isConnected: true,
+      isReconnecting: false,
+      channelId: resolvedChannelId,
+      guildId: resolvedGuildId,
+      activeConnectionId: connectionId,
+      clearError: true,
+    );
+    _refreshChannelPermissionsSnapshot();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        playFluxerSoundEffect(
+          prefs: ref.read(soundPreferencesProvider),
+          sfx: ref.read(fluxerSfxProvider),
+          clip: FluxerSfxClip.userJoin,
+        ),
+      );
+    });
+    if (_pendingRingAfterConnect) {
+      unawaited(
+        _ringAfterConnect(resolvedChannelId, silently: _pendingRingSilently),
+      );
+      _pendingRingAfterConnect = false;
+      _pendingRingSilently = false;
+    }
+    _joinTiming?.mark('connected');
+    unawaited(_reconcileRemoteAudioForSelfConnection(reason: 'room_connected'));
+    unawaited(_applyVoiceOutputRouting(ref.read(voiceSettingsProvider)));
+    _attachMediaDeviceChangeListener();
+    unawaited(
+      _ensureLocalMicrophone(reason: 'room_connected', attempt: attempt),
+    );
+  }
+
+  void _attachMediaDeviceChangeListener() {
+    if (_mediaDeviceChangeSubscription != null) {
+      return;
+    }
+    if (Platform.isIOS) {
+      ref.read(voiceIosNativeRouteSyncProvider);
+    }
+    _mediaDeviceChangeSubscription = Hardware.instance.onDeviceChange.stream
+        .listen(_scheduleAudioRouteRecovery);
+  }
+
+  void _detachMediaDeviceChangeListener() {
+    _audioRouteRecoveryTimer?.cancel();
+    _audioRouteRecoveryTimer = null;
+    _pendingRecoveryInputIds = null;
+    _pendingRecoveryOutputIds = null;
+    _lastKnownInputDeviceIds = null;
+    _lastKnownOutputDeviceIds = null;
+    _isRecoveringAudioRoute = false;
+    unawaited(_mediaDeviceChangeSubscription?.cancel());
+    _mediaDeviceChangeSubscription = null;
+    unawaited(clearNativeVoiceOutputRouteHold());
+  }
+
+  Set<String> _audioInputDeviceIds(List<MediaDevice> devices) {
+    return devices
+        .where((MediaDevice device) => device.kind == 'audioinput')
+        .map((MediaDevice device) => device.deviceId)
+        .toSet();
+  }
+
+  Set<String> _audioOutputDeviceIds(List<MediaDevice> devices) {
+    return devices
+        .where((MediaDevice device) => device.kind == 'audiooutput')
+        .map((MediaDevice device) => device.deviceId)
+        .toSet();
+  }
+
+  void _scheduleAudioRouteRecovery(List<MediaDevice> devices) {
+    _pendingRecoveryInputIds = _audioInputDeviceIds(devices);
+    _pendingRecoveryOutputIds = _audioOutputDeviceIds(devices);
+    _audioRouteRecoveryTimer?.cancel();
+    _audioRouteRecoveryTimer = Timer(kVoiceAudioRouteRecoveryDebounce, () {
+      final Set<String>? inputIds = _pendingRecoveryInputIds;
+      final Set<String>? outputIds = _pendingRecoveryOutputIds;
+      _pendingRecoveryInputIds = null;
+      _pendingRecoveryOutputIds = null;
+      if (inputIds != null && outputIds != null) {
+        unawaited(
+          _recoverAudioAfterDeviceChange(
+            inputIds: inputIds,
+            outputIds: outputIds,
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _recoverAudioAfterDeviceChange({
+    required Set<String> inputIds,
+    required Set<String> outputIds,
+  }) async {
+    if (_isRecoveringAudioRoute) {
+      return;
+    }
+    final Room? room = state.liveKitRoom;
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (!shouldRecoverVoiceAudioOnDeviceChange(
+      isConnected: state.isConnected,
+      hasLiveKitRoom: _hasTransport(),
+    )) {
+      return;
+    }
+
+    final bool inputChanged = didAudioInputDeviceIdsChange(
+      previous: _lastKnownInputDeviceIds,
+      current: inputIds,
+    );
+    final bool outputChanged = didAudioOutputDeviceIdsChange(
+      previous: _lastKnownOutputDeviceIds,
+      current: outputIds,
+    );
+    _lastKnownInputDeviceIds = inputIds;
+    _lastKnownOutputDeviceIds = outputIds;
+
+    if (!inputChanged && !outputChanged) {
+      return;
+    }
+
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+    final bool isAndroid = Platform.isAndroid;
+    final bool isIos = Platform.isIOS;
+    final bool isMobile = isAndroid || isIos;
+    final bool isDesktop = !isMobile;
+
+    _isRecoveringAudioRoute = true;
+    try {
+      if (shouldReapplyMobileVoiceOutputOnDeviceChange(
+        isIos: isIos,
+        isAndroid: isAndroid,
+        outputChanged: outputChanged,
+      )) {
+        await _runAudioRouteRecoveryStep(
+          'applySpeakerOutput',
+          () => applicator.applySpeakerOutput(settings: settings),
+        );
+      } else if (shouldReapplyDesktopAudioOutputOnDeviceChange(
+        isDesktop: isDesktop,
+        outputChanged: outputChanged,
+        configuredOutputDeviceId: settings.outputDeviceId,
+        availableOutputDeviceIds: outputIds,
+      )) {
+        await _runAudioRouteRecoveryStep(
+          'applyDesktopAudioOutput',
+          () => _applyAudioOutputDevice(settings.outputDeviceId),
+        );
+      } else if (shouldClearMissingDesktopOutputDevice(
+        isDesktop: isDesktop,
+        outputChanged: outputChanged,
+        configuredOutputDeviceId: settings.outputDeviceId,
+        availableOutputDeviceIds: outputIds,
+      )) {
+        await _runAudioRouteRecoveryStep('clearDesktopAudioOutput', () async {
+          await ref
+              .read(voiceSettingsProvider.notifier)
+              .setOutputDeviceId(kDefaultVoiceDeviceId);
+        });
+      }
+      if (inputChanged &&
+          shouldRefreshMicrophoneOnAudioRouteChange(
+            isIos: isIos,
+            isAndroid: isAndroid,
+            isForeground: ref.read(appUiForegroundProvider),
+            configuredInputDeviceId: settings.inputDeviceId,
+            availableInputDeviceIds: inputIds,
+          ) &&
+          _shouldPublishMicrophone()) {
+        await _runAudioRouteRecoveryStep('refreshMicrophone', () async {
+          if (mesh != null) {
+            await mesh.refreshMicrophone(
+              options: applicator.buildAudioCaptureOptions(settings),
+              inputGain: inputVoiceVolumePercentToGain(settings.inputVolume),
+            );
+          } else if (room != null) {
+            await applicator.refreshMicrophoneAfterRouteChange(
+              room: room,
+              settings: settings,
+              channelBitrate: await _currentChannelBitrate(),
+            );
+          }
+        });
+      }
+    } finally {
+      _isRecoveringAudioRoute = false;
+    }
+  }
+
+  Future<void> _runAudioRouteRecoveryStep(
+    String step,
+    Future<void> Function() action,
+  ) async {
+    try {
+      await action();
+    } on Object catch (error) {
+      talker.warning('[Voice] audio route recovery $step failed: $error');
+    }
+  }
+
+  bool _shouldPublishMicrophone() {
+    final EffectiveAudioState audio = _effectiveAudioStateForSelfConnection();
+    return audio.micShouldPublish && _canPublishAudioInChannel();
+  }
+
+  Future<int?> _currentChannelBitrate() {
+    return _bitrateForChannel(state.channelId ?? _expectedChannelId);
+  }
+
+  Future<int?> _bitrateForChannel(String? channelId) async {
+    if (channelId == null || channelId.isEmpty) {
+      return null;
+    }
+    final row = await ref
+        .read(fluxerDatabaseProvider)
+        .channelDao
+        .getChannelById(channelId);
+    return row?.bitrate;
+  }
+
+  Future<void> _setSessionMicrophoneEnabled({required bool enabled}) async {
+    if (_shouldDeferWebRtcMediaWork('microphone_publish')) {
+      return;
+    }
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+    final VoiceMeshTransport? mesh = state.mesh;
+    if (mesh != null) {
+      final int? channelBitrate = await _currentChannelBitrate();
+      await mesh.setMicrophoneEnabled(
+        enabled: enabled,
+        options: applicator.buildAudioCaptureOptions(settings),
+        inputGain: inputVoiceVolumePercentToGain(settings.inputVolume),
+        maxBitrate: buildMicrophonePublishOptions(
+          channelBitrate: channelBitrate,
+          processingMode: settings.voiceProcessingMode,
+        )?.encoding?.maxBitrate,
+      );
+      return;
+    }
+    final Room? room = state.liveKitRoom;
+    if (room == null) {
+      return;
+    }
+    await applicator.setMicrophoneEnabled(
+      room: room,
+      settings: settings,
+      enabled: enabled,
+      channelBitrate: await _currentChannelBitrate(),
+    );
+  }
+
+  Future<void> _applyVoiceOutputRouting(VoiceSettingsState settings) async {
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+    await applicator.applySpeakerOutput(settings: settings);
+    await _applyAudioOutputDevice(settings.outputDeviceId);
+  }
+
+  void _cancelSpeakerOutputRetry() {
+    for (final Timer timer in _speakerOutputRetryTimers) {
+      timer.cancel();
+    }
+    _speakerOutputRetryTimers.clear();
+  }
+
+  void _scheduleSpeakerOutputRetry() {
+    _cancelSpeakerOutputRetry();
+    for (final Duration delay in kVoiceCallKitSpeakerReapplyDelays) {
+      _speakerOutputRetryTimers.add(
+        Timer(delay, () {
+          if (!state.isInVoice) {
+            return;
+          }
+          unawaited(_applyVoiceOutputRouting(ref.read(voiceSettingsProvider)));
+        }),
+      );
+    }
+  }
+
+  Future<void> _applyAudioOutputDevice(String outputDeviceId) async {
+    if (outputDeviceId == kDefaultVoiceDeviceId || outputDeviceId.isEmpty) {
+      return;
+    }
+    try {
+      await Helper.selectAudioOutput(outputDeviceId);
+    } on Object {
+      return;
+    }
+  }
+
+  Future<void> _onVoiceSettingsChanged(
+    VoiceSettingsState? previous,
+    VoiceSettingsState next,
+  ) async {
+    if (!state.isInVoice) {
+      return;
+    }
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+    final bool outputRoutingChanged =
+        previous == null ||
+        previous.outputDeviceId != next.outputDeviceId ||
+        previous.outputRoute != next.outputRoute;
+    if (outputRoutingChanged) {
+      await _applyVoiceOutputRouting(next);
+      if (shouldReapplySpeakerOutputOnPreferenceChange(
+        isInVoice: state.isInVoice,
+        speakerPreferenceChanged:
+            previous != null && previous.outputRoute != next.outputRoute,
+        isAndroid: Platform.isAndroid,
+      )) {
+        _scheduleSpeakerOutputRetry();
+      }
+    }
+    final Room? room = state.liveKitRoom;
+    final VoiceMeshTransport? mesh = state.mesh;
+    if ((room == null && mesh == null) || !state.isConnected) {
+      return;
+    }
+    final bool audioChanged =
+        previous == null ||
+        previous.inputDeviceId != next.inputDeviceId ||
+        previous.voiceProcessingMode != next.voiceProcessingMode ||
+        previous.noiseSuppressionTier != next.noiseSuppressionTier ||
+        previous.echoCancellation != next.echoCancellation ||
+        previous.noiseSuppression != next.noiseSuppression ||
+        previous.autoGainControl != next.autoGainControl;
+    final bool inputVolumeChanged =
+        previous == null || previous.inputVolume != next.inputVolume;
+    final bool cameraChanged =
+        previous == null ||
+        previous.videoDeviceId != next.videoDeviceId ||
+        previous.cameraFacing != next.cameraFacing ||
+        previous.cameraResolution != next.cameraResolution;
+    if (mesh != null) {
+      await _applyMeshSettingsChange(
+        mesh,
+        next,
+        audioChanged: audioChanged,
+        inputVolumeChanged: inputVolumeChanged,
+        cameraChanged: cameraChanged,
+      );
+    } else if (room != null) {
+      if (audioChanged) {
+        final VoiceState? vs = _selfConnectionVoiceState();
+        final bool micEnabled =
+            !(vs?.selfMute ?? false) && !(vs?.selfDeaf ?? false);
+        await applicator.refreshMicrophone(
+          room: room,
+          settings: next,
+          microphoneEnabled: micEnabled,
+          channelBitrate: await _currentChannelBitrate(),
+        );
+      } else if (inputVolumeChanged) {
+        final LocalParticipant? participant = room.localParticipant;
+        if (participant != null) {
+          await applicator.applyInputVolumeToMicrophone(
+            participant: participant,
+            inputVolumePercent: next.inputVolume,
+          );
+        }
+      }
+      if (cameraChanged) {
+        final VoiceState? vs = _selfConnectionVoiceState();
+        await applicator.refreshCamera(
+          room: room,
+          settings: next,
+          cameraEnabled: vs?.selfVideo ?? false,
+        );
+      }
+      final bool screenShareCodecChanged =
+          previous == null ||
+          previous.preferredScreenShareCodec != next.preferredScreenShareCodec;
+      if (screenShareCodecChanged &&
+          _hasPublishedLocalScreenShareVideo(requireTrack: false)) {
+        await applicator.refreshScreenShare(room: room, settings: next);
+      }
+    }
+    final bool participantVolumesChanged =
+        previous == null ||
+        previous.participantVolumes != next.participantVolumes;
+    final bool participantLocalMutesChanged =
+        previous == null ||
+        previous.participantLocalMutes != next.participantLocalMutes;
+    final bool outputVolumeChanged =
+        previous == null || previous.outputVolume != next.outputVolume;
+    if (participantVolumesChanged ||
+        participantLocalMutesChanged ||
+        outputVolumeChanged) {
+      await applyAllParticipantVolumes();
+    }
+  }
+
+  Future<void> _applyMeshSettingsChange(
+    VoiceMeshTransport mesh,
+    VoiceSettingsState next, {
+    required bool audioChanged,
+    required bool inputVolumeChanged,
+    required bool cameraChanged,
+  }) async {
+    final VoiceSettingsApplicator applicator = _voiceSettingsApplicator();
+    final double inputGain = inputVoiceVolumePercentToGain(next.inputVolume);
+    if (audioChanged) {
+      await mesh.refreshMicrophone(
+        options: applicator.buildAudioCaptureOptions(next),
+        inputGain: inputGain,
+      );
+    } else if (inputVolumeChanged) {
+      await mesh.applyInputGain(inputGain);
+    }
+    if (cameraChanged) {
+      await mesh.applyCameraOptions(applicator.buildCameraCaptureOptions(next));
+    }
+  }
+
+  Future<void> applyParticipantVolume(String userId) async {
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    await applyParticipantVolumeToMedia(
+      media: state.media,
+      userId: userId,
+      participantVolumePercent: defaultParticipantVolumeForUser(
+        participantVolumes: settings.participantVolumes,
+        userId: userId,
+      ),
+      outputVolumePercent: settings.outputVolume,
+      locallyMuted: settings.participantLocalMutes[userId] ?? false,
+    );
+  }
+
+  Future<void> applyAllParticipantVolumes() async {
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    await applyAllParticipantVolumesToMedia(
+      media: state.media,
+      participantVolumes: settings.participantVolumes,
+      participantLocalMutes: settings.participantLocalMutes,
+      outputVolumePercent: settings.outputVolume,
+    );
+  }
+
+  Future<void> _applyParticipantVolumeForPublication(
+    RemoteTrackPublication publication,
+  ) async {
+    if (publication.source != TrackSource.microphone) {
+      return;
+    }
+    final Participant participant = publication.participant;
+    final String? userId = parseUserIdFromParticipantIdentity(
+      participant.identity,
+    );
+    if (userId == null) {
+      return;
+    }
+    final Track? track = publication.track;
+    if (track is! RemoteAudioTrack) {
+      return;
+    }
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    try {
+      await applyParticipantVolumeToTrack(
+        track: track,
+        participantVolumePercent: defaultParticipantVolumeForUser(
+          participantVolumes: settings.participantVolumes,
+          userId: userId,
+        ),
+        outputVolumePercent: settings.outputVolume,
+        locallyMuted: settings.participantLocalMutes[userId] ?? false,
+      );
+    } on Object catch (error) {
+      talker.warning('[Voice] Failed to apply participant volume: $error');
+    }
+  }
+
+  CameraCaptureOptions _cameraCaptureOptions() {
+    return _voiceSettingsApplicator().buildCameraCaptureOptions(
+      ref.read(voiceSettingsProvider),
+    );
+  }
+
+  Future<void> _subscribeRemotePublicationIfNeeded(
+    RemoteTrackPublication publication,
+  ) async {
+    if (publication.source != TrackSource.microphone) {
+      return;
+    }
+    if (_shouldDeferWebRtcMediaWork('remote_audio_subscribe')) {
+      return;
+    }
+    if (_effectiveAudioStateForSelfConnection().effectiveDeaf) {
+      return;
+    }
+    try {
+      await publication.subscribe();
+      _joinTiming?.markOnce('first_remote_audio');
+      await _applyParticipantVolumeForPublication(publication);
+    } on Object catch (e) {
+      talker.warning('[Voice] Failed to subscribe remote track: $e');
+    }
+  }
+
+  Future<void> _reconcileRemoteAudioSubscriptions({
+    required bool deaf,
+    required String reason,
+  }) async {
+    if (!_hasTransport()) {
+      return;
+    }
+    if (!state.isConnected && !state.isConnecting) {
+      return;
+    }
+    if (_shouldDeferWebRtcMediaWork('reconcile_remote_audio')) {
+      return;
+    }
+    final VoiceMeshTransport? mesh = state.mesh;
+    final Room? room = state.liveKitRoom;
+    if (mesh != null) {
+      mesh.setDeafened(deafened: deaf);
+    } else if (room != null) {
+      await _reconcileLiveKitRemoteAudio(room, deaf: deaf, reason: reason);
+    }
+    if (!deaf) {
+      await applyAllParticipantVolumes();
+    }
+  }
+
+  Future<void> _reconcileLiveKitRemoteAudio(
+    Room room, {
+    required bool deaf,
+    required String reason,
+  }) async {
+    final List<Future<void>> pending = <Future<void>>[];
+    for (final RemoteParticipant participant
+        in room.remoteParticipants.values) {
+      for (final RemoteTrackPublication publication
+          in participant.audioTrackPublications) {
+        if (publication.source != TrackSource.microphone) {
+          continue;
+        }
+        try {
+          if (deaf && publication.subscribed) {
+            pending.add(publication.unsubscribe());
+          } else if (!deaf && !publication.subscribed) {
+            pending.add(publication.subscribe());
+          }
+        } on Object catch (e) {
+          talker.warning(
+            '[Voice] Failed to reconcile remote audio ($reason, '
+            'participant=${participant.identity}): $e',
+          );
+        }
+      }
+    }
+    if (pending.isNotEmpty) {
+      await Future.wait(pending);
+    }
+  }
+
+  Future<void> _ensureLocalMicrophone({
+    required String reason,
+    required int attempt,
+  }) async {
+    if (!_isLatestRoomAttempt(attempt) || !state.isConnected) {
+      return;
+    }
+    if (_ensuringMicrophone) {
+      return;
+    }
+    _ensuringMicrophone = true;
+    try {
+      await _reconcileLocalAudioPublish(reason: reason, attempt: attempt);
+    } finally {
+      _ensuringMicrophone = false;
+    }
+  }
+
+  Future<void> _reconcileLocalAudioPublish({
+    required String reason,
+    int? attempt,
+  }) async {
+    if (!state.isConnected || !_isTransportConnected()) {
+      return;
+    }
+    if (attempt != null && !_isLatestRoomAttempt(attempt)) {
+      return;
+    }
+    if (!_canPublishAudioInChannel()) {
+      await _setSessionMicrophoneEnabled(enabled: false);
+      final VoiceState? vs = _selfConnectionVoiceState();
+      if (vs != null && !vs.selfMute) {
+        await _applySelfVoiceState(
+          selfMute: true,
+          selfDeaf: vs.selfDeaf,
+          selfVideo: vs.selfVideo,
+        );
+      }
+      return;
+    }
+    final EffectiveAudioState audio = _effectiveAudioStateForSelfConnection();
+    talker.debug(
+      '[Voice] Reconcile audio ($reason): micShouldPublish=${audio.micShouldPublish} '
+      'effectiveMute=${audio.effectiveMute}',
+    );
+    if (!audio.micShouldPublish) {
+      await _setSessionMicrophoneEnabled(enabled: false);
+      return;
+    }
+    Object? lastError;
+    for (int i = 0; i <= _kMicPublishRetryDelays.length; i++) {
+      if (attempt != null && !_isLatestRoomAttempt(attempt)) {
+        return;
+      }
+      try {
+        await _setSessionMicrophoneEnabled(enabled: true);
+        if (state.errorMessage == kVoiceSessionErrorMicPublish) {
+          state = state.copyWith(clearError: true);
+        }
+        return;
+      } on Object catch (e) {
+        lastError = e;
+        if (!isTrackPublishFailure(e)) {
+          rethrow;
+        }
+        if (i < _kMicPublishRetryDelays.length) {
+          talker.warning(
+            '[Voice] Mic publish retry ${i + 1} after failure: $e',
+          );
+          await Future<void>.delayed(_kMicPublishRetryDelays[i]);
+        }
+      }
+    }
+    talker.warning(
+      '[Voice] Microphone publish failed (staying in channel listen-only): '
+      '$lastError',
+    );
+    await _setSessionMicrophoneEnabled(enabled: false);
+    final VoiceState? current = _selfConnectionVoiceState();
+    await _applySelfVoiceState(
+      selfMute: true,
+      selfDeaf: current?.selfDeaf ?? _pendingSelfDeaf,
+      selfVideo: current?.selfVideo ?? false,
+    );
+    state = state.copyWith(errorMessage: kVoiceSessionErrorMicPublish);
+  }
+
+  bool _canPublishAudioInChannel() {
+    final String? channelId = state.channelId;
+    final String? guildId = state.guildId;
+    if (channelId == null) {
+      return true;
+    }
+    if (guildId == null) {
+      return true;
+    }
+    final int? bits = ref
+        .read(channelPermissionCacheProvider.notifier)
+        .getChannelBits(channelId);
+    if (bits == null) {
+      return true;
+    }
+    return hasPermission(bits, Permission.speak);
+  }
+
+  Future<void> _onChannelPermissionsChanged() async {
+    if (!state.isConnected || state.channelId == null) {
+      return;
+    }
+    _refreshChannelPermissionsSnapshot();
+    await _reconcileLocalAudioPublish(reason: 'permission_cache_changed');
+  }
+
+  void _refreshChannelPermissionsSnapshot() {
+    final String? channelId = state.channelId;
+    if (channelId == null) {
+      return;
+    }
+    final VoiceChannelPermissions? next = ref.read(
+      voiceChannelPermissionsProvider(channelId),
+    );
+    if (next == null) {
+      return;
+    }
+    final VoiceChannelPermissions? previous = _channelPermissions;
+    _channelPermissions = next;
+    if (previous != null &&
+        previous.canPrioritySpeaker != next.canPrioritySpeaker) {
+      talker.debug(
+        '[Voice] canPrioritySpeaker changed: ${previous.canPrioritySpeaker} -> '
+        '${next.canPrioritySpeaker} (channelId=$channelId)',
+      );
+    }
+  }
+
+  void _bindVoiceRoomEvents({
+    required Room room,
+    required int attempt,
+    required String resolvedChannelId,
+    required String? resolvedGuildId,
+    required String connectionId,
+  }) {
+    _detachRoomEventsListener();
+    _boundRoomAttemptId = attempt;
+    final EventsListener<RoomEvent> listener = room.createListener();
+    _roomEventsListener = listener;
+    final String? selfIdentity = room.localParticipant?.identity;
+    listener
+      ..on<RoomConnectedEvent>((RoomConnectedEvent evt) {
+        if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
+          return;
+        }
+        _runVoiceAsync(
+          () => _onLiveKitRoomConnected(
+            room: room,
+            attempt: attempt,
+            resolvedChannelId: resolvedChannelId,
+            resolvedGuildId: resolvedGuildId,
+            connectionId: connectionId,
+          ),
+          label: 'room connected handler',
+        );
+      })
+      ..on<RoomDisconnectedEvent>((RoomDisconnectedEvent evt) {
+        if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
+          return;
+        }
+        talker.warning('[Voice] LiveKit room disconnected: ${evt.reason}');
+        _runVoiceAsync(
+          () => leaveVoice(endCall: false),
+          label: 'leave after disconnect',
+        );
+      })
+      ..on<RoomReconnectingEvent>((RoomReconnectingEvent _) {
+        if (!_isLatestRoomAttempt(attempt)) {
+          return;
+        }
+        state = state.copyWith(isReconnecting: true);
+      })
+      ..on<RoomReconnectedEvent>((RoomReconnectedEvent _) {
+        if (!_isLatestRoomAttempt(attempt)) {
+          return;
+        }
+        state = state.copyWith(isReconnecting: false);
+        _runVoiceAsync(
+          () => _reconcileRemoteAudioForSelfConnection(
+            reason: 'room_reconnected',
+          ),
+          label: 'reconcile remote audio after reconnect',
+        );
+        _runVoiceAsync(
+          () => _reconcileLocalAudioPublish(
+            reason: 'room_reconnected',
+            attempt: attempt,
+          ),
+          label: 'reconcile local publish after reconnect',
+        );
+      })
+      ..on<TrackPublishedEvent>((TrackPublishedEvent evt) {
+        if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
+          return;
+        }
+        _runVoiceAsync(
+          () => _subscribeRemotePublicationIfNeeded(evt.publication),
+          label: 'subscribe remote track',
+        );
+      })
+      ..on<ParticipantConnectedEvent>((ParticipantConnectedEvent evt) {
+        if (_intentionalLiveKitTeardown) {
+          return;
+        }
+        if (selfIdentity != null && evt.participant.identity == selfIdentity) {
+          return;
+        }
+        final bool isUserParticipant = evt.participant.identity.startsWith(
+          'user_',
+        );
+        _runVoiceAsync(
+          () => playFluxerSoundEffect(
+            prefs: ref.read(soundPreferencesProvider),
+            sfx: ref.read(fluxerSfxProvider),
+            clip: isUserParticipant
+                ? FluxerSfxClip.userJoin
+                : FluxerSfxClip.viewerJoin,
+          ),
+          label: 'participant join sound',
+        );
+      })
+      ..on<ParticipantDisconnectedEvent>((ParticipantDisconnectedEvent evt) {
+        if (_intentionalLiveKitTeardown) {
+          return;
+        }
+        if (selfIdentity != null && evt.participant.identity == selfIdentity) {
+          return;
+        }
+        final bool isUserParticipant = evt.participant.identity.startsWith(
+          'user_',
+        );
+        _runVoiceAsync(
+          () => playFluxerSoundEffect(
+            prefs: ref.read(soundPreferencesProvider),
+            sfx: ref.read(fluxerSfxProvider),
+            clip: isUserParticipant
+                ? FluxerSfxClip.userLeave
+                : FluxerSfxClip.viewerLeave,
+          ),
+          label: 'participant leave sound',
+        );
+      });
+  }
+
+  void _detachRoomEventsListener() {
+    _boundRoomAttemptId = null;
+    final EventsListener<RoomEvent>? listener = _roomEventsListener;
+    _roomEventsListener = null;
+    if (listener != null) {
+      unawaited(listener.dispose());
+    }
+  }
+
+  void updateViewerStreamKeys(List<String> viewerStreamKeys) {
+    final VoiceSessionState s = state;
+    if (!s.isInVoice || s.channelId == null) {
+      return;
+    }
+    final VoiceState? current = _selfConnectionVoiceState();
+    ref
+        .read(gatewayConnectionProvider)
+        .updateVoiceState(
+          GatewayVoiceStateUpdate(
+            guildId: s.guildId,
+            channelId: s.channelId,
+            selfMute: current?.selfMute ?? false,
+            selfDeaf: current?.selfDeaf ?? false,
+            selfVideo: current?.selfVideo ?? false,
+            selfStream: current?.selfStream ?? false,
+            viewerStreamKeys: viewerStreamKeys,
+            connectionId: s.activeConnectionId,
+            isMobile: isFluxerMobileOs,
+          ),
+        );
+  }
+
+  Future<void> refreshLocalCameraAfterOrientationChange() async {
+    final Room? room = state.liveKitRoom;
+    final VoiceMeshTransport? mesh = state.mesh;
+    if ((room == null && mesh == null) || !state.isConnected) {
+      return;
+    }
+    final DateTime now = DateTime.now();
+    if (_lastCameraOrientationRefresh != null) {
+      if (now.difference(_lastCameraOrientationRefresh!) <
+          const Duration(milliseconds: 300)) {
+        return;
+      }
+    }
+    _lastCameraOrientationRefresh = now;
+    final CameraCaptureOptions opts = _cameraCaptureOptions();
+    if (mesh != null) {
+      try {
+        await mesh.restartCamera(opts);
+      } on Object catch (e) {
+        talker.warning('[Voice] restartTrack after orientation: $e');
+      }
+      return;
+    }
+    final LocalParticipant? lp = room?.localParticipant;
+    if (lp == null) {
+      return;
+    }
+    for (final LocalTrackPublication<LocalVideoTrack> pub
+        in lp.videoTrackPublications) {
+      if (pub.isScreenShare) {
+        continue;
+      }
+      final LocalVideoTrack? track = pub.track;
+      if (track == null) {
+        continue;
+      }
+      try {
+        await track.restartTrack(opts);
+      } on Object catch (e) {
+        talker.warning('[Voice] restartTrack after orientation: $e');
+      }
+      return;
+    }
+  }
+}

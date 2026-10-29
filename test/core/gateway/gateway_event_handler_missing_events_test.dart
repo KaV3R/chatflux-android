@@ -1,0 +1,213 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/core/gateway/gateway_event_handler.dart';
+import 'package:fluxer_dart/export.dart';
+import 'package:fluxer_dart/gateway.dart';
+
+import '../../helpers/open_test_database.dart';
+
+void main() {
+  group('GatewayEventHandler missing events', () {
+    late FluxerDatabase database;
+
+    setUp(() {
+      database = openTestDatabase();
+    });
+
+    test('GUILD_COUNTS_UPDATE writes member and online counts', () async {
+      await database.guildDao.upsertServer(
+        ServersCompanion.insert(id: 'g1', name: 'Guild'),
+      );
+      final handler = GatewayEventHandler(database: database);
+
+      await handler.handle(
+        const GuildCountsUpdateEvent(
+          counts: <GuildCountEntry>[
+            GuildCountEntry(guildId: 'g1', memberCount: 42, onlineCount: 7),
+          ],
+        ),
+      );
+
+      final Server? row = await database.guildDao.getServerById('g1');
+      expect(row?.memberCount, 42);
+      expect(row?.onlineCount, 7);
+    });
+
+    test('GUILD_BAN_ADD emits callback', () async {
+      String? guildId;
+      String? userId;
+      final handler = GatewayEventHandler(
+        database: database,
+        onGuildBanAdd: (String id, String banned) {
+          guildId = id;
+          userId = banned;
+        },
+      );
+
+      await handler.handle(const GuildBanAddEvent(guildId: 'g1', userId: 'u1'));
+
+      expect(guildId, 'g1');
+      expect(userId, 'u1');
+    });
+
+    test('WEBHOOKS_UPDATE emits callback', () async {
+      String? guildId;
+      String? channelId;
+      final handler = GatewayEventHandler(
+        database: database,
+        onWebhooksUpdate: (String gid, String cid) {
+          guildId = gid;
+          channelId = cid;
+        },
+      );
+
+      await handler.handle(
+        const WebhooksUpdateEvent(channelId: 'ch1', guildId: 'g1'),
+      );
+
+      expect(guildId, 'g1');
+      expect(channelId, 'ch1');
+    });
+
+    test('AUTH_SESSION_CHANGE emits token and hash callbacks', () async {
+      String? token;
+      String? hash;
+      final handler = GatewayEventHandler(
+        database: database,
+        onAuthSessionChange: (AuthSessionChangeEvent event) {
+          token = event.newToken;
+        },
+        onAuthSessionIdHashChanged: (String? idHash) {
+          hash = idHash;
+        },
+      );
+
+      await handler.handle(
+        const AuthSessionChangeEvent(
+          newToken: 'rotated',
+          newAuthSessionIdHash: 'hash-1',
+        ),
+      );
+
+      expect(token, 'rotated');
+      expect(hash, 'hash-1');
+    });
+
+    test('CHANNEL_MEMBER_COUNTS_UPDATE emits callback', () async {
+      List<ChannelMemberCountEntry>? counts;
+      final handler = GatewayEventHandler(
+        database: database,
+        onChannelMemberCountsUpdate: (ChannelMemberCountsUpdateEvent event) {
+          counts = event.counts;
+        },
+      );
+
+      await handler.handle(
+        const ChannelMemberCountsUpdateEvent(
+          counts: <ChannelMemberCountEntry>[
+            ChannelMemberCountEntry(
+              guildId: 'g1',
+              channelId: 'ch1',
+              memberCount: 9,
+              onlineCount: 2,
+            ),
+          ],
+        ),
+      );
+
+      expect(counts, hasLength(1));
+      expect(counts!.first.channelId, 'ch1');
+    });
+
+    test('ENTRANCE_SOUND_PLAY emits callback', () async {
+      EntranceSoundPlayEvent? received;
+      final handler = GatewayEventHandler(
+        database: database,
+        onEntranceSoundPlay: (EntranceSoundPlayEvent event) {
+          received = event;
+        },
+      );
+
+      await handler.handle(
+        const EntranceSoundPlayEvent(
+          userId: 'u1',
+          channelId: 'ch1',
+          soundId: 's1',
+          hash: 'h',
+          url: 'https://cdn.example/a.ogg',
+          durationMs: 800,
+          contentType: 'audio/ogg',
+        ),
+      );
+
+      expect(received?.url, 'https://cdn.example/a.ogg');
+    });
+
+    test('USER_UPDATE emits the current user profile', () async {
+      UserPrivateResponse? received;
+      final GatewayEventHandler handler = GatewayEventHandler(
+        database: database,
+        onCurrentUserUpdate: (UserPrivateResponse user) {
+          received = user;
+        },
+      );
+
+      await handler.handle(UserUpdateEvent(user: _privateUser('u1')));
+
+      expect(received?.id, 'u1');
+      expect(received?.premiumType, UserPremiumTypes.subscription);
+      expect(received?.traits, contains('premium'));
+    });
+  });
+}
+
+UserPrivateResponse _privateUser(String id) {
+  return UserPrivateResponse(
+    hasVerifiedPhone: false,
+    username: 'ada',
+    discriminator: '0001',
+    globalName: null,
+    avatar: null,
+    avatarColor: null,
+    privacyAgreedAt: null,
+    termsAgreedAt: null,
+    pendingBulkMessageDeletion: null,
+    flags: 0,
+    unreadGiftInventoryCount: 0,
+    isStaff: false,
+    acls: const <String>[],
+    traits: const <String>['premium'],
+    email: 'ada@example.com',
+    hasUnreadGiftInventory: false,
+    hasEverPurchased: true,
+    id: id,
+    bio: null,
+    pronouns: null,
+    accentColor: null,
+    banner: null,
+    hasDismissedPremiumOnboarding: false,
+    bannerColor: null,
+    mfaEnabled: false,
+    nsfwAllowed: true,
+    verified: true,
+    premiumType: UserPremiumTypes.subscription,
+    premiumSince: '2026-03-14T00:00:00.000Z',
+    premiumUntil: null,
+    premiumWillCancel: false,
+    premiumBillingCycle: 'monthly',
+    premiumLifetimeSequence: null,
+    premiumGraceEndsAt: null,
+    premiumDiscriminator: false,
+    requiredActions: const <String>[],
+    premiumBadgeMasked: false,
+    premiumBadgeTimestampHidden: false,
+    premiumBadgeSequenceHidden: false,
+    premiumPurchaseDisabled: false,
+    premiumEnabledOverride: false,
+    passwordLastChangedAt: null,
+    lastVoiceActivitySharingChangeAt: null,
+    premiumBadgeHidden: false,
+    premiumPerksDisabled: false,
+    hiddenProfileBadges: const <String>[],
+  );
+}

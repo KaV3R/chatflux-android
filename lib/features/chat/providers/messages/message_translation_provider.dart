@@ -1,0 +1,94 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/features/chat/data/local_device_translation_source.dart';
+import 'package:fluxer_app/features/chat/data/message_translation_service.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_translate_offer.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_web_translation.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/advanced_preferences_provider.dart';
+import 'package:fluxer_app/l10n/app_locale_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'message_translation_provider.g.dart';
+
+@Riverpod(keepAlive: true)
+MessageTranslationService messageTranslationService(Ref ref) {
+  return MessageTranslationService(
+    messageDao: ref.watch(fluxerDatabaseProvider).messageDao,
+    sources: <LocalDeviceTranslationSource>[LocalDeviceTranslationSource()],
+  );
+}
+
+@Riverpod(keepAlive: true)
+Future<bool> messageTranslationAvailable(Ref ref) {
+  return ref.watch(messageTranslationServiceProvider).isAvailable();
+}
+
+@riverpod
+Future<String?> detectedMessageLanguage(Ref ref, String sample) {
+  if (sample.trim().isEmpty) {
+    return Future.value();
+  }
+  return ref.watch(messageTranslationServiceProvider).detectLanguage(sample);
+}
+
+@Riverpod(keepAlive: true)
+class TranslatingMessageIds extends _$TranslatingMessageIds {
+  @override
+  Set<String> build() => <String>{};
+
+  void add(String messageId) {
+    state = <String>{...state, messageId};
+  }
+
+  void remove(String messageId) {
+    if (!state.contains(messageId)) {
+      return;
+    }
+    final Set<String> next = <String>{...state}..remove(messageId);
+    state = next;
+  }
+}
+
+bool watchCanOfferMessageTranslate(WidgetRef ref, Message message) {
+  final String text = translatableMessageText(message.content);
+  if (text.isEmpty || message.hasValidTranslation) {
+    return false;
+  }
+  final bool localAvailable =
+      ref.watch(messageTranslationAvailableProvider).value ?? false;
+  final bool webAvailable = isWebMessageTranslationAvailable(
+    ref.watch(
+      advancedPreferencesProvider.select((state) => state.searchEngines),
+    ),
+  );
+  if (!localAvailable && !webAvailable) {
+    return false;
+  }
+  if (ref.watch(
+    translatingMessageIdsProvider.select(
+      (Set<String> ids) => ids.contains(message.id),
+    ),
+  )) {
+    return false;
+  }
+  final String appLanguage = ref.watch(effectiveAppLocaleProvider).languageCode;
+  final TranslateOfferHint hint = translateOfferHint(text, appLanguage);
+  if (hint != TranslateOfferHint.detect || !localAvailable) {
+    return shouldOfferMessageTranslateAction(
+      hint: hint,
+      appLanguage: appLanguage,
+      localTranslationAvailable: localAvailable,
+    );
+  }
+  final AsyncValue<String?> detected = ref.watch(
+    detectedMessageLanguageProvider(languageDetectionSample(text)),
+  );
+  return shouldOfferMessageTranslateAction(
+    hint: hint,
+    appLanguage: appLanguage,
+    localTranslationAvailable: localAvailable,
+    detectedLanguage: detected.asData?.value,
+    detectedLanguageReady: detected.hasValue,
+  );
+}

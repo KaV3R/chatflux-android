@@ -1,0 +1,79 @@
+import 'package:dio/dio.dart';
+import 'package:fluxer_app/core/api/fluxer_client_provider.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/core/gateway/gateway_identify_client_properties.dart';
+import 'package:fluxer_app/core/observability/fluxer_observability.dart';
+import 'package:fluxer_app/core/router/app_location_persistence.dart';
+import 'package:fluxer_app/core/router/route_kind.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_dart/gateway.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'gateway_connection_provider.g.dart';
+
+const int kGatewayDebounceMessageReactions = 1 << 1;
+
+const int kGatewayChannelThreads = 1 << 2;
+
+@Riverpod(keepAlive: true)
+bool gatewayHasAuthToken(Ref ref) {
+  final String? token = ref.watch(fluxerAuthTokenProvider);
+  return token != null && token.isNotEmpty;
+}
+
+@Riverpod(keepAlive: true)
+class IdentifyInitialGuildId extends _$IdentifyInitialGuildId {
+  @override
+  String? build() => null;
+
+  void set(String? guildId) {
+    if (state == guildId) {
+      return;
+    }
+    state = guildId;
+  }
+}
+
+Future<void> restoreIdentifyInitialGuildId(
+  IdentifyInitialGuildId notifier,
+  FluxerDatabase database,
+) async {
+  final String? location = await readPersistedAppLocation(database);
+  notifier.set(location == null ? null : extractGuildId(location));
+}
+
+String? readGatewaySessionId(Ref ref) => ref.read(gatewayHasAuthTokenProvider)
+    ? ref.read(gatewayConnectionProvider).sessionId
+    : null;
+
+@Riverpod(keepAlive: true)
+GatewayConnection gatewayConnection(Ref ref) {
+  final Dio dio = ref.watch(fluxerDioProvider);
+  final bool hasToken = ref.watch(gatewayHasAuthTokenProvider);
+  ref.watch(activeInstanceProvider);
+
+  if (!hasToken) {
+    throw StateError('Cannot create gateway connection without auth token');
+  }
+
+  final String token = ref.read(fluxerAuthTokenProvider)!;
+  final clientProperties = ref.read(fluxerClientPropertiesProvider);
+
+  final String? initialGuildId =
+      ref.read(activeGuildIdProvider) ??
+      ref.read(identifyInitialGuildIdProvider);
+
+  final connection = GatewayConnection(
+    token: token,
+    dio: dio,
+    gatewayUrl: ref.watch(activeInstanceGatewayUrlProvider),
+    initialGuildId: initialGuildId,
+    flags: kGatewayDebounceMessageReactions | kGatewayChannelThreads,
+    traceAsync: FluxerObservability.instance.traceAsync,
+    traceSync: FluxerObservability.instance.traceSync,
+    properties: buildGatewayIdentifyProperties(clientProperties),
+  );
+
+  ref.onDispose(connection.dispose);
+  return connection;
+}

@@ -1,0 +1,332 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/database/daos/user_preferences_dao.dart'
+    as preferences_dao;
+import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preference_field.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preferences_dirty.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/providers/channel_list_view_model.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_providers.dart';
+import 'package:fluxer_app/features/mature_content/domain/mature_content_types.dart';
+import 'package:fluxer_app/features/mature_content/providers/sensitive_content_provider.dart';
+import 'package:fluxer_app/features/mature_content/utils/content_warning_utils.dart';
+import 'package:fluxer_app/features/mature_content/utils/mature_media_policy_utils.dart';
+import 'package:fluxer_app/features/settings/providers/view_models/user_settings_view_model.dart';
+import 'package:fluxer_app/shared/utils/chat_context_utils.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'mature_content_agreements_provider.g.dart';
+
+@Riverpod(keepAlive: true)
+class MatureContentAgreements extends _$MatureContentAgreements {
+  Future<void>? _loadInFlight;
+
+  @override
+  MatureContentAgreementsState build() {
+    ref.watch(userSettingsViewModelProvider.select((state) => state.userId));
+    _loadInFlight = _load();
+    return const MatureContentAgreementsState();
+  }
+
+  Future<void> _load() async {
+    final String userId = ref.read(userSettingsViewModelProvider).userId;
+    if (userId.isEmpty) {
+      return;
+    }
+    final db.FluxerDatabase database = ref.read(fluxerDatabaseProvider);
+    final preferences_dao.MatureContentAgreements persisted = await database
+        .userPreferencesDao
+        .getMatureContentAgreements(userId);
+    state = MatureContentAgreementsState(
+      isLoaded: true,
+      agreedChannelIds: persisted.agreedChannelIds.toSet(),
+      agreedCategoryIds: persisted.agreedCategoryIds.toSet(),
+      agreedGuildIds: persisted.agreedGuildIds.toSet(),
+    );
+  }
+
+  Future<void> reload() {
+    _loadInFlight = _load();
+    return _loadInFlight!;
+  }
+
+  Future<void> ensureLoaded() {
+    if (state.isLoaded) {
+      return Future<void>.value();
+    }
+    return _loadInFlight ??= _load();
+  }
+
+  Future<void> _persist() async {
+    final String userId = ref.read(userSettingsViewModelProvider).userId;
+    if (userId.isEmpty) {
+      return;
+    }
+    final db.FluxerDatabase database = ref.read(fluxerDatabaseProvider);
+    await database.userPreferencesDao.setMatureContentAgreements(
+      userId,
+      preferences_dao.MatureContentAgreements(
+        agreedChannelIds: state.agreedChannelIds.toList(),
+        agreedCategoryIds: state.agreedCategoryIds.toList(),
+        agreedGuildIds: state.agreedGuildIds.toList(),
+      ),
+    );
+    ref.markSyncedDirty(SyncedPreferenceField.guildNsfwAgreements);
+  }
+
+  Future<void> agreeToChannel(String channelId) async {
+    if (state.agreedChannelIds.contains(channelId)) {
+      return;
+    }
+    state = state.copyWith(
+      agreedChannelIds: {...state.agreedChannelIds, channelId},
+    );
+    await _persist();
+  }
+
+  Future<void> revokeChannelAgreement(String channelId) async {
+    if (!state.agreedChannelIds.contains(channelId)) {
+      return;
+    }
+    final Set<String> updated = Set<String>.from(state.agreedChannelIds)
+      ..remove(channelId);
+    state = state.copyWith(agreedChannelIds: updated);
+    await _persist();
+  }
+
+  Future<void> agreeToCategory(String categoryId) async {
+    if (state.agreedCategoryIds.contains(categoryId)) {
+      return;
+    }
+    state = state.copyWith(
+      agreedCategoryIds: {...state.agreedCategoryIds, categoryId},
+    );
+    await _persist();
+  }
+
+  Future<void> revokeCategoryAgreement(String categoryId) async {
+    if (!state.agreedCategoryIds.contains(categoryId)) {
+      return;
+    }
+    final Set<String> updated = Set<String>.from(state.agreedCategoryIds)
+      ..remove(categoryId);
+    state = state.copyWith(agreedCategoryIds: updated);
+    await _persist();
+  }
+
+  bool hasAgreedToCategory(String categoryId) {
+    return state.agreedCategoryIds.contains(categoryId);
+  }
+
+  Future<void> agreeToGuild(String guildId) async {
+    if (state.agreedGuildIds.contains(guildId)) {
+      return;
+    }
+    state = state.copyWith(agreedGuildIds: {...state.agreedGuildIds, guildId});
+    await _persist();
+  }
+
+  Future<void> agreeForScope({
+    required MatureContentAgreementScope scope,
+    required String scopeId,
+  }) async {
+    switch (scope) {
+      case MatureContentAgreementScope.guild:
+        await agreeToGuild(scopeId);
+      case MatureContentAgreementScope.category:
+        await agreeToCategory(scopeId);
+      case MatureContentAgreementScope.channel:
+        await agreeToChannel(scopeId);
+    }
+  }
+}
+
+Channel? _listedChannel(Ref ref, String channelId) {
+  return findChannelById(ref.read(channelListViewModelProvider), channelId);
+}
+
+Guild? _listedGuild(Ref ref, String guildId) {
+  final Guild? listedGuild = ref.read(channelListViewModelProvider).guild;
+  return listedGuild?.id == guildId ? listedGuild : null;
+}
+
+Future<T?> _resolveWithFallback<T>(
+  Ref ref, {
+  required AsyncValue<T?> asyncValue,
+  required Future<T?> Function() wait,
+  required T? Function() fallback,
+}) async {
+  final T? current = asyncValue.value ?? fallback();
+  if (current != null || !asyncValue.isLoading) {
+    return current;
+  }
+  final T? loaded = await wait();
+  if (!ref.mounted) {
+    return null;
+  }
+  return loaded ?? fallback();
+}
+
+Future<Channel?> _resolveChannel(Ref ref, String channelId) {
+  return _resolveWithFallback(
+    ref,
+    asyncValue: ref.watch(channelByIdProvider(channelId)),
+    wait: () => ref.watch(channelByIdProvider(channelId).future),
+    fallback: () => _listedChannel(ref, channelId),
+  );
+}
+
+Future<Guild?> _resolveGuild(Ref ref, String guildId) {
+  return _resolveWithFallback(
+    ref,
+    asyncValue: ref.watch(guildByIdProvider(guildId)),
+    wait: () => ref.watch(guildByIdProvider(guildId).future),
+    fallback: () => _listedGuild(ref, guildId),
+  );
+}
+
+Future<ResolvedMatureGateContext?> _resolveGateContextForChannel(
+  Ref ref,
+  String channelId,
+) async {
+  Channel? channel = await _resolveChannel(ref, channelId);
+  final String? threadParentId = channel != null && channel.isThread
+      ? channel.parentId
+      : null;
+  if (threadParentId != null) {
+    channel = await _resolveChannel(ref, threadParentId);
+    if (!ref.mounted) {
+      return null;
+    }
+  }
+  if (channel == null) {
+    return null;
+  }
+  Guild? guild;
+  final String guildId = channel.guildId;
+  if (guildId.isNotEmpty) {
+    guild = await _resolveGuild(ref, guildId);
+    if (!ref.mounted) {
+      return null;
+    }
+  }
+  Channel? parentCategory;
+  final String? parentId = channel.parentId;
+  if (parentId != null) {
+    final Channel? parent = await _resolveChannel(ref, parentId);
+    if (!ref.mounted) {
+      return null;
+    }
+    if (parent != null && parent.isCategory) {
+      parentCategory = parent;
+    }
+  }
+  return resolveMatureGateContext(
+    channel: channel,
+    guild: guild,
+    parentCategory: parentCategory,
+  );
+}
+
+@riverpod
+Future<ResolvedMatureGateContext?> matureGateContext(
+  Ref ref,
+  String channelId,
+) {
+  return _resolveGateContextForChannel(ref, channelId);
+}
+
+@riverpod
+Future<MatureContentGateReason> matureContentGateReason(
+  Ref ref,
+  String channelId,
+) async {
+  final SensitiveContentState settings = ref.watch(sensitiveContentProvider);
+  final MatureContentAgreementsState agreements = ref.watch(
+    matureContentAgreementsProvider,
+  );
+  final ResolvedMatureGateContext? context = await ref.watch(
+    matureGateContextProvider(channelId).future,
+  );
+  if (context == null) {
+    return MatureContentGateReason.none;
+  }
+  return resolveChannelGateReason(
+    context: context,
+    nsfwAllowed: settings.nsfwAllowed,
+    agreements: agreements,
+  );
+}
+
+@riverpod
+Future<bool> shouldShowMatureContentGate(Ref ref, String channelId) async {
+  final MatureContentGateReason reason = await ref.watch(
+    matureContentGateReasonProvider(channelId).future,
+  );
+  return reason != MatureContentGateReason.none;
+}
+
+@immutable
+class MatureMediaPolicyRequest {
+  const MatureMediaPolicyRequest({
+    required this.channelId,
+    required this.isMatureMedia,
+  });
+
+  final String channelId;
+  final bool isMatureMedia;
+
+  @override
+  bool operator ==(Object other) {
+    return other is MatureMediaPolicyRequest &&
+        other.channelId == channelId &&
+        other.isMatureMedia == isMatureMedia;
+  }
+
+  @override
+  int get hashCode => Object.hash(channelId, isMatureMedia);
+}
+
+@riverpod
+Future<MatureMediaPolicy> matureMediaPolicy(
+  Ref ref,
+  MatureMediaPolicyRequest request,
+) async {
+  if (!request.isMatureMedia) {
+    return MatureMediaPolicy.none;
+  }
+  final SensitiveContentState settings = ref.watch(sensitiveContentProvider);
+  final ClientSensitiveMediaFilterLevel filterLevel = await ref.watch(
+    sensitiveMediaFilterForChannelProvider(request.channelId).future,
+  );
+  if (!ref.mounted) {
+    return const MatureMediaPolicy(
+      shouldBlur: true,
+      shouldBlock: false,
+      canReveal: false,
+    );
+  }
+  final ResolvedMatureGateContext? context = await ref.watch(
+    matureGateContextProvider(request.channelId).future,
+  );
+  if (!ref.mounted) {
+    return const MatureMediaPolicy(
+      shouldBlur: true,
+      shouldBlock: false,
+      canReveal: false,
+    );
+  }
+  final MatureContentGateReason mediaGateReason = resolveMediaGateReason(
+    nsfwAllowed: settings.nsfwAllowed,
+    effectiveMatureContent: context?.effectiveMatureContent ?? false,
+  );
+  return resolveMatureMediaPolicy(
+    isMatureMedia: request.isMatureMedia,
+    filterLevel: filterLevel,
+    mediaGateReason: mediaGateReason,
+  );
+}

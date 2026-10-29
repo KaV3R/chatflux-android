@@ -1,0 +1,803 @@
+require "yaml"
+
+default_platform(:ios)
+
+def fetchRequiredEnvironmentValue(key)
+  return ENV.fetch(key)
+end
+
+def fetchOptionalEnvironmentValue(key, defaultValue)
+  return ENV[key] || defaultValue
+end
+
+def github_hosted_xcode_app_paths
+  [
+    "/Applications/Xcode_27.1.app",
+    "/Applications/Xcode_27.1.0.app",
+    "/Applications/Xcode_27.1_Release_Candidate.app",
+    "/Applications/Xcode_27.app",
+    "/Applications/Xcode_27.0.app",
+    "/Applications/Xcode.app",
+    "/Applications/Xcode_27_Release_Candidate.app"
+  ]
+end
+
+def select_required_xcode
+  xcode_app = ENV["XCODE_PATH"].to_s.strip
+  if xcode_app.empty?
+    developer_dir = ENV["DEVELOPER_DIR"].to_s.strip
+    if !developer_dir.empty? && File.directory?(developer_dir)
+      xcode_app = File.expand_path("../..", developer_dir)
+    else
+      xcode_app = github_hosted_xcode_app_paths.find { |path| File.directory?(path) }
+    end
+  end
+  unless xcode_app && File.directory?(xcode_app)
+    UI.user_error!(
+      "Could not find Xcode 27.1 (iPhone Duo). On GitHub Actions use runs-on: xcode-27 and set " \
+      "DEVELOPER_DIR to /Applications/Xcode_27.1.app/Contents/Developer, or set XCODE_PATH locally."
+    )
+  end
+  xcode_select(xcode_app)
+end
+
+def project_root_path
+  File.expand_path("..", __dir__)
+end
+
+def measure_ios_api_key
+  release_channel = ENV["MEASURE_RELEASE_CHANNEL"].to_s.strip
+  key_channel = release_channel
+  key_channel = "stable" if key_channel.empty? || key_channel == "beta"
+  channel_key = ENV["MEASURE_IOS_API_KEY_#{key_channel.upcase}"].to_s.strip
+  return channel_key unless channel_key.empty?
+
+  return ENV["MEASURE_IOS_API_KEY"].to_s.strip if key_channel == "canary"
+
+  ""
+end
+
+def upload_measure_ios_dsyms
+  api_key = measure_ios_api_key
+  api_url = ENV["MEASURE_API_URL"].to_s.strip
+  if api_key.empty? || api_url.empty?
+    UI.important("Measure iOS API key or MEASURE_API_URL not set; skipping Measure dSYM upload")
+    return
+  end
+
+  archive_path = lane_context[SharedValues::XCODEBUILD_ARCHIVE].to_s
+  unless File.directory?(archive_path)
+    UI.user_error!("Measure dSYM upload requires an Xcode archive but none was found at #{archive_path.inspect}")
+  end
+
+  upload_script = File.join(project_root_path, "tool/measure/upload_measure_ios_symbols.sh")
+  unless File.exist?(upload_script)
+    UI.user_error!("Missing Measure upload script at #{upload_script}")
+  end
+
+  ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH].to_s
+  if File.exist?(ipa_path)
+    sh(upload_script, archive_path, ipa_path)
+  else
+    sh(upload_script, archive_path)
+  end
+end
+
+def flutter_marketing_version
+  pubspec_path = File.join(project_root_path, "pubspec.yaml")
+  version = YAML.safe_load_file(pubspec_path).fetch("version")
+  version.to_s.split("+", 2).first
+end
+
+def canary_number_dart_define_args
+  canary_number = ENV["CANARY_NUMBER"].to_s.strip
+  return [] if canary_number.empty?
+
+  ["--dart-define=CANARY_NUMBER=#{canary_number}"]
+end
+
+def next_testflight_build_number(api_key:, app_identifier:, platform: "ios")
+  latest_testflight_build_number(
+    api_key: api_key,
+    app_identifier: app_identifier,
+    platform: platform,
+    initial_build_number: 1
+  ) + 1
+end
+
+def wait_for_processed_build(api_key:, app_identifier:, app_version:, build_number:, groups:, changelog:, platform: Spaceship::ConnectAPI::Platform::IOS, internal_only: false)
+  jwt = Spaceship::ConnectAPI::Token.from(hash: api_key)
+  Spaceship::ConnectAPI.token = jwt
+
+  app = Spaceship::ConnectAPI::App.find(app_identifier)
+  build = nil
+  begin
+    build = FastlaneCore::BuildWatcher.wait_for_build_processing_to_be_complete(
+      app_id: app.id,
+      app_version: app_version,
+      build_version: build_number.to_s,
+      platform: platform,
+      timeout_duration: 3600,
+      wait_for_build_beta_detail_processing: false,
+      return_spaceship_testflight_build: false
+    )
+  rescue FastlaneCore::Interface::FastlaneCrash => err
+    unless err.message.include?("BuildWatcher exceeded")
+      raise err
+    end
+    UI.important(
+      "BuildWatcher timed out waiting for App Store Connect processing of #{app_version} (#{build_number}). " \
+      "The upload already succeeded; checking whether the build is available for distribution..."
+    )
+    build = find_processed_build(app: app, app_version: app_version, build_number: build_number, platform: platform)
+    if build.nil?
+      UI.user_error!(
+        "Build #{app_version} (#{build_number}) was uploaded but is not yet available in App Store Connect " \
+        "after waiting 3600 seconds. Check App Store Connect for processing issues."
+      )
+    end
+  end
+
+  distribute_to_groups(build: build, app: app, groups: groups, changelog: changelog, internal_only: internal_only)
+end
+
+def find_processed_build(app:, app_version:, build_number:, platform: Spaceship::ConnectAPI::Platform::IOS)
+  builds = Spaceship::ConnectAPI::Build.all(
+    app_id: app.id,
+    version: app_version,
+    build_number: build_number.to_s,
+    platform: platform
+  )
+  build = builds.first
+  return nil if build.nil?
+  return nil unless build.processed?
+
+  build
+end
+
+def distribute_to_groups(build:, app:, groups:, changelog:, internal_only: false)
+  build = ensure_export_compliance(build: build)
+  beta_groups = app.get_beta_groups.select { |group| groups.include?(group.name) }
+  if internal_only
+    beta_groups = beta_groups.select(&:is_internal_group)
+  end
+  missing_group_names = groups - beta_groups.map(&:name)
+
+  if missing_group_names.any?
+    UI.important("Beta groups not found on #{app.bundle_id}: #{missing_group_names.join(', ')}")
+  end
+
+  if beta_groups.empty?
+    UI.user_error!("No beta groups found for distribution on #{app.bundle_id}. Expected: #{groups.join(', ')}")
+  end
+
+  update_build_changelog(build: build, changelog: changelog)
+  reject_build_waiting_for_beta_review(build: build) unless internal_only
+
+  external_groups = beta_groups.reject(&:is_internal_group)
+  internal_group_names = beta_groups.select(&:is_internal_group).map(&:name)
+
+  if internal_group_names.any?
+    UI.message("Skipping internal groups (not assignable via API): #{internal_group_names.join(', ')}")
+  end
+
+  if external_groups.any?
+    if build.ready_for_beta_submission?
+      build.post_beta_app_review_submission
+    else
+      external_state = build.build_beta_detail&.external_build_state || "unknown"
+      UI.message("Build #{build.app_version} (#{build.version}) is not ready for beta submission (external state: #{external_state})")
+    end
+
+    build.add_beta_groups(beta_groups: external_groups)
+  else
+    UI.message("No external groups to assign; internal testers rely on automatic distribution or manual assignment in App Store Connect")
+  end
+
+  if build.build_beta_detail
+    Spaceship::ConnectAPI.patch_build_beta_details(
+      build_beta_details_id: build.build_beta_detail.id,
+      attributes: { autoNotifyEnabled: true }
+    )
+  else
+    UI.user_error!("Unable to enable tester notifications because build beta details were not returned")
+  end
+
+  distributed_names = external_groups.map(&:name)
+  if internal_group_names.any?
+    distributed_names += internal_group_names.map { |name| "#{name} (internal)" }
+  end
+  UI.success("Distributed to groups: #{distributed_names.join(', ')}")
+end
+
+def ensure_export_compliance(build:)
+  return build unless build.uses_non_exempt_encryption.nil?
+
+  Spaceship::ConnectAPI.patch_builds(
+    build_id: build.id,
+    attributes: { usesNonExemptEncryption: false }
+  )
+  UI.important("Export compliance was unset; waiting for App Store Connect to finish processing again...")
+
+  loop do
+    refreshed_build = Spaceship::ConnectAPI::Build.get(build_id: build.id)
+    return refreshed_build unless refreshed_build.missing_export_compliance?
+
+    UI.message("Waiting for build #{build.id} to finish export compliance processing")
+    sleep(5)
+  end
+end
+
+def reject_build_waiting_for_beta_review(build:)
+  waiting_for_review_build = build.app.get_builds(
+    filter: {
+      "betaAppReviewSubmission.betaReviewState" => "WAITING_FOR_REVIEW,IN_REVIEW",
+      "expired" => false,
+      "preReleaseVersion.version" => build.pre_release_version.version
+    },
+    includes: "betaAppReviewSubmission,preReleaseVersion"
+  ).first
+  return if waiting_for_review_build.nil?
+
+  UI.important("Another build is already in beta review. Expiring #{waiting_for_review_build.app_version} (#{waiting_for_review_build.version}) before submitting the new build.")
+  waiting_for_review_build.expire!
+end
+
+def update_build_changelog(build:, changelog:)
+  return if changelog.to_s.empty?
+
+  attributes = { whatsNew: changelog }
+  localization = build.get_beta_build_localizations.find { |item| item.locale == "en-US" }
+
+  if localization
+    Spaceship::ConnectAPI.patch_beta_build_localizations(localization_id: localization.id, attributes: attributes)
+  else
+    attributes[:locale] = "en-US"
+    Spaceship::ConnectAPI.post_beta_build_localizations(build_id: build.id, attributes: attributes)
+  end
+end
+
+platform :ios do
+  before_all do
+    select_required_xcode
+  end
+
+  desc "Build beta archive and upload to TestFlight"
+  lane :testflight_beta do
+    ENV["MEASURE_RELEASE_CHANNEL"] = "beta"
+    profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision")
+    extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/broadcast_extension.mobileprovision")
+    notification_service_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/notification_service.mobileprovision")
+    share_extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/share_extension.mobileprovision")
+    runner_profile_uuid = fetchRequiredEnvironmentValue("PROFILE_UUID")
+    extension_profile_uuid = fetchOptionalEnvironmentValue("BROADCAST_EXTENSION_PROFILE_UUID", runner_profile_uuid)
+    notification_service_profile_uuid = fetchOptionalEnvironmentValue("NOTIFICATION_SERVICE_PROFILE_UUID", extension_profile_uuid)
+    share_extension_profile_uuid = fetchOptionalEnvironmentValue("SHARE_EXTENSION_PROFILE_UUID", notification_service_profile_uuid)
+    unless File.exist?(notification_service_profile_path)
+      notification_service_profile_path = extension_profile_path
+    end
+    unless File.exist?(share_extension_profile_path)
+      share_extension_profile_path = notification_service_profile_path
+    end
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APPSTORE_KEY_ID"),
+      issuer_id: ENV.fetch("APPSTORE_ISSUER_ID"),
+      key_content: ENV.fetch("APPSTORE_PRIVATE_KEY")
+    )
+
+    app_identifier = "com.fluxer"
+    flutter_build_name = flutter_marketing_version
+    flutter_build_number = next_testflight_build_number(
+      api_key: api_key,
+      app_identifier: app_identifier
+    )
+    UI.message("Building #{app_identifier} #{flutter_build_name} (#{flutter_build_number})")
+
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: profile_path,
+      target_filter: "^Runner$",
+      build_configuration: "Release-beta",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: extension_profile_path,
+      target_filter: "^BroadcastExtension$",
+      build_configuration: "Release-beta",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: notification_service_profile_path,
+      target_filter: "^NotificationService$",
+      build_configuration: "Release-beta",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: share_extension_profile_path,
+      target_filter: "^ShareExtension$",
+      build_configuration: "Release-beta",
+      code_signing_identity: "Apple Distribution"
+    )
+    cocoapods(
+      podfile: "ios/Podfile",
+      clean_install: true
+    )
+
+    sh(
+      "flutter",
+      "build",
+      "ios",
+      "--release",
+      "--flavor",
+      "beta",
+      "--no-codesign",
+      "--build-name",
+      flutter_build_name,
+      "--build-number",
+      flutter_build_number.to_s,
+      "--dart-define-from-file=#{File.join(project_root_path, "tool/dart_defines/beta.json")}",
+      "--dart-define=PUSH_PROVIDER=apns",
+      "--dart-define=BUILD_TIMESTAMP=#{Time.now.utc.iso8601}",
+      "--dart-define=BETA_NUMBER=#{ENV["BETA_NUMBER"]}"
+    )
+    build_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: "beta",
+      configuration: "Release-beta",
+      clean: true,
+      output_directory: "build/ios/ipa",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV.fetch("APPLE_TEAM_ID"),
+        signingCertificate: "Apple Distribution",
+        provisioningProfiles: {
+          "com.fluxer" => runner_profile_uuid,
+          "com.fluxer.BroadcastExtension" => extension_profile_uuid,
+          "com.fluxer.NotificationService" => notification_service_profile_uuid,
+          "com.fluxer.ShareExtension" => share_extension_profile_uuid
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM=#{ENV.fetch("APPLE_TEAM_ID")}",
+        "FLUTTER_BUILD_NAME=#{flutter_build_name}",
+        "FLUTTER_BUILD_NUMBER=#{flutter_build_number}",
+        "CODE_SIGN_STYLE=Manual",
+      ].join(" ")
+    )
+    upload_measure_ios_dsyms
+    maximum_attempts = 3
+    attempt_index = 1
+    begin
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: lane_context[SharedValues::IPA_OUTPUT_PATH],
+        skip_waiting_for_build_processing: true
+      )
+    rescue => err
+      if err.message.include?("The bundle version must be higher") || err.message.include?("-19232")
+        raise err
+      end
+      if attempt_index >= maximum_attempts
+        raise err
+      end
+      retry_delay_seconds = attempt_index * 30
+      UI.important("TestFlight upload failed on attempt #{attempt_index}/#{maximum_attempts}: #{err.message}")
+      UI.important("Retrying upload in #{retry_delay_seconds} seconds...")
+      sleep(retry_delay_seconds)
+      attempt_index += 1
+      retry
+    end
+  end
+
+  desc "Build canary archive and upload to TestFlight (com.fluxer.canary)"
+  lane :testflight_canary do
+    ENV["MEASURE_RELEASE_CHANNEL"] = "canary"
+    profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision")
+    extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/broadcast_extension.mobileprovision")
+    notification_service_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/notification_service.mobileprovision")
+    share_extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/share_extension.mobileprovision")
+    runner_profile_uuid = fetchRequiredEnvironmentValue("PROFILE_UUID")
+    extension_profile_uuid = fetchOptionalEnvironmentValue("BROADCAST_EXTENSION_PROFILE_UUID", runner_profile_uuid)
+    notification_service_profile_uuid = fetchOptionalEnvironmentValue("NOTIFICATION_SERVICE_PROFILE_UUID", extension_profile_uuid)
+    share_extension_profile_uuid = fetchOptionalEnvironmentValue("SHARE_EXTENSION_PROFILE_UUID", notification_service_profile_uuid)
+    unless File.exist?(notification_service_profile_path)
+      notification_service_profile_path = extension_profile_path
+    end
+    unless File.exist?(share_extension_profile_path)
+      share_extension_profile_path = notification_service_profile_path
+    end
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APPSTORE_KEY_ID"),
+      issuer_id: ENV.fetch("APPSTORE_ISSUER_ID"),
+      key_content: ENV.fetch("APPSTORE_PRIVATE_KEY")
+    )
+
+    app_identifier = "com.fluxer.canary"
+    flutter_build_name = flutter_marketing_version
+    flutter_build_number = next_testflight_build_number(
+      api_key: api_key,
+      app_identifier: app_identifier
+    )
+    UI.message("Building #{app_identifier} #{flutter_build_name} (#{flutter_build_number})")
+
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: profile_path,
+      target_filter: "^Runner$",
+      build_configuration: "Release-canary",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: extension_profile_path,
+      target_filter: "^BroadcastExtension$",
+      build_configuration: "Release-canary",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: notification_service_profile_path,
+      target_filter: "^NotificationService$",
+      build_configuration: "Release-canary",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: share_extension_profile_path,
+      target_filter: "^ShareExtension$",
+      build_configuration: "Release-canary",
+      code_signing_identity: "Apple Distribution"
+    )
+    cocoapods(
+      podfile: "ios/Podfile",
+      clean_install: true
+    )
+
+    sh(
+      "flutter",
+      "build",
+      "ios",
+      "--release",
+      "--flavor",
+      "canary",
+      "--no-codesign",
+      "--build-name",
+      flutter_build_name,
+      "--build-number",
+      flutter_build_number.to_s,
+      "--dart-define-from-file=#{File.join(project_root_path, "tool/dart_defines/canary.json")}",
+      "--dart-define=PUSH_PROVIDER=apns",
+      "--dart-define=BUILD_TIMESTAMP=#{Time.now.utc.iso8601}",
+      *canary_number_dart_define_args
+    )
+    build_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: "canary",
+      configuration: "Release-canary",
+      clean: true,
+      output_directory: "build/ios/ipa",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV.fetch("APPLE_TEAM_ID"),
+        signingCertificate: "Apple Distribution",
+        provisioningProfiles: {
+          "com.fluxer.canary" => runner_profile_uuid,
+          "com.fluxer.canary.BroadcastExtension" => extension_profile_uuid,
+          "com.fluxer.canary.NotificationService" => notification_service_profile_uuid,
+          "com.fluxer.canary.ShareExtension" => share_extension_profile_uuid
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM=#{ENV.fetch("APPLE_TEAM_ID")}",
+        "FLUTTER_BUILD_NAME=#{flutter_build_name}",
+        "FLUTTER_BUILD_NUMBER=#{flutter_build_number}",
+        "CODE_SIGN_STYLE=Manual",
+      ].join(" ")
+    )
+    upload_measure_ios_dsyms
+    changelog = "Build from GitHub Actions run: #{ENV['GITHUB_SERVER_URL']}/#{ENV['GITHUB_REPOSITORY']}/actions/runs/#{ENV['GITHUB_RUN_ID']}"
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: lane_context[SharedValues::IPA_OUTPUT_PATH],
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+    UI.success("Build #{flutter_build_number} uploaded to TestFlight")
+
+    wait_for_processed_build(
+      api_key: api_key,
+      app_identifier: app_identifier,
+      app_version: flutter_build_name,
+      build_number: flutter_build_number,
+      groups: ["Fluxer Team", "Development collaborations"],
+      changelog: changelog
+    )
+  end
+
+  desc "Build stable IPA and upload to App Store Connect as a processing build only (no App Review submission, no automatic release)"
+  lane :stable_release do
+    ENV["MEASURE_RELEASE_CHANNEL"] = "stable"
+    profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision")
+    extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/broadcast_extension.mobileprovision")
+    notification_service_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/notification_service.mobileprovision")
+    share_extension_profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/share_extension.mobileprovision")
+    runner_profile_uuid = fetchRequiredEnvironmentValue("PROFILE_UUID")
+    extension_profile_uuid = fetchOptionalEnvironmentValue("BROADCAST_EXTENSION_PROFILE_UUID", runner_profile_uuid)
+    notification_service_profile_uuid = fetchOptionalEnvironmentValue("NOTIFICATION_SERVICE_PROFILE_UUID", extension_profile_uuid)
+    share_extension_profile_uuid = fetchOptionalEnvironmentValue("SHARE_EXTENSION_PROFILE_UUID", notification_service_profile_uuid)
+    unless File.exist?(notification_service_profile_path)
+      notification_service_profile_path = extension_profile_path
+    end
+    unless File.exist?(share_extension_profile_path)
+      share_extension_profile_path = notification_service_profile_path
+    end
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APPSTORE_KEY_ID"),
+      issuer_id: ENV.fetch("APPSTORE_ISSUER_ID"),
+      key_content: ENV.fetch("APPSTORE_PRIVATE_KEY")
+    )
+
+    app_identifier = "com.fluxer"
+    flutter_build_name = flutter_marketing_version
+    flutter_build_number = next_testflight_build_number(
+      api_key: api_key,
+      app_identifier: app_identifier
+    )
+    UI.message("Building #{app_identifier} #{flutter_build_name} (#{flutter_build_number})")
+
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: profile_path,
+      target_filter: "^Runner$",
+      build_configuration: "Release-stable",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: extension_profile_path,
+      target_filter: "^BroadcastExtension$",
+      build_configuration: "Release-stable",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: notification_service_profile_path,
+      target_filter: "^NotificationService$",
+      build_configuration: "Release-stable",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_project_provisioning(
+      xcodeproj: "ios/Runner.xcodeproj",
+      profile: share_extension_profile_path,
+      target_filter: "^ShareExtension$",
+      build_configuration: "Release-stable",
+      code_signing_identity: "Apple Distribution"
+    )
+    cocoapods(
+      podfile: "ios/Podfile",
+      clean_install: true
+    )
+
+    sh(
+      "flutter",
+      "build",
+      "ios",
+      "--release",
+      "--flavor",
+      "stable",
+      "--no-codesign",
+      "--build-name",
+      flutter_build_name,
+      "--build-number",
+      flutter_build_number.to_s,
+      "--dart-define-from-file=#{File.join(project_root_path, "tool/dart_defines/stable.json")}",
+      "--dart-define=PUSH_PROVIDER=apns",
+      "--dart-define=BUILD_TIMESTAMP=#{Time.now.utc.iso8601}"
+    )
+    build_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: "stable",
+      configuration: "Release-stable",
+      clean: true,
+      output_directory: "build/ios/ipa",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV.fetch("APPLE_TEAM_ID"),
+        signingCertificate: "Apple Distribution",
+        provisioningProfiles: {
+          "com.fluxer" => runner_profile_uuid,
+          "com.fluxer.BroadcastExtension" => extension_profile_uuid,
+          "com.fluxer.NotificationService" => notification_service_profile_uuid,
+          "com.fluxer.ShareExtension" => share_extension_profile_uuid
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM=#{ENV.fetch("APPLE_TEAM_ID")}",
+        "FLUTTER_BUILD_NAME=#{flutter_build_name}",
+        "FLUTTER_BUILD_NUMBER=#{flutter_build_number}",
+        "CODE_SIGN_STYLE=Manual",
+      ].join(" ")
+    )
+    upload_measure_ios_dsyms
+    maximum_attempts = 3
+    attempt_index = 1
+    begin
+      upload_to_app_store(
+        api_key: api_key,
+        ipa: lane_context[SharedValues::IPA_OUTPUT_PATH],
+        app_identifier: app_identifier,
+        skip_metadata: true,
+        skip_screenshots: true,
+        skip_app_version_update: true,
+        force: true,
+        submit_for_review: false,
+        automatic_release: false,
+        run_precheck_before_submit: false,
+        precheck_include_in_app_purchases: false
+      )
+    rescue => err
+      if err.message.include?("The bundle version must be higher") || err.message.include?("-19232")
+        raise err
+      end
+      if attempt_index >= maximum_attempts
+        raise err
+      end
+      retry_delay_seconds = attempt_index * 30
+      UI.important("App Store upload failed on attempt #{attempt_index}/#{maximum_attempts}: #{err.message}")
+      UI.important("Retrying upload in #{retry_delay_seconds} seconds...")
+      sleep(retry_delay_seconds)
+      attempt_index += 1
+      retry
+    end
+  end
+end
+
+def play_store_beta_release_notes
+  tag = fetchRequiredEnvironmentValue("BETA_RELEASE_TAG")
+  repository = fetchOptionalEnvironmentValue("GITHUB_REPOSITORY", "fluxerapp/flutter_client")
+  server_url = fetchOptionalEnvironmentValue("GITHUB_SERVER_URL", "https://github.com")
+  "Review full release notes here: #{server_url}/#{repository}/releases/tag/#{tag}"
+end
+
+platform :android do
+  desc "Upload beta FCM app bundle to Google Play"
+  lane :upload_beta_fcm_aab do
+    aab_glob = File.join(project_root_path, "build/app/outputs/bundle/betaFcmRelease/*.aab")
+    aab_path = Dir.glob(aab_glob).first
+    if aab_path.nil? || !File.exist?(aab_path)
+      UI.user_error!("Beta FCM AAB not found (expected #{aab_glob})")
+    end
+
+    upload_to_play_store(
+      package_name: "com.fluxer",
+      aab: aab_path,
+      track: fetchOptionalEnvironmentValue("PLAY_STORE_TRACK", "beta"),
+      json_key_data: fetchRequiredEnvironmentValue("SUPPLY_JSON_KEY_DATA"),
+      release_notes: {
+        "en-US" => play_store_beta_release_notes
+      },
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end
+
+platform :mac do
+  desc "Build canary macOS archive and upload to TestFlight (com.fluxer.lite.canary)"
+  lane :testflight_canary do
+    profile_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision")
+    runner_profile_uuid = fetchRequiredEnvironmentValue("PROFILE_UUID")
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APPSTORE_KEY_ID"),
+      issuer_id: ENV.fetch("APPSTORE_ISSUER_ID"),
+      key_content: ENV.fetch("APPSTORE_PRIVATE_KEY")
+    )
+
+    app_identifier = "com.fluxer.lite.canary"
+    flutter_build_name = flutter_marketing_version
+    flutter_build_number = next_testflight_build_number(
+      api_key: api_key,
+      app_identifier: app_identifier,
+      platform: "osx"
+    )
+    UI.message("Building #{app_identifier} #{flutter_build_name} (#{flutter_build_number})")
+
+    update_project_provisioning(
+      xcodeproj: "macos/Runner.xcodeproj",
+      profile: profile_path,
+      target_filter: "^Runner$",
+      build_configuration: "Release-canary",
+      code_signing_identity: "Apple Distribution"
+    )
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "macos/Runner.xcodeproj",
+      team_id: ENV.fetch("APPLE_TEAM_ID"),
+      targets: ["Runner"],
+      build_configurations: ["Release-canary"],
+      code_sign_identity: "Apple Distribution",
+      profile_uuid: runner_profile_uuid,
+      sdk: "macosx*"
+    )
+    cocoapods(
+      podfile: "macos/Podfile",
+      clean_install: true
+    )
+
+    sh(
+      "flutter",
+      "build",
+      "macos",
+      "--release",
+      "--flavor",
+      "canary",
+      "--build-name",
+      flutter_build_name,
+      "--build-number",
+      flutter_build_number.to_s,
+      "--dart-define-from-file=#{File.join(project_root_path, "tool/dart_defines/canary.json")}",
+      "--dart-define=BUILD_TIMESTAMP=#{Time.now.utc.iso8601}"
+    )
+    build_mac_app(
+      workspace: "macos/Runner.xcworkspace",
+      scheme: "canary",
+      configuration: "Release-canary",
+      clean: true,
+      output_directory: "build/macos/pkg",
+      export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV.fetch("APPLE_TEAM_ID"),
+        signingCertificate: "Apple Distribution",
+        installerSigningCertificate: "Mac Installer Distribution",
+        provisioningProfiles: {
+          "com.fluxer.lite.canary" => runner_profile_uuid
+        }
+      },
+      xcargs: [
+        "DEVELOPMENT_TEAM=#{ENV.fetch("APPLE_TEAM_ID")}",
+        "FLUTTER_BUILD_NAME=#{flutter_build_name}",
+        "FLUTTER_BUILD_NUMBER=#{flutter_build_number}",
+        "CODE_SIGN_STYLE=Manual",
+        'CODE_SIGN_IDENTITY[sdk=macosx*]="Apple Distribution"',
+      ].join(" ")
+    )
+    changelog = "Build from GitHub Actions run: #{ENV['GITHUB_SERVER_URL']}/#{ENV['GITHUB_REPOSITORY']}/actions/runs/#{ENV['GITHUB_RUN_ID']}"
+
+    upload_to_testflight(
+      api_key: api_key,
+      pkg: lane_context[SharedValues::PKG_OUTPUT_PATH],
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+    UI.success("Build #{flutter_build_number} uploaded to TestFlight")
+
+    wait_for_processed_build(
+      api_key: api_key,
+      app_identifier: app_identifier,
+      app_version: flutter_build_name,
+      build_number: flutter_build_number,
+      groups: ["Fluxer Team"],
+      changelog: changelog,
+      platform: Spaceship::ConnectAPI::Platform::MAC_OS,
+      internal_only: true
+    )
+  end
+end

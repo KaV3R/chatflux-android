@@ -1,0 +1,158 @@
+import 'package:fluxer_app/features/chat/data/channel_search_query_parser.dart';
+import 'package:fluxer_app/features/chat/data/message_search_repository.dart';
+
+class ChannelSearchChipFilters {
+  const ChannelSearchChipFilters({
+    this.authorIds = const <String>[],
+    this.mentionIds = const <String>[],
+    this.channelIds = const <String>[],
+    this.contentTypes = const <MessageSearchContentFilter>{},
+    this.pinned,
+    this.authorTypes = const <String>[],
+    this.linkHostname,
+    this.fileName,
+    this.fileExtension,
+    this.dates = const <(String, String)>[],
+  });
+
+  final List<String> authorIds;
+  final List<String> mentionIds;
+  final List<String> channelIds;
+  final Set<MessageSearchContentFilter> contentTypes;
+  final bool? pinned;
+  final List<String> authorTypes;
+  final String? linkHostname;
+  final String? fileName;
+  final String? fileExtension;
+  final List<(String, String)> dates;
+
+  bool get isEmpty =>
+      authorIds.isEmpty &&
+      mentionIds.isEmpty &&
+      channelIds.isEmpty &&
+      contentTypes.isEmpty &&
+      pinned == null &&
+      authorTypes.isEmpty &&
+      (linkHostname == null || linkHostname!.trim().isEmpty) &&
+      (fileName == null || fileName!.trim().isEmpty) &&
+      (fileExtension == null || fileExtension!.trim().isEmpty) &&
+      dates.every(((String, String) date) => date.$2.trim().isEmpty);
+}
+
+extension ChannelSearchChipFiltersMerge on ParsedChannelSearchParams {
+  ParsedChannelSearchParams mergeChipFilters({
+    String? authorId,
+    Set<MessageSearchContentFilter>? contentTypes,
+    ChannelSearchChipFilters chips = const ChannelSearchChipFilters(),
+  }) {
+    ParsedChannelSearchParams next = this;
+
+    final List<String> mergedAuthors = <String>[
+      ...next.authorIds,
+      if (authorId != null && authorId.trim().isNotEmpty)
+        ...authorId.split(RegExp(r'[\s,]+')).where((String v) => v.isNotEmpty),
+      ...chips.authorIds,
+    ];
+    if (mergedAuthors.isNotEmpty) {
+      next = next.copyWith(authorIds: mergedAuthors.toSet().toList());
+    }
+
+    final List<String> mergedMentions = <String>[
+      ...next.mentions,
+      ...chips.mentionIds,
+    ];
+    if (mergedMentions.isNotEmpty) {
+      next = next.copyWith(mentions: mergedMentions.toSet().toList());
+    }
+
+    final List<String> mergedChannels = <String>[
+      ...next.channelIds,
+      ...chips.channelIds,
+    ];
+    if (mergedChannels.isNotEmpty) {
+      next = next.copyWith(channelIds: mergedChannels.toSet().toList());
+    }
+
+    final Set<MessageSearchContentFilter> mergedContentTypes =
+        <MessageSearchContentFilter>{
+          ...next.hasContentFilters,
+          ...?contentTypes,
+          ...chips.contentTypes,
+        };
+    if (mergedContentTypes.isNotEmpty) {
+      final List<String> mergedHas = <String>[
+        ...next.has,
+        ...mergedContentTypes.map(channelSearchHasValueForContentFilter),
+      ];
+      next = next.copyWith(has: mergedHas.toSet().toList());
+    }
+
+    if (chips.pinned != null) {
+      next = next.copyWith(pinned: chips.pinned);
+    }
+
+    if (chips.authorTypes.isNotEmpty) {
+      next = next.copyWith(
+        authorTypes: <String>{
+          ...next.authorTypes,
+          ...chips.authorTypes,
+        }.toList(),
+      );
+    }
+
+    final String? link = chips.linkHostname?.trim();
+    if (link != null && link.isNotEmpty) {
+      next = next.copyWith(
+        linkHostnames: <String>{...next.linkHostnames, link}.toList(),
+      );
+    }
+
+    final String? filename = chips.fileName?.trim();
+    if (filename != null && filename.isNotEmpty) {
+      next = next.copyWith(
+        attachmentFilenames: <String>{
+          ...next.attachmentFilenames,
+          filename,
+        }.toList(),
+      );
+    }
+
+    final String? extension = chips.fileExtension?.trim();
+    if (extension != null && extension.isNotEmpty) {
+      next = next.copyWith(
+        attachmentExtensions: <String>{
+          ...next.attachmentExtensions,
+          extension,
+        }.toList(),
+      );
+    }
+
+    for (final (String key, String value) in chips.dates) {
+      if (value.trim().isNotEmpty) {
+        next = applyChannelSearchDateChip(
+          next,
+          filterKey: key,
+          value: value.trim(),
+        );
+      }
+    }
+
+    return next;
+  }
+}
+
+String channelSearchHasValueForContentFilter(
+  MessageSearchContentFilter filter,
+) {
+  return switch (filter) {
+    MessageSearchContentFilter.image => 'image',
+    MessageSearchContentFilter.video => 'video',
+    MessageSearchContentFilter.audio => 'sound',
+    MessageSearchContentFilter.file => 'file',
+    MessageSearchContentFilter.link => 'link',
+    MessageSearchContentFilter.embed => 'embed',
+    MessageSearchContentFilter.sticker => 'sticker',
+    MessageSearchContentFilter.poll => 'poll',
+    MessageSearchContentFilter.forward => 'snapshot',
+  };
+}

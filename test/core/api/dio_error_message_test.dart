@@ -1,0 +1,124 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/api/dio_error_message.dart';
+
+void main() {
+  group('apiMessageFromDioException', () {
+    test('returns message from response map', () {
+      final DioException error = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/test'),
+          data: <String, dynamic>{'message': 'Invite expired'},
+        ),
+      );
+      expect(apiMessageFromDioException(error), 'Invite expired');
+    });
+
+    test('returns null when message is missing', () {
+      final DioException error = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/test'),
+          data: <String, dynamic>{},
+        ),
+      );
+      expect(apiMessageFromDioException(error), isNull);
+    });
+  });
+
+  group('userFacingErrorMessage', () {
+    DioException formBodyError(List<Map<String, dynamic>> errors) {
+      return DioException(
+        requestOptions: RequestOptions(path: '/users/@me/mfa/totp/enable'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/users/@me/mfa/totp/enable'),
+          statusCode: 400,
+          data: <String, dynamic>{
+            'code': 'INVALID_FORM_BODY',
+            'message': 'Invalid form body.',
+            'errors': errors,
+          },
+        ),
+      );
+    }
+
+    test('shows the field messages of an invalid form body', () {
+      final DioException error = formBodyError(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'path': 'code',
+          'message': 'Invalid code.',
+          'code': 'INVALID_CODE',
+        },
+      ]);
+      expect(userFacingErrorMessage(error, 'fallback'), 'Invalid code.');
+    });
+
+    test('joins distinct field messages of an invalid form body', () {
+      final DioException error = formBodyError(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'path': 'new_password',
+          'message': 'Password is too short.',
+          'code': 'PASSWORD_LENGTH_INVALID',
+        },
+        <String, dynamic>{
+          'path': 'password',
+          'message': 'Password is too short.',
+          'code': 'PASSWORD_LENGTH_INVALID',
+        },
+        <String, dynamic>{
+          'path': 'password',
+          'message': 'Invalid password.',
+          'code': 'INVALID_PASSWORD',
+        },
+      ]);
+      expect(
+        userFacingErrorMessage(error, 'fallback'),
+        'Password is too short. Invalid password.',
+      );
+    });
+
+    test('keeps the top-level message without field errors', () {
+      final DioException error = formBodyError(<Map<String, dynamic>>[]);
+      expect(userFacingErrorMessage(error, 'fallback'), 'Invalid form body.');
+    });
+  });
+
+  group('retryAfterMsFromDioException', () {
+    test('converts retry_after seconds to milliseconds', () {
+      final DioException error = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/test'),
+          data: <String, dynamic>{'retry_after': 18.5},
+        ),
+      );
+      expect(retryAfterMsFromDioException(error), 18500);
+    });
+
+    test('returns null when retry_after is missing', () {
+      final DioException error = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/test'),
+          data: <String, dynamic>{},
+        ),
+      );
+      expect(retryAfterMsFromDioException(error), isNull);
+    });
+
+    test('falls back to Retry-After header when body has no window', () {
+      final DioException error = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/test'),
+          data: <String, dynamic>{},
+          headers: Headers.fromMap(<String, List<String>>{
+            'retry-after': <String>['3'],
+          }),
+        ),
+      );
+      expect(retryAfterMsFromDioException(error), 3000);
+    });
+  });
+}

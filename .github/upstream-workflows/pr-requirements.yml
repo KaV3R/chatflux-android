@@ -1,0 +1,57 @@
+name: PR requirements
+
+on:
+  pull_request:
+    branches:
+      - canary
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  validate:
+    name: Validate PR requirements
+    if: ${{ !(github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == vars.TRANSLATIONS_BRANCH) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate linked reference and commit signatures
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/validate_pr_requirements.sh
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        # Temp use while waiting for a pr: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+
+      - name: Configure APNs build tree
+        run: dart tool/configure_build.dart --profile=apns
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify generated localisations
+        run: |
+          flutter gen-l10n
+          dart format lib/l10n/generated
+          git diff --exit-code -- lib/l10n/generated

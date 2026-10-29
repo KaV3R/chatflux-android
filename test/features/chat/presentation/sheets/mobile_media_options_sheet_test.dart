@@ -1,0 +1,528 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/favorite_meme.dart';
+import 'package:fluxer_app/features/chat/domain/media_options_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/delete_message_confirm_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/mobile_media_options_sheet.dart';
+import 'package:fluxer_app/features/chat/providers/messages/saved_message_provider.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/favorite_media_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:riverpod/src/framework.dart' show Override;
+
+import '../../../../helpers/open_test_database.dart';
+import '../../../../helpers/test_l10n.dart';
+
+const String _testAttachmentUrl =
+    'https://fluxerusercontent.com/attachments/1427764813854588943/1531388054034460672/video.mp4';
+const String _testImageUrl =
+    'https://fluxerusercontent.com/attachments/1427764813854588943/1531388054034460672/image.png';
+const String _externalEmbedUrl =
+    'https://fxtwitter.com/i/status/2082073836472647719';
+
+Widget _wrap(Widget child, {List<Override> overrides = const []}) {
+  final colorTheme = buildDarkColorTheme();
+  final Override database = fluxerDatabaseProvider.overrideWithValue(
+    openTestDatabase(),
+  );
+  return ProviderScope(
+    overrides: <Override>[
+      database,
+      favoriteMemesProvider.overrideWith(
+        (Ref ref) => Stream<List<FavoriteMeme>>.value(const <FavoriteMeme>[]),
+      ),
+      ...overrides,
+    ],
+    child: MaterialApp(
+      navigatorKey: rootNavigatorKey,
+      locale: kTestLocale,
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      home: child,
+    ),
+  );
+}
+
+void main() {
+  testWidgets(
+    'open in browser shows external link warning after sheet closes',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              return Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      unawaited(
+                        showMobileMediaOptionsSheet(
+                          context: context,
+                          ref: ref,
+                          launchContext: const MediaOptionsLaunchContext(
+                            fallbackUrl: _externalEmbedUrl,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('open'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Open in browser'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('External link warning'), findsOneWidget);
+      expect(find.text(_externalEmbedUrl), findsOneWidget);
+    },
+  );
+
+  testWidgets('download is hidden for external embed media', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    unawaited(
+                      showMobileMediaOptionsSheet(
+                        context: context,
+                        ref: ref,
+                        launchContext: const MediaOptionsLaunchContext(
+                          fallbackUrl: _externalEmbedUrl,
+                          embedIndex: 0,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Download'), findsNothing);
+    expect(find.text('Open in browser'), findsOneWidget);
+  });
+
+  testWidgets('download is shown for embed media with a media URL', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    unawaited(
+                      showMobileMediaOptionsSheet(
+                        context: context,
+                        ref: ref,
+                        launchContext: const MediaOptionsLaunchContext(
+                          fallbackUrl: 'https://tenor.com/view/wave-gif-1',
+                          embedIndex: 0,
+                          downloadUrl:
+                              'https://fluxerusercontent.com/external/sig/https/media.tenor.com/wave.mp4',
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Download'), findsOneWidget);
+  });
+
+  testWidgets('download is shown for uploaded attachments', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    unawaited(
+                      showMobileMediaOptionsSheet(
+                        context: context,
+                        ref: ref,
+                        launchContext: const MediaOptionsLaunchContext(
+                          fallbackUrl: _testAttachmentUrl,
+                          attachmentId: 'attachment-id',
+                          filename: 'video.mp4',
+                          downloadUrl: _testAttachmentUrl,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Download'), findsOneWidget);
+  });
+
+  testWidgets('edit alt text opens on the first tap', (tester) async {
+    const Attachment attachment = Attachment(
+      id: 'attachment-id',
+      filename: 'image.png',
+      url: _testImageUrl,
+      contentType: 'image/png',
+    );
+    final Message message = Message(
+      id: 'message-id',
+      channelId: 'channel-id',
+      authorId: 'author-id',
+      authorName: 'Author',
+      content: '',
+      timestamp: DateTime(2026),
+      attachments: const <Attachment>[attachment],
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        overrides: <Override>[
+          appearancePreferencesProvider.overrideWithValue(
+            const AppearancePreferencesState(),
+          ),
+          isMessageSavedProvider(
+            message.id,
+          ).overrideWith((Ref ref) => Stream<bool>.value(false)),
+        ],
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    unawaited(
+                      showMobileMediaOptionsSheet(
+                        context: context,
+                        ref: ref,
+                        launchContext: MediaOptionsLaunchContext(
+                          fallbackUrl: _testImageUrl,
+                          attachmentId: attachment.id,
+                          filename: attachment.filename,
+                          actionScope: MessageMediaActionScope(
+                            message: message,
+                            permissions: const MessageActionPermissions(
+                              isOwnMessage: true,
+                              isDmChannel: false,
+                              canDelete: true,
+                              canReport: false,
+                              canAddReactions: false,
+                              canPinMessage: false,
+                              canManageMessages: false,
+                              canSendMessages: true,
+                              developerMode: false,
+                            ),
+                            callbacks: const MessageActionCallbacks(),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final Finder editAltText = find.text('Edit alt text');
+    await tester.ensureVisible(editAltText);
+    await tester.pumpAndSettle();
+    await tester.tap(editAltText);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit attachment'), findsOneWidget);
+    expect(find.text('Edit alt text'), findsNothing);
+  });
+
+  testWidgets('delete attachment closes media viewer after the sheet', (
+    tester,
+  ) async {
+    const Attachment attachment = Attachment(
+      id: 'attachment-id',
+      filename: 'image.png',
+      url: _testImageUrl,
+      contentType: 'image/png',
+    );
+    final Message message = Message(
+      id: 'message-id',
+      channelId: 'channel-id',
+      authorId: 'author-id',
+      authorName: 'Author',
+      content: '',
+      timestamp: DateTime(2026),
+      attachments: const <Attachment>[attachment],
+    );
+    var viewerClosed = false;
+
+    await tester.pumpWidget(
+      _wrap(
+        overrides: <Override>[
+          appearancePreferencesProvider.overrideWithValue(
+            const AppearancePreferencesState(),
+          ),
+          isMessageSavedProvider(
+            message.id,
+          ).overrideWith((Ref ref) => Stream<bool>.value(false)),
+        ],
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    showGeneralDialog<void>(
+                      context: context,
+                      pageBuilder: (BuildContext dialogContext, _, _) {
+                        return Scaffold(
+                          body: Center(
+                            child: TextButton(
+                              onPressed: () {
+                                unawaited(
+                                  showMobileMediaOptionsSheet(
+                                    context: dialogContext,
+                                    ref: ref,
+                                    launchContext: MediaOptionsLaunchContext(
+                                      fallbackUrl: _testImageUrl,
+                                      attachmentId: attachment.id,
+                                      filename: attachment.filename,
+                                      actionScope: MessageMediaActionScope(
+                                        message: message,
+                                        permissions:
+                                            const MessageActionPermissions(
+                                              isOwnMessage: true,
+                                              isDmChannel: false,
+                                              canDelete: true,
+                                              canReport: false,
+                                              canAddReactions: false,
+                                              canPinMessage: false,
+                                              canManageMessages: false,
+                                              canSendMessages: true,
+                                              developerMode: false,
+                                            ),
+                                        callbacks: MessageActionCallbacks(
+                                          onDeleteAttachment:
+                                              (Attachment attachment) {
+                                                unawaited(
+                                                  showDeleteAttachmentConfirmSheet(
+                                                    dialogContext,
+                                                    ref,
+                                                    messageId: message.id,
+                                                    attachment: attachment,
+                                                  ),
+                                                );
+                                              },
+                                        ),
+                                      ),
+                                    ),
+                                    onCloseViewer: () {
+                                      viewerClosed = true;
+                                      Navigator.of(dialogContext).pop();
+                                    },
+                                  ),
+                                );
+                              },
+                              child: const Text('options'),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: const Text('open viewer'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open viewer'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('options'));
+    await tester.pumpAndSettle();
+
+    final Finder deleteAttachment = find.text('Delete attachment');
+    await tester.ensureVisible(deleteAttachment);
+    await tester.pumpAndSettle();
+    await tester.tap(deleteAttachment.first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(deleteAttachment.last);
+    await tester.pumpAndSettle();
+
+    expect(viewerClosed, isTrue);
+    expect(find.text('options'), findsNothing);
+  });
+  testWidgets('forward closes the media viewer and keeps the forward sheet', (
+    tester,
+  ) async {
+    const Attachment attachment = Attachment(
+      id: 'attachment-id',
+      filename: 'image.png',
+      url: _testImageUrl,
+      contentType: 'image/png',
+    );
+    final Message message = Message(
+      id: 'message-id',
+      channelId: 'channel-id',
+      authorId: 'author-id',
+      authorName: 'Author',
+      content: '',
+      timestamp: DateTime(2026),
+      attachments: const <Attachment>[attachment],
+    );
+    var forwardOpened = 0;
+
+    await tester.pumpWidget(
+      _wrap(
+        overrides: <Override>[
+          appearancePreferencesProvider.overrideWithValue(
+            const AppearancePreferencesState(),
+          ),
+          isMessageSavedProvider(
+            message.id,
+          ).overrideWith((Ref ref) => Stream<bool>.value(false)),
+        ],
+        Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            return Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () {
+                    showGeneralDialog<void>(
+                      context: context,
+                      pageBuilder: (BuildContext dialogContext, _, _) {
+                        return Scaffold(
+                          body: Center(
+                            child: TextButton(
+                              onPressed: () {
+                                unawaited(
+                                  showMobileMediaOptionsSheet(
+                                    context: dialogContext,
+                                    ref: ref,
+                                    launchContext: MediaOptionsLaunchContext(
+                                      fallbackUrl: _testImageUrl,
+                                      attachmentId: attachment.id,
+                                      filename: attachment.filename,
+                                      actionScope: MessageMediaActionScope(
+                                        message: message,
+                                        permissions:
+                                            const MessageActionPermissions(
+                                              isOwnMessage: false,
+                                              isDmChannel: false,
+                                              canDelete: false,
+                                              canReport: false,
+                                              canAddReactions: false,
+                                              canPinMessage: false,
+                                              canManageMessages: false,
+                                              canSendMessages: true,
+                                              developerMode: false,
+                                            ),
+                                        callbacks: MessageActionCallbacks(
+                                          onForward: () {
+                                            forwardOpened++;
+                                            showModalBottomSheet<void>(
+                                              context: rootNavigatorKey
+                                                  .currentContext!,
+                                              useRootNavigator: true,
+                                              builder: (_) =>
+                                                  const Text('forward picker'),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    onCloseViewer: () =>
+                                        Navigator.of(dialogContext).pop(),
+                                  ),
+                                );
+                              },
+                              child: const Text('options'),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: const Text('open viewer'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open viewer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('options'));
+    await tester.pumpAndSettle();
+
+    final Finder forward = find.text('Forward');
+    await tester.ensureVisible(forward);
+    await tester.pumpAndSettle();
+    await tester.tap(forward);
+    await tester.pumpAndSettle();
+
+    expect(forwardOpened, 1);
+    expect(find.text('options'), findsNothing);
+    expect(find.text('forward picker'), findsOneWidget);
+  });
+}

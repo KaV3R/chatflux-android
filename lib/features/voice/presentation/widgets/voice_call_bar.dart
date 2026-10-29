@@ -1,0 +1,388 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/gateway/providers/gateway_event_providers.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/providers/channel_list_view_model.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/dm/domain/dm_conversation.dart';
+import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_list_view_model.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/features/voice/providers/voice_pip_providers.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_state.dart';
+import 'package:fluxer_app/features/voice/utils/connection/session_navigation.dart';
+import 'package:fluxer_app/features/voice/voice_session_errors.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/chat_context_utils.dart';
+import 'package:fluxer_dart/gateway.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class VoiceCallBar extends ConsumerWidget {
+  const VoiceCallBar({super.key});
+
+  String _guildName(List<Guild> guilds, String? guildId) {
+    if (guildId == null || guildId.isEmpty) {
+      return '';
+    }
+    final Guild? guild = guilds.where((Guild g) => g.id == guildId).firstOrNull;
+    return guild?.name ?? '';
+  }
+
+  String _guildChannelSubtitle(
+    ChannelListState state,
+    String? channelId, {
+    Channel? persistedChannel,
+  }) {
+    if (channelId == null || channelId.isEmpty) {
+      return '';
+    }
+    final Channel? channel =
+        findChannelById(state, channelId) ?? persistedChannel;
+    return channel?.name ?? channelId;
+  }
+
+  DmConversation? _dmForVoice(
+    List<DmConversation> conversations,
+    String? channelId,
+  ) {
+    if (channelId == null || channelId.isEmpty) {
+      return null;
+    }
+    return findDmById(conversations, channelId);
+  }
+
+  String _privateSubtitle(DmConversation? dm, String? channelId) {
+    if (dm != null) {
+      return dm.displayName;
+    }
+    return channelId ?? '';
+  }
+
+  String _guildPrimaryLine({
+    required FluxerLocalizations l10n,
+    required VoiceSessionState voice,
+    required String guildName,
+  }) {
+    if (voice.errorMessage != null) {
+      return guildName.isEmpty ? l10n.dmVoiceCallBarIssueFallback : guildName;
+    }
+    if (voice.isConnected) {
+      return guildName.isEmpty
+          ? l10n.voiceCallBarGuildConnectedFallback
+          : guildName;
+    }
+    return guildName.isEmpty
+        ? l10n.dmVoiceCallBarConnecting
+        : '$guildName (${l10n.dmVoiceCallBarConnecting})';
+  }
+
+  String _privatePrimaryLine({
+    required FluxerLocalizations l10n,
+    required VoiceSessionState voice,
+    required bool isGroup,
+  }) {
+    if (voice.errorMessage != null) {
+      return l10n.dmVoiceCallBarIssueFallback;
+    }
+    if (!voice.isConnected) {
+      return l10n.dmVoiceCallBarConnecting;
+    }
+    return isGroup
+        ? l10n.dmVoiceCallBarGroupPrimary
+        : l10n.dmVoiceCallBarDirectPrimary;
+  }
+
+  void _onBarNavigate(
+    BuildContext context, {
+    required VoiceSessionState voice,
+  }) {
+    navigateToActiveVoiceSession(context, voice: voice);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (
+      bool isInVoice,
+      bool isConnected,
+      String? errorMessage,
+      String? guildId,
+      String? channelId,
+      String? activeConnectionId,
+    ) = ref.watch(
+      voiceSessionProvider.select(
+        (VoiceSessionState s) => (
+          s.isInVoice,
+          s.isConnected,
+          s.errorMessage,
+          s.guildId,
+          s.channelId,
+          s.activeConnectionId,
+        ),
+      ),
+    );
+    if (!isInVoice && errorMessage == null) {
+      return const SizedBox.shrink();
+    }
+    if (isMobileLayout(context) &&
+        errorMessage == null &&
+        !ref.watch(voicePipOnSessionCallRouteProvider)) {
+      return const SizedBox.shrink();
+    }
+    final VoiceSessionState voice = VoiceSessionState(
+      isConnecting: isInVoice && !isConnected,
+      isConnected: isConnected,
+      errorMessage: errorMessage,
+      guildId: guildId,
+      channelId: channelId,
+      activeConnectionId: activeConnectionId,
+    );
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final bool isGuildVoice =
+        voice.guildId != null && voice.guildId!.isNotEmpty;
+    final List<DmConversation> conversations = ref.watch(
+      dmViewModelProvider.select((s) => s.conversations),
+    );
+    final ChannelListState channelState = ref.watch(
+      channelListViewModelProvider.select((s) => s),
+    );
+    final DmConversation? dm = isGuildVoice
+        ? null
+        : _dmForVoice(conversations, voice.channelId);
+    late final String primaryLine;
+    late final String subtitle;
+    if (isGuildVoice) {
+      final Channel? persistedChannel = voice.channelId == null
+          ? null
+          : switch (ref.watch(channelByIdProvider(voice.channelId!))) {
+              AsyncData(:final value) => value,
+              _ => null,
+            };
+      primaryLine = _guildPrimaryLine(
+        l10n: l10n,
+        voice: voice,
+        guildName: _guildName(
+          ref.watch(guildListViewModelProvider.select((s) => s.guilds)),
+          voice.guildId,
+        ),
+      );
+      subtitle = _guildChannelSubtitle(
+        channelState,
+        voice.channelId,
+        persistedChannel: persistedChannel,
+      );
+    } else {
+      primaryLine = _privatePrimaryLine(
+        l10n: l10n,
+        voice: voice,
+        isGroup: dm?.isGroup ?? false,
+      );
+      subtitle = _privateSubtitle(dm, voice.channelId);
+    }
+    final String? connectionId = voice.activeConnectionId;
+    final VoiceState? selfVoiceState = connectionId == null
+        ? null
+        : ref.watch(voiceStateForConnectionProvider(connectionId));
+    final bool isMuted = selfVoiceState?.selfMute ?? false;
+    final bool isDeafened = selfVoiceState?.selfDeaf ?? false;
+    return RepaintBoundary(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Divider(height: 1, color: context.colors.borderColor),
+          Material(
+            color: context.colors.backgroundSecondary,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              child: FluxerGestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  _onBarNavigate(context, voice: voice);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Row(
+                      children: <Widget>[
+                        _buildStatusIcon(context),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                primaryLine,
+                                style: context.textStyles.channelName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (subtitle.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 2),
+                                Text(
+                                  subtitle,
+                                  style: context.textStyles.categoryName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                              if (voice.errorMessage != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  resolveVoiceSessionErrorMessage(
+                                    voice.errorMessage!,
+                                    l10n,
+                                  ),
+                                  style: context.textStyles.categoryName
+                                      .copyWith(
+                                        color: context.colors.statusDanger,
+                                      ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (voice.errorMessage == null &&
+                            voice.isInVoice) ...<Widget>[
+                          const SizedBox(width: 8),
+                          _ControlIconButton(
+                            icon: isMuted
+                                ? PhosphorIconsFill.microphoneSlash
+                                : PhosphorIconsFill.microphone,
+                            color: isMuted
+                                ? context.colors.statusDanger
+                                : context.colors.backgroundTertiary,
+                            tooltip: isMuted
+                                ? l10n.voiceControlUnmute
+                                : l10n.voiceControlMute,
+                            toggled: isMuted,
+                            onPressed: () {
+                              unawaited(
+                                ref
+                                    .read(voiceSessionProvider.notifier)
+                                    .toggleSelfMute(),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _ControlIconButton(
+                            icon: isDeafened
+                                ? PhosphorIconsFill.speakerSlash
+                                : PhosphorIconsFill.speakerHigh,
+                            color: isDeafened
+                                ? context.colors.statusDanger
+                                : context.colors.backgroundTertiary,
+                            tooltip: isDeafened
+                                ? l10n.voiceControlUndeafen
+                                : l10n.voiceControlDeafen,
+                            toggled: isDeafened,
+                            onPressed: () {
+                              unawaited(
+                                ref
+                                    .read(voiceSessionProvider.notifier)
+                                    .toggleSelfDeafen(),
+                              );
+                            },
+                          ),
+                        ],
+                        const SizedBox(width: 6),
+                        if (voice.errorMessage != null)
+                          TextButton(
+                            onPressed: () {
+                              ref
+                                  .read(voiceSessionProvider.notifier)
+                                  .clearError();
+                            },
+                            child: Text(l10n.voiceConnectionDismiss),
+                          )
+                        else if (voice.isConnected)
+                          FilledButton.tonal(
+                            onPressed: () {
+                              unawaited(
+                                ref
+                                    .read(voiceSessionProvider.notifier)
+                                    .leaveVoice(),
+                              );
+                            },
+                            child: Text(l10n.voiceChannelLeave),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusIcon(BuildContext context) {
+    return PhosphorIcon(
+      PhosphorIconsBold.phone,
+      color: context.colors.textSecondary,
+      size: 22,
+    );
+  }
+}
+
+class _ControlIconButton extends StatelessWidget {
+  const _ControlIconButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+    required this.tooltip,
+    this.toggled = false,
+  });
+
+  final PhosphorIconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+  final String tooltip;
+  final bool toggled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: tooltip,
+      toggled: toggled,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: color,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: SizedBox(
+              width: 36,
+              height: 36,
+              child: Center(
+                child: ExcludeSemantics(
+                  child: PhosphorIcon(
+                    icon,
+                    size: 18,
+                    color: context.colors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,1002 @@
+part of 'guild_navbar.dart';
+
+class _GuildFolderWidget extends ConsumerStatefulWidget {
+  final GuildNavbarFolder folder;
+  final int unavailableCount;
+  final GlobalKey<_GuildListItemState> Function(String guildId)
+  resolveGuildItemKey;
+
+  const _GuildFolderWidget({
+    required this.folder,
+    required this.unavailableCount,
+    required this.resolveGuildItemKey,
+    super.key,
+  });
+
+  @override
+  ConsumerState<_GuildFolderWidget> createState() => _GuildFolderWidgetState();
+}
+
+class _GuildFolderWidgetState extends ConsumerState<_GuildFolderWidget> {
+  var _isHovered = false;
+  var _suppressNextFolderTap = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final folder = widget.folder;
+    final isExpanded = ref.watch(
+      folderExpandedStateProvider.select((s) => s.contains(folder.id)),
+    );
+    final DragState dragState = ref.watch(guildDragProvider);
+    final bool useTouchDrag = isTouchPrimaryInput(ref);
+    final String folderId = folder.id.toString();
+    final bool collapseWhileDragging = dragState.shouldCollapseDragSource(
+      itemId: folderId,
+      useTouchDrag: useTouchDrag,
+    );
+    final bool visuallyExpanded = isExpanded && !collapseWhileDragging;
+    final bool showLeadingInsertionGap = ref.watch(
+      guildDragProvider.select(
+        (DragState state) => showFolderExternalTouchInsertionGap(
+          state: state,
+          folderId: folderId,
+          useTouchDrag: useTouchDrag,
+          edge: DropPosition.before,
+        ),
+      ),
+    );
+    final bool showTrailingInsertionGap = ref.watch(
+      guildDragProvider.select(
+        (DragState state) => showFolderExternalTouchInsertionGap(
+          state: state,
+          folderId: folderId,
+          useTouchDrag: useTouchDrag,
+          edge: DropPosition.after,
+        ),
+      ),
+    );
+
+    var anyUnread = false;
+    var totalMentions = 0;
+    var folderVoiceActivity = VoiceActivityType.none;
+    final guildUnreadReady = ref.watch(guildReadStateReadyProvider);
+    for (final guild in folder.guilds) {
+      final unread = ref.watch(
+        guildReadStateProvider.select((s) => s[guild.id]),
+      );
+      if (guildUnreadReady &&
+          !guild.unavailable &&
+          (unread?.hasUnread ?? false)) {
+        anyUnread = true;
+      }
+      if (guildUnreadReady && !guild.unavailable) {
+        totalMentions += unread?.mentionCount ?? 0;
+      }
+      final voiceActivity = ref.watch(guildVoiceActivityProvider(guild.id));
+      if (voiceActivity.index > folderVoiceActivity.index) {
+        folderVoiceActivity = voiceActivity;
+      }
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final folderAccent = folder.color != null && folder.color != 0
+        ? Color(folder.color! | 0xFF000000)
+        : isDark
+        ? context.colors.brandPrimaryLight
+        : context.colors.brandPrimary;
+
+    final folderSurface = Color.lerp(
+      context.colors.serverSidebarBackground,
+      folderAccent,
+      isDark ? 0.2 : 0.15,
+    )!;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: GuildNavbarIconShape.itemSpacing / 2,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GuildTouchInsertionGap(isOpen: showLeadingInsertionGap),
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              if (visuallyExpanded)
+                Positioned.fill(
+                  child: Center(
+                    child: Container(
+                      width: GuildNavbarIconShape.size,
+                      decoration: BoxDecoration(
+                        color: folderSurface,
+                        borderRadius: BorderRadius.circular(
+                          GuildNavbarIconShape.activeRadius,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GuildDragWrapper(
+                    itemId: folderId,
+                    isFolder: true,
+                    suppressInsertionGapAfter: visuallyExpanded,
+                    dragFeedback: GuildFolderDragFeedback(
+                      guilds: folder.guilds,
+                      folderIcon: folder.icon,
+                      showIconWhenCollapsed: folder.showIconWhenCollapsed,
+                    ),
+                    folderPeekMenu: isMobileLayout(context)
+                        ? GuildFolderPeekMenuConfig(
+                            folderName: folder.name ?? _derivedFolderName,
+                            guilds: folder.guilds,
+                            hasUnread: anyUnread,
+                            onAction: (FolderMenuAction action) async {
+                              setState(() => _suppressNextFolderTap = true);
+                              await _handleFolderMenuAction(action);
+                            },
+                          )
+                        : null,
+                    onPeekOpened: () {
+                      setState(() => _suppressNextFolderTap = true);
+                    },
+                    child: _buildFolderButton(
+                      context,
+                      folderAccent: folderAccent,
+                      folderSurface: folderSurface,
+                      anyUnread: anyUnread,
+                      totalMentions: totalMentions,
+                      folderVoiceActivity: folderVoiceActivity,
+                      isExpanded: visuallyExpanded,
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: context.motion.panel,
+                    curve: const Cubic(0.25, 0.1, 0.25, 1),
+                    alignment: Alignment.topCenter,
+                    child: visuallyExpanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final guild in folder.guilds)
+                                  _buildGuildItemInFolder(context, guild),
+                              ],
+                            ),
+                          )
+                        : const SizedBox(width: kGuildNavbarWidth),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GuildTouchInsertionGap(
+            isOpen: visuallyExpanded && showTrailingInsertionGap,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFolderButton(
+    BuildContext context, {
+    required Color folderAccent,
+    required Color folderSurface,
+    required bool anyUnread,
+    required int totalMentions,
+    required VoiceActivityType folderVoiceActivity,
+    required bool isExpanded,
+  }) {
+    final folder = widget.folder;
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final String folderName = folder.name ?? _derivedFolderName;
+    return SizedBox(
+      width: kGuildNavbarWidth,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          if (!isExpanded)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: GuildNavbarPill(
+                  height: _isHovered
+                      ? GuildNavbarPill.hoverHeight
+                      : anyUnread
+                      ? GuildNavbarPill.unreadHeight
+                      : 0,
+                ),
+              ),
+            ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _RightTooltip(
+                content: _TooltipLabel(
+                  label: isExpanded
+                      ? l10n.guildNavbarCollapseFolder(folderName)
+                      : folderName,
+                ),
+                child: MouseRegion(
+                  onEnter: (_) => setState(() => _isHovered = true),
+                  onExit: (_) => setState(() => _isHovered = false),
+                  child: Semantics(
+                    button: true,
+                    expanded: isExpanded,
+                    label: isExpanded
+                        ? l10n.guildNavbarCollapseFolder(folderName)
+                        : folderName,
+                    child: FluxerGestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (_suppressNextFolderTap) {
+                          _suppressNextFolderTap = false;
+                          return;
+                        }
+                        ref
+                            .read(folderExpandedStateProvider.notifier)
+                            .toggle(folder.id);
+                      },
+                      onSecondaryTapUp: (TapUpDetails details) {
+                        unawaited(
+                          _showFolderContextMenu(
+                            context,
+                            details.globalPosition,
+                          ),
+                        );
+                      },
+                      child: SizedBox.square(
+                        dimension: GuildNavbarIconShape.size,
+                        child: isExpanded
+                            ? Center(
+                                child: PhosphorIcon(
+                                  guildFolderIconForName(folder.icon),
+                                  color: context.colors.textPrimary,
+                                  size: 24,
+                                ),
+                              )
+                            : Center(
+                                child: Container(
+                                  width: GuildNavbarIconShape.size,
+                                  height: GuildNavbarIconShape.size,
+                                  decoration: BoxDecoration(
+                                    color: folderSurface,
+                                    borderRadius: BorderRadius.circular(
+                                      GuildNavbarIconShape.activeRadius,
+                                    ),
+                                  ),
+                                  child: _buildFolderContent(
+                                    context,
+                                    folderAccent,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (!isExpanded && totalMentions > 0)
+                Positioned(
+                  bottom: GuildNavbarPill.badgeInset,
+                  right: GuildNavbarPill.badgeInset,
+                  child: FluxerBadgeEntrance(
+                    child: FluxerBadge.count(
+                      count: totalMentions,
+                      cutoutColor: context.colors.serverSidebarBackground,
+                    ),
+                  ),
+                ),
+              if (!isExpanded && folderVoiceActivity != VoiceActivityType.none)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: _VoiceActivityBadge(type: folderVoiceActivity),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFolderContent(BuildContext context, Color folderAccent) {
+    final folder = widget.folder;
+    if (folder.showIconWhenCollapsed) {
+      return Center(
+        child: PhosphorIcon(
+          guildFolderIconForName(folder.icon ?? 'folder'),
+          color: context.colors.textPrimary,
+          size: 24,
+        ),
+      );
+    }
+
+    final gridGuilds = folder.guilds.take(4).toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double gridPadding = 4;
+        const double gridGap = 2;
+        final double cellSize =
+            (constraints.maxWidth - gridPadding * 2 - gridGap) / 2;
+        return Padding(
+          padding: const EdgeInsets.all(gridPadding),
+          child: Wrap(
+            spacing: gridGap,
+            runSpacing: gridGap,
+            children: [
+              for (final guild in gridGuilds)
+                SizedBox.square(
+                  dimension: cellSize,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(cellSize * 0.3),
+                    child: guild.iconUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: guild.iconUrl!,
+                            fit: BoxFit.cover,
+                            memCacheWidth: _guildNavbarIconMemCache(
+                              context,
+                              cellSize,
+                            ),
+                            memCacheHeight: _guildNavbarIconMemCache(
+                              context,
+                              cellSize,
+                            ),
+                          )
+                        : ColoredBox(
+                            color: context.colors.serverIconBackground,
+                            child: FluxerGuildAcronym(name: guild.name),
+                          ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuildItemInFolder(BuildContext context, Guild guild) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+        final unread = ref.watch(
+          guildReadStateProvider.select((s) => s[guild.id]),
+        );
+        final guildUnreadReady = ref.watch(guildReadStateReadyProvider);
+        final muteState = ref.watch(guildMuteProvider(guild.id)).value;
+        final voiceActivity = ref.watch(guildVoiceActivityProvider(guild.id));
+        final permissions = ref.watch(
+          guildPermissionsProvider.select((s) => s[guild.id] ?? 0),
+        );
+        final invitesPaused =
+            guild.features.contains('INVITES_DISABLED') &&
+            hasPermission(permissions, Permission.manageGuild);
+        final currentUserId = ref.watch(currentUserIdProvider);
+        final developerMode = ref.watch(
+          userSettingsViewModelProvider.select((s) => s.developerMode),
+        );
+        final GlobalKey<_GuildListItemState> itemKey = widget
+            .resolveGuildItemKey(guild.id);
+        final bool isSelected = ref.watch(
+          activeGuildIdProvider.select((String? id) => id == guild.id),
+        );
+        return GuildDragWrapper(
+          itemId: guild.id,
+          isFolder: false,
+          allowCombine: false,
+          allowsGuildMergeAsSource: false,
+          parentFolderId: widget.folder.id.toString(),
+          dragFeedback: GuildDragFeedback(
+            label: guild.name,
+            iconUrl: guild.iconUrl,
+            isUnavailable: guild.unavailable,
+          ),
+          peekMenu: buildGuildPeekMenuConfig(
+            context,
+            guild: guild,
+            hasUnread: !guild.unavailable && (unread?.hasUnread ?? false),
+            onAction:
+                (BuildContext actionContext, GuildIconPeekAction action) async {
+                  await itemKey.currentState?.handlePeekAction(
+                    actionContext,
+                    action,
+                  );
+                },
+          ),
+          child: _GuildListItem(
+            key: itemKey,
+            label: guild.name,
+            guild: guild,
+            isSelected: isSelected,
+            permissions: permissions,
+            isOwner: guild.ownerId == currentUserId,
+            iconUrl: guild.iconUrl,
+            isUnavailable: guild.unavailable,
+            unavailableCount: widget.unavailableCount,
+            isMuted: muteState?.isMuted ?? false,
+            muteEndTime: muteState?.muteEndTime,
+            hideMutedChannels: muteState?.hideMutedChannels ?? false,
+            voiceActivity: voiceActivity,
+            hasUnread: !guild.unavailable && (unread?.hasUnread ?? false),
+            mentionCount: guild.unavailable ? 0 : unread?.mentionCount ?? 0,
+            guildUnreadReady: guildUnreadReady,
+            invitesPaused: invitesPaused,
+            developerMode: developerMode,
+            enableLongPressMenu: !isMobileLayout(context),
+            onTap: () {
+              unawaited(
+                DrawerNavigationCoordinator.selectGuild(
+                  ref.container,
+                  guild.id,
+                ),
+              );
+            },
+            onMenuOpened: () {
+              ref.read(guildSyncProvider.notifier).syncIfNeeded(guild.id);
+            },
+            resolveMenuPermissions: () =>
+                _resolveGuildMenuPermissions(ref, guild.id),
+            resolveCanInvite: () => _resolveGuildCanInvite(ref, guild.id),
+            onMarkAsRead: () {
+              unawaited(
+                markGuildAsRead(
+                  guild.id,
+                  ref.read(fluxerDatabaseProvider),
+                  ref.read(fluxerClientProvider),
+                ),
+              );
+            },
+            onLeaveGuild: () {
+              unawaited(leaveGuildAndCleanup(ref, guild.id));
+            },
+            onDeleteMyMessages: (guildId) async {
+              await ref
+                  .read(fluxerClientProvider)
+                  .guilds
+                  .bulkDeleteMyMessagesInGuild(
+                    guildId: guildId,
+                    body: const SudoVerificationSchema(),
+                  );
+            },
+            onGuildSettingsAction: (action) {
+              unawaited(
+                updateGuildUserSettings(
+                  action,
+                  guild.id,
+                  ref.read(fluxerDatabaseProvider),
+                  ref.read(fluxerClientProvider),
+                ),
+              );
+            },
+            onCreateCategory: (name) {
+              unawaited(
+                ref
+                    .read(fluxerClientProvider)
+                    .guilds
+                    .createGuildChannel(
+                      guildId: guild.id,
+                      body: ChannelCreateRequest4(
+                        name: name,
+                        type: GuildCategoryChannelCreateRequestTypeType
+                            .guildCategory,
+                        permissionOverwrites: [],
+                        contentWarningLevel: ContentWarningLevelInput.inherit,
+                      ),
+                    ),
+              );
+            },
+            onCreateChannel: (request) {
+              unawaited(
+                ref
+                    .read(fluxerClientProvider)
+                    .guilds
+                    .createGuildChannel(guildId: guild.id, body: request),
+              );
+            },
+            onCreateInvite:
+                ({
+                  int maxAge = 604800,
+                  int maxUses = 0,
+                  bool temporary = false,
+                }) {
+                  return createGuildInviteLink(
+                    ref: ref,
+                    guildId: guild.id,
+                    maxAge: maxAge,
+                    maxUses: maxUses,
+                    temporary: temporary,
+                  );
+                },
+            onGetRecipients: () =>
+                loadInvitePeopleRecipients(ref: ref, l10n: l10n),
+            onSendInviteTo: (channelId, recipientId, url) {
+              return sendInviteLinkMessage(
+                ref: ref,
+                channelId: channelId,
+                recipientId: recipientId,
+                url: url,
+              );
+            },
+            onGetPrivacyState: () => getGuildPrivacyState(
+              db: ref.read(fluxerDatabaseProvider),
+              userId: ref.read(currentUserIdProvider)!,
+              guildId: guild.id,
+            ),
+            onToggleDms: ({required bool allowed}) {
+              unawaited(
+                updateGuildPrivacySetting(
+                  client: ref.read(fluxerClientProvider),
+                  db: ref.read(fluxerDatabaseProvider),
+                  userId: ref.read(currentUserIdProvider)!,
+                  guildId: guild.id,
+                  dmsAllowed: allowed,
+                ),
+              );
+            },
+            onToggleBotDms: ({required bool allowed}) {
+              unawaited(
+                updateGuildPrivacySetting(
+                  client: ref.read(fluxerClientProvider),
+                  db: ref.read(fluxerDatabaseProvider),
+                  userId: ref.read(currentUserIdProvider)!,
+                  guildId: guild.id,
+                  botDmsAllowed: allowed,
+                ),
+              );
+            },
+            onGetGuildDebugJson: () => buildGuildDebugJson(
+              client: ref.read(fluxerClientProvider),
+              db: ref.read(fluxerDatabaseProvider),
+              userId: ref.read(currentUserIdProvider)!,
+              guildId: guild.id,
+            ),
+            onShowToast: (toast) {
+              ref.read(toastProvider.notifier).show(toast);
+            },
+            onGetNotificationSettings: () => getGuildNotificationSettings(
+              db: ref.read(fluxerDatabaseProvider),
+              guildId: guild.id,
+            ),
+            onUpdateNotificationSetting:
+                ({
+                  bool? muted,
+                  UserNotificationSettings? messageNotifications,
+                  bool? suppressEveryone,
+                  bool? suppressRoles,
+                  bool? mobilePush,
+                }) {
+                  unawaited(
+                    updateGuildNotificationSetting(
+                      db: ref.read(fluxerDatabaseProvider),
+                      client: ref.read(fluxerClientProvider),
+                      guildId: guild.id,
+                      muted: muted,
+                      messageNotifications: messageNotifications,
+                      suppressEveryone: suppressEveryone,
+                      suppressRoles: suppressRoles,
+                      mobilePush: mobilePush,
+                    ),
+                  );
+                },
+            onGetGuildChannels: () => getGuildChannelsForSettings(
+              db: ref.read(fluxerDatabaseProvider),
+              guildId: guild.id,
+            ),
+            onUpdateChannelOverride:
+                (channelId, messageNotifications, {required muted}) {
+                  unawaited(
+                    ref
+                        .read(guildUserSettingsRepositoryProvider)
+                        .updateChannelOverride(
+                          guildId: guild.id,
+                          channelId: channelId,
+                          messageNotifications:
+                              UserNotificationSettings.fromJson(
+                                messageNotifications,
+                              ),
+                          muted: muted,
+                        ),
+                  );
+                },
+            onRemoveChannelOverride: (channelId) {
+              unawaited(
+                ref
+                    .read(guildUserSettingsRepositoryProvider)
+                    .removeChannelOverride(
+                      guildId: guild.id,
+                      channelId: channelId,
+                    ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  String get _derivedFolderName {
+    final names = widget.folder.guilds.take(3).map((g) => g.name);
+    return names.join(', ');
+  }
+
+  String get _folderDisplayName => widget.folder.name ?? _derivedFolderName;
+
+  bool _folderHasUnread() {
+    final bool guildUnreadReady = ref.read(guildReadStateReadyProvider);
+    if (!guildUnreadReady) {
+      return false;
+    }
+    for (final Guild guild in widget.folder.guilds) {
+      if (guild.unavailable) {
+        continue;
+      }
+      final unread = ref.read(guildReadStateProvider)[guild.id];
+      if (unread?.hasUnread ?? false) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _handleFolderMenuAction(FolderMenuAction action) async {
+    if (action == FolderMenuAction.folderSettings) {
+      await GuildFolderSettingsModal.show(context, folderId: widget.folder.id);
+      return;
+    }
+    final String? userId = ref.read(currentUserIdProvider);
+    if (userId == null) {
+      return;
+    }
+    await handleFolderMenuAction(
+      action: action,
+      guilds: widget.folder.guilds,
+      db: ref.read(fluxerDatabaseProvider),
+      client: ref.read(fluxerClientProvider),
+      userId: userId,
+    );
+  }
+
+  Future<void> _showFolderContextMenu(
+    BuildContext context,
+    Offset position, {
+    bool verticallyCenterAtPosition = false,
+  }) async {
+    final FolderMenuAction? action = await showFolderContextMenu(
+      context,
+      position: position,
+      folderName: _folderDisplayName,
+      guilds: widget.folder.guilds,
+      hasUnread: _folderHasUnread(),
+      verticallyCenterAtPosition: verticallyCenterAtPosition,
+    );
+    if (action != null && context.mounted) {
+      await _handleFolderMenuAction(action);
+    }
+  }
+}
+
+Future<int> _resolveGuildMenuPermissions(WidgetRef ref, String guildId) async {
+  await ref.read(guildPermissionsProvider.notifier).refreshPermissions(guildId);
+  return ref.read(guildPermissionsProvider)[guildId] ?? 0;
+}
+
+Future<bool> _resolveGuildCanInvite(WidgetRef ref, String guildId) async {
+  return (await resolveGuildInvitableChannel(ref: ref, guildId: guildId)) !=
+      null;
+}
+
+Future<void> presentGuildMenuSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required Guild guild,
+}) async {
+  final Guild sheetGuild =
+      ref
+          .read(guildListViewModelProvider)
+          .guilds
+          .where((Guild g) => g.id == guild.id)
+          .firstOrNull ??
+      guild;
+  final unread = ref.read(guildReadStateProvider)[guild.id];
+  final muteState = ref.read(guildMuteProvider(guild.id)).value;
+  final int permissions = await _resolveGuildMenuPermissions(ref, guild.id);
+  final bool canInvite = await _resolveGuildCanInvite(ref, guild.id);
+  if (!context.mounted) {
+    return;
+  }
+  final String? currentUserId = ref.read(currentUserIdProvider);
+  final bool developerMode = ref.read(
+    userSettingsViewModelProvider.select((s) => s.developerMode),
+  );
+  final GuildAction? action = await showGuildBottomSheet(
+    context,
+    guild: sheetGuild,
+    hasUnread: !sheetGuild.unavailable && (unread?.hasUnread ?? false),
+    isMuted: muteState?.isMuted ?? false,
+    isOwner: sheetGuild.ownerId == currentUserId,
+    permissions: permissions,
+    canInvite: canInvite,
+    muteEndTime: muteState?.muteEndTime,
+    hideMutedChannels: muteState?.hideMutedChannels ?? false,
+    developerMode: developerMode,
+  );
+  if (action == null || !context.mounted) {
+    return;
+  }
+  await _runGuildMenuAction(context, ref, guild: guild, action: action);
+}
+
+Future<void> _runGuildMenuAction(
+  BuildContext context,
+  WidgetRef ref, {
+  required Guild guild,
+  required GuildAction action,
+}) async {
+  final GlobalKey<_GuildListItemState> menuKey =
+      GlobalKey<_GuildListItemState>();
+  final OverlayState overlay = Overlay.of(context);
+  late final OverlayEntry entry;
+  final Completer<void> mounted = Completer<void>();
+  entry = OverlayEntry(
+    builder: (BuildContext overlayContext) {
+      return Offstage(
+        child: _buildGuildMenuActionItem(
+          context: overlayContext,
+          ref: ref,
+          guild: guild,
+          key: menuKey,
+          onMounted: () {
+            if (!mounted.isCompleted) {
+              mounted.complete();
+            }
+          },
+        ),
+      );
+    },
+  );
+  overlay.insert(entry);
+  await mounted.future;
+  if (context.mounted) {
+    menuKey.currentState?.handleMenuAction(context, action);
+  }
+  entry.remove();
+}
+
+Widget _buildGuildMenuActionItem({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Guild guild,
+  required GlobalKey<_GuildListItemState> key,
+  required VoidCallback onMounted,
+}) {
+  final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+  final unread = ref.read(guildReadStateProvider)[guild.id];
+  final muteState = ref.read(guildMuteProvider(guild.id)).value;
+  final permissions = ref.read(guildPermissionsProvider)[guild.id] ?? 0;
+  final String? currentUserId = ref.read(currentUserIdProvider);
+  final bool developerMode = ref.read(
+    userSettingsViewModelProvider.select((s) => s.developerMode),
+  );
+  return _GuildListItem(
+    key: key,
+    label: guild.name,
+    guild: guild,
+    permissions: permissions,
+    isOwner: guild.ownerId == currentUserId,
+    isMuted: muteState?.isMuted ?? false,
+    muteEndTime: muteState?.muteEndTime,
+    hideMutedChannels: muteState?.hideMutedChannels ?? false,
+    hasUnread: !guild.unavailable && (unread?.hasUnread ?? false),
+    developerMode: developerMode,
+    onTap: () {},
+    onMenuOpened: () {
+      ref.read(guildSyncProvider.notifier).syncIfNeeded(guild.id);
+    },
+    onMarkAsRead: () {
+      unawaited(
+        markGuildAsRead(
+          guild.id,
+          ref.read(fluxerDatabaseProvider),
+          ref.read(fluxerClientProvider),
+        ),
+      );
+    },
+    onLeaveGuild: () {
+      unawaited(leaveGuildAndCleanup(ref, guild.id));
+    },
+    onDeleteMyMessages: (String guildId) async {
+      await ref
+          .read(fluxerClientProvider)
+          .guilds
+          .bulkDeleteMyMessagesInGuild(
+            guildId: guildId,
+            body: const SudoVerificationSchema(),
+          );
+    },
+    onGuildSettingsAction: (GuildAction action) {
+      unawaited(
+        updateGuildUserSettings(
+          action,
+          guild.id,
+          ref.read(fluxerDatabaseProvider),
+          ref.read(fluxerClientProvider),
+        ),
+      );
+    },
+    onCreateCategory: (String name) {
+      unawaited(
+        ref
+            .read(fluxerClientProvider)
+            .guilds
+            .createGuildChannel(
+              guildId: guild.id,
+              body: ChannelCreateRequest4(
+                name: name,
+                type: GuildCategoryChannelCreateRequestTypeType.guildCategory,
+                permissionOverwrites: const [],
+                contentWarningLevel: ContentWarningLevelInput.inherit,
+              ),
+            ),
+      );
+    },
+    onCreateChannel: (ChannelCreateRequest request) {
+      unawaited(
+        ref
+            .read(fluxerClientProvider)
+            .guilds
+            .createGuildChannel(guildId: guild.id, body: request),
+      );
+    },
+    onCreateInvite:
+        ({int maxAge = 604800, int maxUses = 0, bool temporary = false}) {
+          return createGuildInviteLink(
+            ref: ref,
+            guildId: guild.id,
+            maxAge: maxAge,
+            maxUses: maxUses,
+            temporary: temporary,
+          );
+        },
+    onGetRecipients: () => loadInvitePeopleRecipients(ref: ref, l10n: l10n),
+    onSendInviteTo: (String? channelId, String? recipientId, String url) {
+      return sendInviteLinkMessage(
+        ref: ref,
+        channelId: channelId,
+        recipientId: recipientId,
+        url: url,
+      );
+    },
+    onGetPrivacyState: () => getGuildPrivacyState(
+      db: ref.read(fluxerDatabaseProvider),
+      userId: ref.read(currentUserIdProvider)!,
+      guildId: guild.id,
+    ),
+    onToggleDms: ({required bool allowed}) {
+      unawaited(
+        updateGuildPrivacySetting(
+          client: ref.read(fluxerClientProvider),
+          db: ref.read(fluxerDatabaseProvider),
+          userId: ref.read(currentUserIdProvider)!,
+          guildId: guild.id,
+          dmsAllowed: allowed,
+        ),
+      );
+    },
+    onToggleBotDms: ({required bool allowed}) {
+      unawaited(
+        updateGuildPrivacySetting(
+          client: ref.read(fluxerClientProvider),
+          db: ref.read(fluxerDatabaseProvider),
+          userId: ref.read(currentUserIdProvider)!,
+          guildId: guild.id,
+          botDmsAllowed: allowed,
+        ),
+      );
+    },
+    onGetGuildDebugJson: () => buildGuildDebugJson(
+      client: ref.read(fluxerClientProvider),
+      db: ref.read(fluxerDatabaseProvider),
+      userId: ref.read(currentUserIdProvider)!,
+      guildId: guild.id,
+    ),
+    onShowToast: (FluxerToast toast) {
+      ref.read(toastProvider.notifier).show(toast);
+    },
+    onGetNotificationSettings: () => getGuildNotificationSettings(
+      db: ref.read(fluxerDatabaseProvider),
+      guildId: guild.id,
+    ),
+    onUpdateNotificationSetting:
+        ({
+          bool? muted,
+          UserNotificationSettings? messageNotifications,
+          bool? suppressEveryone,
+          bool? suppressRoles,
+          bool? mobilePush,
+        }) {
+          unawaited(
+            updateGuildNotificationSetting(
+              db: ref.read(fluxerDatabaseProvider),
+              client: ref.read(fluxerClientProvider),
+              guildId: guild.id,
+              muted: muted,
+              messageNotifications: messageNotifications,
+              suppressEveryone: suppressEveryone,
+              suppressRoles: suppressRoles,
+              mobilePush: mobilePush,
+            ),
+          );
+        },
+    onGetGuildChannels: () => getGuildChannelsForSettings(
+      db: ref.read(fluxerDatabaseProvider),
+      guildId: guild.id,
+    ),
+    onUpdateChannelOverride:
+        (String channelId, int messageNotifications, {required bool muted}) {
+          unawaited(
+            ref
+                .read(guildUserSettingsRepositoryProvider)
+                .updateChannelOverride(
+                  guildId: guild.id,
+                  channelId: channelId,
+                  messageNotifications: UserNotificationSettings.fromJson(
+                    messageNotifications,
+                  ),
+                  muted: muted,
+                ),
+          );
+        },
+    onRemoveChannelOverride: (String channelId) {
+      unawaited(
+        ref
+            .read(guildUserSettingsRepositoryProvider)
+            .removeChannelOverride(guildId: guild.id, channelId: channelId),
+      );
+    },
+    onMounted: onMounted,
+  );
+}
+
+Future<Map<String, Object?>> buildGuildDebugJson({
+  required FluxerClient client,
+  required FluxerDatabase db,
+  required String userId,
+  required String guildId,
+}) async {
+  final response = await client.guilds.getGuild(guildId: guildId);
+  final json = response.toJson()..remove('permissions');
+
+  final member = await db.memberDao.getMemberByUserId(userId, guildId);
+  if (member?.joinedAt != null) {
+    json['joined_at'] = member!.joinedAt!.toUtc().toIso8601String();
+  }
+
+  final server = await db.guildDao.getServerById(guildId);
+  json['unavailable'] = server?.unavailable ?? false;
+  json['member_count'] = server?.memberCount ?? 0;
+
+  final roles = await db.roleDao.getRoles(guildId);
+  final rolesMap = <String, Object>{};
+  for (final role in roles) {
+    rolesMap[role.id] = {
+      'id': role.id,
+      'name': role.name,
+      'color': role.color,
+      'position': role.position,
+      'hoist_position': role.hoist ? role.position : null,
+      'permissions': role.permissions,
+      'hoist': role.hoist,
+    };
+  }
+  json['roles'] = rolesMap;
+
+  return json;
+}

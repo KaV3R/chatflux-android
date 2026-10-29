@@ -1,0 +1,80 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_markdown/src/contexts/fluxer_markdown_context.dart';
+import 'package:fluxer_markdown/src/contexts/fluxer_markdown_features.dart';
+import 'package:fluxer_markdown/src/parsing/markdown_parse_cache.dart';
+
+void main() {
+  group('MarkdownParseCache', () {
+    test('computes once and returns identical value on hit', () {
+      final cache = MarkdownParseCache<String, List<int>>();
+      var computeCount = 0;
+      final first = cache.resolve('a', () {
+        computeCount++;
+        return <int>[1, 2, 3];
+      });
+      final second = cache.resolve('a', () {
+        computeCount++;
+        return <int>[9, 9, 9];
+      });
+      expect(computeCount, 1);
+      expect(identical(first, second), isTrue);
+    });
+
+    test('evicts the eldest entry when over capacity', () {
+      final cache = MarkdownParseCache<String, List<int>>(maxEntries: 2);
+      var aComputes = 0;
+      List<int> resolveA() => cache.resolve('a', () {
+        aComputes++;
+        return <int>[aComputes];
+      });
+
+      resolveA();
+      cache
+        ..resolve('b', () => <int>[0])
+        ..resolve('c', () => <int>[0]);
+      resolveA();
+
+      expect(aComputes, 2);
+    });
+
+    test('hit moves entry to most-recent so it survives later overflow', () {
+      final cache = MarkdownParseCache<String, List<int>>(maxEntries: 2);
+      var aComputes = 0;
+      List<int> resolveA() => cache.resolve('a', () {
+        aComputes++;
+        return <int>[aComputes];
+      });
+
+      resolveA();
+      cache.resolve('b', () => <int>[0]);
+      resolveA();
+      cache.resolve('c', () => <int>[0]);
+      resolveA();
+
+      expect(aComputes, 1);
+    });
+  });
+
+  group('FluxerMarkdownFeatures value equality', () {
+    test('two forContext results for the same context are equal', () {
+      final a = FluxerMarkdownFeatures.forContext(
+        FluxerMarkdownContext.standardWithJumbo,
+      );
+      final b = FluxerMarkdownFeatures.forContext(
+        FluxerMarkdownContext.standardWithJumbo,
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+    });
+
+    test('different contexts are not equal', () {
+      final a = FluxerMarkdownFeatures.forContext(
+        FluxerMarkdownContext.standardWithJumbo,
+      );
+      final b = FluxerMarkdownFeatures.forContext(
+        FluxerMarkdownContext.restrictedUserBio,
+      );
+      expect(a, isNot(equals(b)));
+    });
+  });
+}

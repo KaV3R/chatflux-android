@@ -1,0 +1,829 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preference_field.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preferences_store.dart';
+import 'package:fluxer_app/core/talker.dart';
+import 'package:fluxer_app/core/theme/custom_theme_css.dart';
+import 'package:fluxer_app/core/theme/fluxer_color_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_mode.dart';
+import 'package:fluxer_app/core/theme/theme_color_editor.dart';
+import 'package:fluxer_app/core/theme/theme_variable_mapping.dart';
+import 'package:fluxer_app/core/theme/themes/coal.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/core/theme/themes/dark_legacy.dart';
+import 'package:fluxer_app/core/theme/themes/light.dart';
+import 'package:fluxer_app/features/accessibility/domain/text_scale.dart';
+import 'package:fluxer_app/features/profile/providers/user_settings_status_provider.dart';
+import 'package:fluxer_app/features/settings/providers/sync/user_settings_sync_service.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_dart/export.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'theme_preference_provider.g.dart';
+
+const _kInflightSentinel = Object();
+
+class _BuiltColorThemes {
+  const _BuiltColorThemes({
+    required this.dark,
+    required this.darkLegacy,
+    required this.light,
+    required this.coal,
+  });
+
+  final FluxerColorTheme dark;
+  final FluxerColorTheme darkLegacy;
+  final FluxerColorTheme light;
+  final FluxerColorTheme coal;
+}
+
+FluxerColorTheme _themedColor(
+  FluxerThemeMode mode,
+  FluxerColorTheme Function({double saturationFactor}) builder, {
+  required double saturationFactor,
+  required String? customThemeCss,
+}) => applyCustomThemeCss(
+  builder(saturationFactor: saturationFactor),
+  css: customThemeCss,
+  saturationFactor: saturationFactor,
+  mode: mode,
+);
+
+_BuiltColorThemes _buildColorThemes({
+  required double saturationFactor,
+  required String? customThemeCss,
+}) {
+  return _BuiltColorThemes(
+    dark: _themedColor(
+      FluxerThemeMode.dark,
+      buildDarkColorTheme,
+      saturationFactor: saturationFactor,
+      customThemeCss: customThemeCss,
+    ),
+    darkLegacy: _themedColor(
+      FluxerThemeMode.darkLegacy,
+      buildDarkLegacyColorTheme,
+      saturationFactor: saturationFactor,
+      customThemeCss: customThemeCss,
+    ),
+    light: _themedColor(
+      FluxerThemeMode.light,
+      buildLightColorTheme,
+      saturationFactor: saturationFactor,
+      customThemeCss: customThemeCss,
+    ),
+    coal: _themedColor(
+      FluxerThemeMode.coal,
+      buildCoalColorTheme,
+      saturationFactor: saturationFactor,
+      customThemeCss: customThemeCss,
+    ),
+  );
+}
+
+_BuiltColorThemes _buildActiveColorThemes({
+  required FluxerThemeMode mode,
+  required double saturationFactor,
+  required String? customThemeCss,
+  required FluxerColorTheme dark,
+  required FluxerColorTheme darkLegacy,
+  required FluxerColorTheme light,
+  required FluxerColorTheme coal,
+}) {
+  switch (mode) {
+    case FluxerThemeMode.dark:
+      return _BuiltColorThemes(
+        dark: _themedColor(
+          FluxerThemeMode.dark,
+          buildDarkColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+        darkLegacy: darkLegacy,
+        light: light,
+        coal: coal,
+      );
+    case FluxerThemeMode.darkLegacy:
+      return _BuiltColorThemes(
+        dark: dark,
+        darkLegacy: _themedColor(
+          FluxerThemeMode.darkLegacy,
+          buildDarkLegacyColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+        light: light,
+        coal: coal,
+      );
+    case FluxerThemeMode.light:
+      return _BuiltColorThemes(
+        dark: dark,
+        darkLegacy: darkLegacy,
+        light: _themedColor(
+          FluxerThemeMode.light,
+          buildLightColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+        coal: coal,
+      );
+    case FluxerThemeMode.coal:
+      return _BuiltColorThemes(
+        dark: dark,
+        darkLegacy: darkLegacy,
+        light: light,
+        coal: _themedColor(
+          FluxerThemeMode.coal,
+          buildCoalColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+      );
+    case FluxerThemeMode.system:
+      return _BuiltColorThemes(
+        dark: _themedColor(
+          FluxerThemeMode.dark,
+          buildDarkColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+        darkLegacy: darkLegacy,
+        light: _themedColor(
+          FluxerThemeMode.light,
+          buildLightColorTheme,
+          saturationFactor: saturationFactor,
+          customThemeCss: customThemeCss,
+        ),
+        coal: coal,
+      );
+  }
+}
+
+class ThemePreferenceState {
+  static const Object unspecifiedCustomThemeCss = Object();
+
+  factory ThemePreferenceState({
+    FluxerThemeMode mode = FluxerThemeMode.dark,
+    double scaleFactor = 1.0,
+    int chatFontSize = 16,
+    bool syncAcrossDevices = true,
+    double saturationFactor = 1.0,
+    String? customThemeCss,
+    bool syncThemeColorsFromThemeStudio = true,
+    bool syncThemeColorsToThemeStudio = true,
+    bool customThemeCssEditedLocally = false,
+    FluxerThemeMode? inflightTheme,
+  }) {
+    final _BuiltColorThemes themes = _buildColorThemes(
+      saturationFactor: clampSaturationFactor(saturationFactor),
+      customThemeCss: normalizeCustomThemeCss(customThemeCss),
+    );
+    return ThemePreferenceState._(
+      mode: mode,
+      scaleFactor: scaleFactor,
+      chatFontSize: chatFontSize,
+      syncAcrossDevices: syncAcrossDevices,
+      saturationFactor: clampSaturationFactor(saturationFactor),
+      customThemeCss: normalizeCustomThemeCss(customThemeCss),
+      syncThemeColorsFromThemeStudio: syncThemeColorsFromThemeStudio,
+      syncThemeColorsToThemeStudio: syncThemeColorsToThemeStudio,
+      customThemeCssEditedLocally: customThemeCssEditedLocally,
+      inflightTheme: inflightTheme,
+      darkColorTheme: themes.dark,
+      darkLegacyColorTheme: themes.darkLegacy,
+      lightColorTheme: themes.light,
+      coalColorTheme: themes.coal,
+    );
+  }
+
+  ThemePreferenceState._({
+    required this.mode,
+    required this.scaleFactor,
+    required this.chatFontSize,
+    required this.syncAcrossDevices,
+    required this.saturationFactor,
+    required this.customThemeCss,
+    required this.syncThemeColorsFromThemeStudio,
+    required this.syncThemeColorsToThemeStudio,
+    required this.customThemeCssEditedLocally,
+    required this.inflightTheme,
+    required this.darkColorTheme,
+    required this.darkLegacyColorTheme,
+    required this.lightColorTheme,
+    required this.coalColorTheme,
+  });
+
+  final FluxerThemeMode mode;
+  final double scaleFactor;
+  final int chatFontSize;
+  final bool syncAcrossDevices;
+  final double saturationFactor;
+  final String? customThemeCss;
+  final bool syncThemeColorsFromThemeStudio;
+  final bool syncThemeColorsToThemeStudio;
+  final bool customThemeCssEditedLocally;
+
+  final FluxerThemeMode? inflightTheme;
+
+  final FluxerColorTheme darkColorTheme;
+  final FluxerColorTheme darkLegacyColorTheme;
+  final FluxerColorTheme lightColorTheme;
+  final FluxerColorTheme coalColorTheme;
+
+  bool get isSyncing => inflightTheme != null;
+
+  FluxerColorTheme get colorTheme => colorThemeForMode(mode);
+
+  FluxerColorTheme colorThemeForMode(FluxerThemeMode resolvedMode) {
+    return switch (resolvedMode) {
+      FluxerThemeMode.dark => darkColorTheme,
+      FluxerThemeMode.darkLegacy => darkLegacyColorTheme,
+      FluxerThemeMode.light => lightColorTheme,
+      FluxerThemeMode.coal => coalColorTheme,
+      FluxerThemeMode.system => darkColorTheme,
+    };
+  }
+
+  late final FluxerTextTheme textTheme = FluxerTextTheme.fromColors(colorTheme);
+  late final FluxerTextTheme darkTextTheme = FluxerTextTheme.fromColors(
+    darkColorTheme,
+  );
+  late final FluxerTextTheme lightTextTheme = FluxerTextTheme.fromColors(
+    lightColorTheme,
+  );
+
+  ThemePreferenceState copyWith({
+    FluxerThemeMode? mode,
+    double? scaleFactor,
+    int? chatFontSize,
+    bool? syncAcrossDevices,
+    double? saturationFactor,
+    Object? customThemeCss = unspecifiedCustomThemeCss,
+    bool? syncThemeColorsFromThemeStudio,
+    bool? syncThemeColorsToThemeStudio,
+    bool? customThemeCssEditedLocally,
+    bool clearCustomThemeCss = false,
+    Object? inflightTheme = _kInflightSentinel,
+    bool rebuildAllColorThemes = true,
+  }) {
+    final FluxerThemeMode nextMode = mode ?? this.mode;
+    final double nextSaturationFactor = saturationFactor == null
+        ? this.saturationFactor
+        : clampSaturationFactor(saturationFactor);
+    final bool customThemeCssArgumentProvided = !identical(
+      customThemeCss,
+      unspecifiedCustomThemeCss,
+    );
+    final String? nextCustomThemeCss = clearCustomThemeCss
+        ? null
+        : normalizeCustomThemeCss(
+            customThemeCssArgumentProvided
+                ? customThemeCss as String?
+                : this.customThemeCss,
+          );
+    final double nextScaleFactor = scaleFactor ?? this.scaleFactor;
+    final String? normalizedCurrentCss = normalizeCustomThemeCss(
+      this.customThemeCss,
+    );
+    final bool themesChanged =
+        nextSaturationFactor != this.saturationFactor ||
+        ((customThemeCssArgumentProvided || clearCustomThemeCss) &&
+            nextCustomThemeCss != normalizedCurrentCss);
+    final _BuiltColorThemes themes;
+    if (!themesChanged) {
+      themes = _BuiltColorThemes(
+        dark: darkColorTheme,
+        darkLegacy: darkLegacyColorTheme,
+        light: lightColorTheme,
+        coal: coalColorTheme,
+      );
+    } else if (rebuildAllColorThemes) {
+      themes = _buildColorThemes(
+        saturationFactor: nextSaturationFactor,
+        customThemeCss: nextCustomThemeCss,
+      );
+    } else {
+      themes = _buildActiveColorThemes(
+        mode: nextMode,
+        saturationFactor: nextSaturationFactor,
+        customThemeCss: nextCustomThemeCss,
+        dark: darkColorTheme,
+        darkLegacy: darkLegacyColorTheme,
+        light: lightColorTheme,
+        coal: coalColorTheme,
+      );
+    }
+    return ThemePreferenceState._(
+      mode: nextMode,
+      scaleFactor: nextScaleFactor,
+      chatFontSize: chatFontSize ?? this.chatFontSize,
+      syncAcrossDevices: syncAcrossDevices ?? this.syncAcrossDevices,
+      saturationFactor: nextSaturationFactor,
+      customThemeCss: nextCustomThemeCss,
+      syncThemeColorsFromThemeStudio:
+          syncThemeColorsFromThemeStudio ?? this.syncThemeColorsFromThemeStudio,
+      syncThemeColorsToThemeStudio:
+          syncThemeColorsToThemeStudio ?? this.syncThemeColorsToThemeStudio,
+      customThemeCssEditedLocally:
+          customThemeCssEditedLocally ?? this.customThemeCssEditedLocally,
+      inflightTheme: identical(inflightTheme, _kInflightSentinel)
+          ? this.inflightTheme
+          : inflightTheme as FluxerThemeMode?,
+      darkColorTheme: themes.dark,
+      darkLegacyColorTheme: themes.darkLegacy,
+      lightColorTheme: themes.light,
+      coalColorTheme: themes.coal,
+    );
+  }
+}
+
+const Duration _kThemeColorPersistDebounce = Duration(milliseconds: 1500);
+
+@Riverpod(keepAlive: true)
+class ThemePreference extends _$ThemePreference {
+  String? _userId;
+  bool _isApplyingRemote = false;
+  Timer? _themeColorPersistTimer;
+
+  @override
+  ThemePreferenceState build() {
+    ref.onDispose(() {
+      _themeColorPersistTimer?.cancel();
+      _themeColorPersistTimer = null;
+    });
+    ref.listen<AsyncValue<UserSettingsResponse?>>(
+      userSettingsStatusStreamProvider,
+      (
+        AsyncValue<UserSettingsResponse?>? previous,
+        AsyncValue<UserSettingsResponse?> next,
+      ) {
+        final UserSettingsResponse? settings = next.value;
+        final String? currentUserId = ref.read(currentUserIdProvider);
+        if (settings == null || _userId == null || currentUserId != _userId) {
+          return;
+        }
+        unawaited(applyServerSettings(settings));
+      },
+    );
+    return ThemePreferenceState();
+  }
+
+  Future<void> load(String userId) async {
+    _userId = userId;
+    final int accountGeneration = ref
+        .read(syncedPreferencesStoreProvider)
+        .accountGeneration;
+    final db = ref.read(fluxerDatabaseProvider);
+    final prefs = await db.userPreferencesDao.getPreferences(userId);
+    if (!_isCurrentLoad(userId, accountGeneration)) {
+      return;
+    }
+    if (prefs != null) {
+      final mode =
+          FluxerThemeMode.fromApiValue(prefs.theme) ?? FluxerThemeMode.dark;
+      state = ThemePreferenceState(
+        mode: mode,
+        scaleFactor: prefs.scaleFactor,
+        chatFontSize: prefs.chatFontSize,
+        syncAcrossDevices: prefs.syncAcrossDevices,
+        saturationFactor: prefs.saturationFactor,
+        customThemeCss: prefs.customThemeCss.isEmpty
+            ? null
+            : prefs.customThemeCss,
+        syncThemeColorsFromThemeStudio: prefs.syncThemeColorsFromThemeStudio,
+        syncThemeColorsToThemeStudio: prefs.syncThemeColorsToThemeStudio,
+      );
+    } else {
+      state = ThemePreferenceState();
+    }
+    final bool hadCachedSettings = await _applyCachedUserSettings(
+      userId,
+      accountGeneration,
+    );
+    if (!hadCachedSettings && _isCurrentLoad(userId, accountGeneration)) {
+      await _hydrateThemeFromServerOnLoad(userId, accountGeneration);
+    }
+  }
+
+  bool _isCurrentLoad(String userId, int accountGeneration) =>
+      ref.mounted &&
+      _userId == userId &&
+      ref.read(syncedPreferencesStoreProvider).accountGeneration ==
+          accountGeneration;
+
+  Future<bool> _applyCachedUserSettings(
+    String userId,
+    int accountGeneration,
+  ) async {
+    final row = await ref
+        .read(fluxerDatabaseProvider)
+        .userSettingsDao
+        .getSettings(userId);
+    if (row == null) {
+      return false;
+    }
+    try {
+      final Object? decoded = jsonDecode(row.data);
+      if (decoded is! Map<String, dynamic>) {
+        return false;
+      }
+      await _applyRemoteUserSettings(
+        UserSettingsResponse.fromJson(decoded),
+        userId: userId,
+        accountGeneration: accountGeneration,
+        fromCache: true,
+      );
+      return true;
+    } on Object catch (e, st) {
+      talker.warning('[ThemePreference] Cached settings apply failed', e, st);
+      return false;
+    }
+  }
+
+  Future<void> _hydrateThemeFromServerOnLoad(
+    String userId,
+    int accountGeneration,
+  ) async {
+    try {
+      final UserSettingsResponse settings = await ref
+          .read(userSettingsSyncProvider)
+          .fetchCurrentSettings();
+      await _applyRemoteUserSettings(
+        settings,
+        userId: userId,
+        accountGeneration: accountGeneration,
+      );
+    } on Object catch (e, st) {
+      talker.warning('[ThemePreference] Server theme fetch failed', e, st);
+    }
+  }
+
+  Future<void> _applyRemoteUserSettings(
+    UserSettingsResponse settings, {
+    required String userId,
+    required int accountGeneration,
+    bool fromCache = false,
+  }) async {
+    if (!_isCurrentLoad(userId, accountGeneration)) {
+      return;
+    }
+    await ref
+        .read(syncedPreferencesStoreProvider)
+        .hydrateFromUserSettings(
+          settings,
+          themeCustomizationApplier: applySyncedThemeCustomization,
+          fromCache: fromCache,
+          accountGeneration: accountGeneration,
+        );
+    if (!_isCurrentLoad(userId, accountGeneration)) {
+      return;
+    }
+    if (state.syncAcrossDevices && state.mode != FluxerThemeMode.system) {
+      await applyServerSettings(settings);
+    }
+  }
+
+  Future<void> setTheme(FluxerThemeMode mode) async {
+    if (state.inflightTheme != null) {
+      return;
+    }
+    if (state.mode == mode) {
+      return;
+    }
+
+    final wantsServerPush =
+        state.syncAcrossDevices && mode != FluxerThemeMode.system;
+
+    if (!wantsServerPush) {
+      state = state.copyWith(mode: mode);
+      await _persist();
+      return;
+    }
+
+    state = state.copyWith(inflightTheme: mode);
+    try {
+      await ref
+          .read(userSettingsSyncProvider)
+          .pushTheme(_toSettingsTheme(mode));
+      state = state.copyWith(mode: mode, inflightTheme: null);
+      await _persist();
+    } on Object {
+      state = state.copyWith(inflightTheme: null);
+      rethrow;
+    }
+  }
+
+  Future<void> setScaleFactor(double factor) async {
+    state = state.copyWith(scaleFactor: clampLayoutZoomLevel(factor));
+    await _persist();
+    _markAccessibilityDirty();
+  }
+
+  Future<void> setChatFontSize(int size) async {
+    state = state.copyWith(chatFontSize: snapChatFontSize(size.toDouble()));
+    await _persist();
+    _markAccessibilityDirty();
+  }
+
+  void previewSaturationFactor(double value) {
+    final double clamped = clampSaturationFactor(value);
+    if (state.saturationFactor == clamped) {
+      return;
+    }
+    state = state.copyWith(
+      saturationFactor: clamped,
+      rebuildAllColorThemes: false,
+    );
+  }
+
+  Future<void> setSaturationFactor(double value) async {
+    final ThemePreferenceState current = state;
+    state = ThemePreferenceState(
+      mode: current.mode,
+      scaleFactor: current.scaleFactor,
+      chatFontSize: current.chatFontSize,
+      syncAcrossDevices: current.syncAcrossDevices,
+      saturationFactor: clampSaturationFactor(value),
+      customThemeCss: current.customThemeCss,
+      syncThemeColorsFromThemeStudio: current.syncThemeColorsFromThemeStudio,
+      syncThemeColorsToThemeStudio: current.syncThemeColorsToThemeStudio,
+      customThemeCssEditedLocally: current.customThemeCssEditedLocally,
+      inflightTheme: current.inflightTheme,
+    );
+    await _persist();
+    _markAccessibilityDirty();
+  }
+
+  Future<void> applySyncedThemeCustomization({
+    double? saturationFactor,
+    String? customThemeCss,
+    int? chatFontSize,
+    double? scaleFactor,
+    bool updateSaturationFactor = true,
+    bool updateCustomThemeCss = true,
+    bool updateChatFontSize = false,
+    bool updateScaleFactor = false,
+    bool clearCustomThemeCss = false,
+  }) async {
+    final bool applyCustomThemeCss =
+        updateCustomThemeCss && state.syncThemeColorsFromThemeStudio;
+    if (_userId == null) {
+      return;
+    }
+    final currentUserId = ref.read(currentUserIdProvider);
+    if (currentUserId != null && currentUserId != _userId) {
+      return;
+    }
+    _isApplyingRemote = true;
+    try {
+      state = state.copyWith(
+        saturationFactor: updateSaturationFactor ? saturationFactor : null,
+        customThemeCss: applyCustomThemeCss
+            ? customThemeCss
+            : ThemePreferenceState.unspecifiedCustomThemeCss,
+        chatFontSize: updateChatFontSize ? chatFontSize : null,
+        scaleFactor: updateScaleFactor ? scaleFactor : null,
+        clearCustomThemeCss: applyCustomThemeCss && clearCustomThemeCss,
+        customThemeCssEditedLocally: applyCustomThemeCss ? false : null,
+      );
+      await _persist();
+    } finally {
+      _isApplyingRemote = false;
+    }
+  }
+
+  Future<void> setSyncAcrossDevices({required bool value}) async {
+    if (state.mode == FluxerThemeMode.system) {
+      return;
+    }
+    if (state.inflightTheme != null) {
+      return;
+    }
+    if (state.syncAcrossDevices == value) {
+      return;
+    }
+
+    if (!value) {
+      state = state.copyWith(syncAcrossDevices: false);
+      await _persist();
+      return;
+    }
+
+    state = state.copyWith(syncAcrossDevices: true, inflightTheme: state.mode);
+    try {
+      await ref
+          .read(userSettingsSyncProvider)
+          .pushTheme(_toSettingsTheme(state.mode));
+      state = state.copyWith(inflightTheme: null);
+      await _persist();
+    } on Object {
+      state = state.copyWith(syncAcrossDevices: false, inflightTheme: null);
+      await _persist();
+      rethrow;
+    }
+  }
+
+  Future<void> applyServerSettings(UserSettingsResponse settings) async {
+    final String? currentUserId = ref.read(currentUserIdProvider);
+    if (_userId == null ||
+        (currentUserId != null && currentUserId != _userId)) {
+      talker.warning(
+        '[ThemePreference] Hydration dropped: '
+        '${_userId == null ? 'userId not loaded yet' : 'user mismatch'}',
+      );
+      return;
+    }
+    if (!state.syncAcrossDevices || state.mode == FluxerThemeMode.system) {
+      return;
+    }
+    if (state.inflightTheme != null) {
+      return;
+    }
+    final serverMode = _modeFromJson(settings.theme);
+    if (serverMode == null || serverMode == state.mode) {
+      return;
+    }
+    state = state.copyWith(mode: serverMode);
+    await _persist();
+  }
+
+  Future<void> setSyncThemeColorsFromThemeStudio({required bool value}) async {
+    if (state.syncThemeColorsFromThemeStudio == value) {
+      return;
+    }
+    state = state.copyWith(syncThemeColorsFromThemeStudio: value);
+    await _persist();
+    if (value) {
+      final String? wireCss = normalizeCustomThemeCss(
+        ref.read(syncedPreferencesStoreProvider).readWireCustomThemeCss(),
+      );
+      if (wireCss != null) {
+        await applySyncedThemeCustomization(
+          customThemeCss: wireCss,
+          updateSaturationFactor: false,
+        );
+      }
+    }
+  }
+
+  Future<void> setSyncThemeColorsToThemeStudio({required bool value}) async {
+    if (state.syncThemeColorsToThemeStudio == value) {
+      return;
+    }
+    state = state.copyWith(syncThemeColorsToThemeStudio: value);
+    await _persist();
+    if (value) {
+      _markAccessibilityDirty();
+    }
+  }
+
+  void previewThemeColorOverride({
+    required FluxerThemeMode editingMode,
+    required String cssVariable,
+    required Color color,
+  }) {
+    _applyThemeColorCssChange(
+      upsertScopedThemeColor(
+        customThemeCss: state.customThemeCss,
+        editingMode: editingMode,
+        cssVariable: cssVariable,
+        hexValue: themeColorToCssHex(color),
+      ),
+    );
+    _scheduleThemeColorPersist();
+  }
+
+  Future<void> setThemeColorOverride({
+    required FluxerThemeMode editingMode,
+    required String cssVariable,
+    required Color color,
+  }) async {
+    previewThemeColorOverride(
+      editingMode: editingMode,
+      cssVariable: cssVariable,
+      color: color,
+    );
+    await _flushThemeColorPersist();
+  }
+
+  Future<void> clearThemeColorOverride({
+    required FluxerThemeMode editingMode,
+    required String cssVariable,
+  }) async {
+    _applyThemeColorCssChange(
+      clearScopedThemeColor(
+        customThemeCss: state.customThemeCss,
+        editingMode: editingMode,
+        cssVariable: cssVariable,
+      ),
+    );
+    await _flushThemeColorPersist();
+  }
+
+  Future<void> resetThemeColorOverridesForMode(
+    FluxerThemeMode editingMode,
+  ) async {
+    _applyThemeColorCssChange(
+      clearAllScopedThemeColorsForMode(
+        customThemeCss: state.customThemeCss,
+        editingMode: editingMode,
+      ),
+    );
+    await _flushThemeColorPersist();
+  }
+
+  void _applyThemeColorCssChange(String nextCss) {
+    final ThemePreferenceState current = state;
+    state = ThemePreferenceState(
+      mode: current.mode,
+      scaleFactor: current.scaleFactor,
+      chatFontSize: current.chatFontSize,
+      syncAcrossDevices: current.syncAcrossDevices,
+      saturationFactor: current.saturationFactor,
+      customThemeCss: nextCss.isEmpty ? null : nextCss,
+      syncThemeColorsFromThemeStudio: current.syncThemeColorsFromThemeStudio,
+      syncThemeColorsToThemeStudio: current.syncThemeColorsToThemeStudio,
+      customThemeCssEditedLocally: true,
+      inflightTheme: current.inflightTheme,
+    );
+  }
+
+  void _scheduleThemeColorPersist() {
+    _themeColorPersistTimer?.cancel();
+    _themeColorPersistTimer = Timer(_kThemeColorPersistDebounce, () {
+      unawaited(_flushThemeColorPersist());
+    });
+  }
+
+  Future<void> flushPendingThemeColorPersist() async {
+    await _flushThemeColorPersist();
+  }
+
+  Future<void> _flushThemeColorPersist() async {
+    _themeColorPersistTimer?.cancel();
+    _themeColorPersistTimer = null;
+    if (!ref.mounted) {
+      return;
+    }
+    await _persist();
+    if (!ref.mounted) {
+      return;
+    }
+    _markAccessibilityDirty();
+  }
+
+  void _markAccessibilityDirty() {
+    if (_isApplyingRemote) {
+      return;
+    }
+    ref
+        .read(syncedPreferencesStoreProvider)
+        .markDirty(SyncedPreferenceField.accessibility);
+  }
+
+  Future<void> _persist() async {
+    final userId = _userId;
+    if (userId == null) {
+      return;
+    }
+    final db = ref.read(fluxerDatabaseProvider);
+    try {
+      await db.userPreferencesDao.savePreferences(
+        UserPreferencesTableCompanion(
+          userId: Value(userId),
+          theme: Value(state.mode.apiValue),
+          scaleFactor: Value(state.scaleFactor),
+          chatFontSize: Value(state.chatFontSize),
+          syncAcrossDevices: Value(state.syncAcrossDevices),
+          saturationFactor: Value(state.saturationFactor),
+          customThemeCss: Value(state.customThemeCss ?? ''),
+          syncThemeColorsFromThemeStudio: Value(
+            state.syncThemeColorsFromThemeStudio,
+          ),
+          syncThemeColorsToThemeStudio: Value(
+            state.syncThemeColorsToThemeStudio,
+          ),
+        ),
+      );
+    } on Object catch (e, st) {
+      talker.error('[ThemePreference] Persist failed', e, st);
+    }
+  }
+
+  UserThemeType _toSettingsTheme(FluxerThemeMode mode) => switch (mode) {
+    FluxerThemeMode.dark => UserThemeType.dark,
+    FluxerThemeMode.darkLegacy => UserThemeType.darkLegacy,
+    FluxerThemeMode.coal => UserThemeType.coal,
+    FluxerThemeMode.light => UserThemeType.light,
+    FluxerThemeMode.system => UserThemeType.system,
+  };
+
+  FluxerThemeMode? _modeFromJson(String raw) =>
+      FluxerThemeMode.fromApiValue(raw);
+}

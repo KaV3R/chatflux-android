@@ -1,0 +1,201 @@
+import 'package:cached_network_image_ce/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_markdown.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/external_links/external_link_handler.dart';
+import 'package:fluxer_app/shared/markdown/message_markdown_settings.dart';
+import 'package:fluxer_markdown/fluxer_markdown.dart';
+
+class EmbedInlineText extends StatelessWidget {
+  const EmbedInlineText({required this.text, required this.style, super.key});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return MessageMarkdown(
+      data: text,
+      baseStyle: style,
+      markdownContext: FluxerMarkdownContext.restrictedInlineReply,
+    );
+  }
+}
+
+class EmbedLinkText extends ConsumerWidget {
+  const EmbedLinkText({
+    required this.text,
+    required this.url,
+    required this.style,
+    super.key,
+  });
+
+  final String text;
+  final String url;
+  final TextStyle style;
+
+  Future<void> _launch(BuildContext context) async {
+    await handleExternalLinkTap(context, url);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool underline =
+        MessageMarkdownSettingsScope.maybeOf(context)?.alwaysUnderlineLinks ??
+        ref.watch(
+          appearancePreferencesProvider.select((s) => s.alwaysUnderlineLinks),
+        );
+    return FluxerGestureDetector(
+      onTap: () => _launch(context),
+      child: EmbedInlineText(
+        text: text,
+        style: underline
+            ? style.copyWith(
+                decoration: TextDecoration.underline,
+                decorationColor: style.color,
+              )
+            : style,
+      ),
+    );
+  }
+}
+
+class EmbedTitle extends StatelessWidget {
+  final String title;
+  final String? url;
+
+  const EmbedTitle({required this.title, this.url, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = context.textStyles.embedTitle;
+    final String? link = url;
+    if (link == null) {
+      return EmbedInlineText(
+        text: title,
+        style: baseStyle.copyWith(color: context.colors.textPrimary),
+      );
+    }
+    return EmbedLinkText(text: title, url: link, style: baseStyle);
+  }
+}
+
+class EmbedProvider extends StatelessWidget {
+  final String name;
+  final String? url;
+
+  const EmbedProvider({required this.name, this.url, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle style = context.textStyles.embedFooter.copyWith(
+      fontSize: 12,
+    );
+    final String? link = url;
+    if (link == null || link.isEmpty) {
+      return EmbedInlineText(text: name, style: style);
+    }
+    return EmbedLinkText(text: name, url: link, style: style);
+  }
+}
+
+class EmbedAuthorRow extends StatelessWidget {
+  final EmbedAuthor author;
+
+  const EmbedAuthorRow({required this.author, super.key});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      if (author.iconUrl != null) ...[
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: CachedNetworkImage(
+            imageUrl: author.proxyIconUrl ?? author.iconUrl!,
+            width: 20,
+            height: 20,
+            memCacheWidth: (20 * MediaQuery.devicePixelRatioOf(context))
+                .round(),
+            fit: BoxFit.cover,
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+            errorBuilder: (_, e, s) => const SizedBox.shrink(),
+          ),
+        ),
+        const SizedBox(width: 6),
+      ],
+      Flexible(child: _name(context)),
+    ],
+  );
+
+  Widget _name(BuildContext context) {
+    final TextStyle style = context.textStyles.smallText.copyWith(
+      color: context.colors.textPrimary,
+      fontSize: 13,
+    );
+    final String? link = author.url;
+    if (link == null || link.isEmpty) {
+      return EmbedInlineText(text: author.name, style: style);
+    }
+    return EmbedLinkText(text: author.name, url: link, style: style);
+  }
+}
+
+class EmbedFooterRow extends StatelessWidget {
+  final EmbedFooter footer;
+  final String? timestamp;
+
+  const EmbedFooterRow({required this.footer, this.timestamp, super.key});
+
+  String? _formatTimestamp() {
+    if (timestamp == null) {
+      return null;
+    }
+    try {
+      final dt = DateTime.parse(timestamp!).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}.'
+          '${dt.month.toString().padLeft(2, '0')}.'
+          '${dt.year} '
+          '${dt.hour.toString().padLeft(2, '0')}:'
+          '${dt.minute.toString().padLeft(2, '0')}';
+    } on FormatException {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ts = _formatTimestamp();
+    return Row(
+      children: [
+        if (footer.iconUrl != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: CachedNetworkImage(
+              imageUrl: footer.proxyIconUrl ?? footer.iconUrl!,
+              width: 16,
+              height: 16,
+              memCacheWidth: (16 * MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              fit: BoxFit.cover,
+              fadeInDuration: Duration.zero,
+              fadeOutDuration: Duration.zero,
+              errorBuilder: (_, e, s) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+        Flexible(
+          child: EmbedInlineText(
+            text: ts != null ? '${footer.text} • $ts' : footer.text,
+            style: context.textStyles.embedFooter,
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -1,0 +1,150 @@
+name: Android Canary OSS Build
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-canary-oss:
+    name: Build canary OSS APK (UnifiedPush)
+    runs-on: macos-26
+    environment: release-builds
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Fetch Android build number
+        id: android_build_number
+        env:
+          BUILD_SERVICE_TOKEN: ${{ secrets.BUILD_SERVICE_TOKEN }}
+          BUILD_SERVICE_URL: ${{ secrets.BUILD_SERVICE_URL }}
+        run: |
+          set -euo pipefail
+          URL="https://$BUILD_SERVICE_URL/v1/build-number?platform=android"
+          echo "Calling build service at $URL"
+          RESPONSE=$(curl -sS -X POST "$URL" \
+            -H "Authorization: Bearer $BUILD_SERVICE_TOKEN")
+          RESPONSE_ONE_LINE=$(printf '%s' "$RESPONSE" | tr -d '\n')
+          BUILD_NUMBER=$(printf '%s\n' "$RESPONSE_ONE_LINE" | sed -n 's/.*"buildNumber"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p')
+          if ! [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid or missing buildNumber in response: $RESPONSE"
+            exit 1
+          fi
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Sync submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Restore Gradle cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-canary-oss-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-canary-oss-
+            ${{ runner.os }}-gradle-
+
+      - name: Set up Flutter
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+      - name: Restore pub cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Configure OSS build tree
+        run: dart tool/configure_build.dart --profile=oss
+
+      - name: Set up Rust for the native markdown parser
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --default-toolchain stable
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            . "$HOME/.cargo/env"
+          fi
+          rustup show active-toolchain || rustup toolchain install stable
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+          flutter config --enable-native-assets
+
+      - name: Resolve unifiedpush_linux to the stub
+        run: bash tool/apply_macos_pub_overrides.sh
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: dart run build_runner build
+
+      - name: Create Android signing files
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          KEYSTORE_PATH="$RUNNER_TEMP/upload-keystore.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=$KEYSTORE_PATH
+          EOF
+
+      - name: Write Android ADI registration file
+        env:
+          ANDROID_ADI_REGISTRATION_SNIPPET: ${{ secrets.ANDROID_ADI_REGISTRATION_SNIPPET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ANDROID_ADI_REGISTRATION_SNIPPET" ]; then
+            echo "::warning::ANDROID_ADI_REGISTRATION_SNIPPET secret is not set. Add the Play Console identifier under Settings -> Secrets and variables -> Actions -> Secrets if you need adi-registration.properties in the APK."
+            exit 0
+          fi
+          mkdir -p android/app/src/main/assets
+          printf '%s\n' "$ANDROID_ADI_REGISTRATION_SNIPPET" > android/app/src/main/assets/adi-registration.properties
+
+      - name: Write Measure Android config
+        env:
+          MEASURE_RELEASE_CHANNEL: canary
+          MEASURE_ANDROID_API_KEY_CANARY: ${{ secrets.MEASURE_ANDROID_API_KEY_CANARY }}
+          MEASURE_ANDROID_API_KEY: ${{ secrets.MEASURE_ANDROID_API_KEY }}
+          MEASURE_API_URL: ${{ secrets.MEASURE_API_URL }}
+        run: tool/measure/write_native_measure_config.sh
+
+      - name: Build canary OSS split APKs
+        run: flutter build apk --release --split-per-abi --flavor canaryUnifiedpush --build-number ${{ steps.android_build_number.outputs.build_number }} --dart-define-from-file=tool/dart_defines/canary.json --dart-define=PUSH_PROVIDER=unifiedpush --dart-define=BUILD_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)" --dart-define=CANARY_NUMBER=${{ steps.android_build_number.outputs.build_number }}
+
+      - name: Build canary OSS combined APK
+        run: flutter build apk --release --flavor canaryUnifiedpush --build-number ${{ steps.android_build_number.outputs.build_number }} --dart-define-from-file=tool/dart_defines/canary.json --dart-define=PUSH_PROVIDER=unifiedpush --dart-define=BUILD_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)" --dart-define=CANARY_NUMBER=${{ steps.android_build_number.outputs.build_number }}
+
+      - name: Rename canary OSS APK artifacts
+        run: |
+          set -euo pipefail
+          APK_DIR="build/app/outputs/flutter-apk"
+          for apk in "$APK_DIR"/*canaryunifiedpush*.apk; do
+            new_name=$(basename "$apk" | sed 's/unifiedpush/oss/g')
+            mv "$apk" "$APK_DIR/$new_name"
+          done
+
+      - name: Upload canary OSS APK artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: canary-oss-apk
+          path: |
+            build/app/outputs/flutter-apk/app-*-canaryoss-release.apk
+            build/app/outputs/flutter-apk/app-canaryoss-release.apk
+          if-no-files-found: error

@@ -1,0 +1,152 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/css_color_parser.dart';
+import 'package:fluxer_app/core/theme/custom_theme_css.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_mode.dart';
+import 'package:fluxer_app/core/theme/themes/coal.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/core/theme/themes/dark_legacy.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+void main() {
+  group('custom_theme_css', () {
+    test('extractThemeVariableOverrides parses css variables', () {
+      const css =
+          ':root { --background-primary: #112233; --text-primary: rgb(1, 2, 3); }';
+      final overrides = extractThemeVariableOverrides(css);
+      expect(overrides['--background-primary'], '#112233');
+      expect(overrides['--text-primary'], 'rgb(1, 2, 3)');
+    });
+
+    test('parseCssColor handles hex and hsl with saturation factor', () {
+      expect(
+        parseCssColor('#AABBCC', saturationFactor: 1)?.toARGB32(),
+        0xFFAABBCC,
+      );
+      final Color? hslColor = parseCssColor(
+        'hsl(210, calc(100% * var(--saturation-factor)), 45%)',
+        saturationFactor: 0.5,
+      );
+      expect(hslColor, isNotNull);
+    });
+
+    test('applyCustomThemeCss mirrors brand primary to linked tokens', () {
+      const css = ':root { --brand-primary: #ff5500; }';
+      final base = buildDarkColorTheme();
+      final themed = applyCustomThemeCss(base, css: css, saturationFactor: 1);
+      expect(themed.brandPrimary, const Color(0xFFFF5500));
+      expect(themed.accentPrimary, const Color(0xFFFF5500));
+      expect(themed.serverIconActive, const Color(0xFFFF5500));
+      expect(themed.brandPrimaryLight, isNot(const Color(0xFFFF5500)));
+    });
+
+    test(
+      'applyCustomThemeCss resolves var() references in override values',
+      () {
+        const css = '''
+:root {
+  --brand-primary: #ff5500;
+  --accent-primary: var(--brand-primary);
+}
+''';
+        final base = buildDarkColorTheme();
+        final themed = applyCustomThemeCss(base, css: css, saturationFactor: 1);
+        expect(themed.brandPrimary, const Color(0xFFFF5500));
+        expect(themed.accentPrimary, const Color(0xFFFF5500));
+      },
+    );
+
+    test('applyCustomThemeCss propagates text link aliases', () {
+      const css = ':root { --text-link: #00aabb; }';
+      final base = buildDarkColorTheme();
+      final themed = applyCustomThemeCss(base, css: css, saturationFactor: 1);
+      expect(themed.textLink, const Color(0xFF00AABB));
+      expect(themed.accentInfo, const Color(0xFF00AABB));
+      expect(themed.markupMentionText, const Color(0xFF00AABB));
+    });
+
+    test('parseCssColor resolves hsl calc saturation expressions', () {
+      final Color? color = parseCssColor(
+        'hsl(242, calc(70% * var(--saturation-factor)), 55%)',
+        saturationFactor: 0.5,
+      );
+      expect(color, isNotNull);
+    });
+
+    test('normalizeCustomThemeCss treats blank values as null', () {
+      expect(normalizeCustomThemeCss('   '), isNull);
+      expect(normalizeCustomThemeCss(':root { }'), isNotNull);
+    });
+
+    test(
+      'applyCustomThemeCss applies mode scope over root for active mode',
+      () {
+        const css = '''
+.theme-coal { --brand-primary: #010203; }
+:root { --brand-primary: #007fff; }
+''';
+        final base = buildCoalColorTheme();
+        final themed = applyCustomThemeCss(
+          base,
+          css: css,
+          saturationFactor: 1,
+          mode: FluxerThemeMode.coal,
+        );
+        expect(themed.brandPrimary, const Color(0xFF010203));
+      },
+    );
+
+    test(
+      'applyCustomThemeCss applies .theme-dark override over :root on dark mode',
+      () {
+        const css = '''
+:root { --brand-primary: #007fff; }
+.theme-dark { --brand-primary: #ff5500; }
+''';
+        final base = buildDarkColorTheme();
+        final themed = applyCustomThemeCss(
+          base,
+          css: css,
+          saturationFactor: 1,
+          mode: FluxerThemeMode.dark,
+        );
+        expect(themed.brandPrimary, const Color(0xFFFF5500));
+      },
+    );
+
+    test('coal spoiler overlay uses a light fill on AMOLED black', () {
+      final coal = buildCoalColorTheme();
+      expect(coal.spoilerBackground, const Color(0x14FFFFFF));
+      expect(coal.spoilerOverlayHoverColor, const Color(0x24FFFFFF));
+    });
+
+    test(
+      'applyCustomThemeCss applies .theme-dark_legacy only in legacy mode',
+      () {
+        const css = '''
+.theme-dark_legacy { --brand-primary: #112233; }
+.theme-dark { --brand-primary: #445566; }
+''';
+        final legacy = applyCustomThemeCss(
+          buildDarkLegacyColorTheme(),
+          css: css,
+          saturationFactor: 1,
+          mode: FluxerThemeMode.darkLegacy,
+        );
+        final dark = applyCustomThemeCss(
+          buildDarkColorTheme(),
+          css: css,
+          saturationFactor: 1,
+          mode: FluxerThemeMode.dark,
+        );
+        expect(legacy.brandPrimary, const Color(0xFF112233));
+        expect(dark.brandPrimary, const Color(0xFF445566));
+      },
+    );
+
+    test('clampSaturationFactor clamps to 0..1', () {
+      expect(clampSaturationFactor(-1), 0);
+      expect(clampSaturationFactor(2), 1);
+      expect(clampSaturationFactor(0.75), 0.75);
+    });
+  });
+}

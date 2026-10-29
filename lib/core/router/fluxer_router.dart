@@ -1,0 +1,967 @@
+import 'dart:async' show unawaited;
+
+import 'package:fluxer_app/core/build/app_build_config.dart';
+import 'package:fluxer_app/core/observability/fluxer_measure_navigator_observer.dart';
+import 'package:fluxer_app/core/providers/app/app_startup_provider.dart';
+import 'package:fluxer_app/core/providers/app/splash_exit_allowed_provider.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_connection_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_ready_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_reconnect_provider.dart';
+import 'package:fluxer_app/core/push/notification/pending_path_provider.dart';
+import 'package:fluxer_app/core/push/notification/pending_route.dart';
+import 'package:fluxer_app/core/router/channel_persistence_observer.dart';
+import 'package:fluxer_app/core/router/guild_root_redirect.dart';
+import 'package:fluxer_app/core/router/pre_reconnecting_location_provider.dart';
+import 'package:fluxer_app/core/router/route_names.dart';
+import 'package:fluxer_app/core/router/shell_navigator_keys.dart';
+import 'package:fluxer_app/core/router/shell_popup_route_observer.dart';
+import 'package:fluxer_app/core/router/shell_transition_page.dart';
+import 'package:fluxer_app/features/auth/presentation/login_screen.dart';
+import 'package:fluxer_app/features/auth/providers/account_manager_provider.dart';
+import 'package:fluxer_app/features/auth/providers/add_account_instance_guard_provider.dart';
+import 'package:fluxer_app/features/bookmarks/presentation/saved_messages_page.dart';
+import 'package:fluxer_app/features/channels/domain/channel_settings_tab.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/channel_settings_modal.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/channel_settings_nav_page.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/pages/channel_settings_tab_pages.dart';
+import 'package:fluxer_app/features/chat/presentation/channel_layout.dart';
+import 'package:fluxer_app/features/discovery/presentation/discovery_desktop_shell.dart';
+import 'package:fluxer_app/features/discovery/presentation/discovery_layout.dart';
+import 'package:fluxer_app/features/dm/presentation/dm_layout.dart';
+import 'package:fluxer_app/features/favorites/presentation/favorites_layout.dart';
+import 'package:fluxer_app/features/gifts/presentation/pages/gift_accept_page.dart';
+import 'package:fluxer_app/features/guilds/presentation/pages/invite_accept_page.dart';
+import 'package:fluxer_app/features/guilds/presentation/widgets/guild_root_placeholder.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_availability_provider.dart';
+import 'package:fluxer_app/features/members/presentation/pages/guild_members_page.dart';
+import 'package:fluxer_app/features/notifications/presentation/notifications_page.dart';
+import 'package:fluxer_app/features/notifications/presentation/recent_mentions_page.dart';
+import 'package:fluxer_app/features/profile/presentation/profile_page.dart';
+import 'package:fluxer_app/features/settings/domain/guild/guild_settings_tab.dart';
+import 'package:fluxer_app/features/settings/presentation/guild_settings_modal.dart'
+    deferred as guild_settings;
+import 'package:fluxer_app/features/settings/presentation/pages/guild/guild_settings_nav_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_audit_log_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_bans_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_channels_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_discovery_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_emoji_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_invites_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_members_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_moderation_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_overview_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_roles_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_stickers_page.dart';
+import 'package:fluxer_app/features/settings/presentation/pages/guild/settings_webhooks_page.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/guild/guild_settings_open_gate.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/wide_settings_modal_overlay.dart';
+import 'package:fluxer_app/features/shell/navigation/shell_chat_back.dart';
+import 'package:fluxer_app/features/shell/presentation/app_layout.dart';
+import 'package:fluxer_app/features/shell/presentation/invalid_deep_link_screen.dart';
+import 'package:fluxer_app/features/shell/presentation/reconnecting_screen.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/shell/presentation/splash_screen.dart';
+import 'package:fluxer_app/features/shell/providers/layout/shell_popup_overlay_provider.dart';
+import 'package:fluxer_app/features/threads/presentation/thread_route_gate.dart';
+import 'package:fluxer_app/features/ui/spinner/fluxer_loading_spinner.dart';
+import 'package:fluxer_app/features/voice/presentation/dm_voice_call_fullscreen_page.dart'
+    deferred as dm_voice_call;
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_dart/gateway.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+export 'package:fluxer_app/core/router/shell_navigator_keys.dart';
+
+part 'fluxer_router.g.dart';
+
+@Riverpod(keepAlive: true)
+class AuthState extends _$AuthState {
+  @override
+  bool build() => false;
+
+  void setAuthenticated({required bool value}) {
+    if (state == value) {
+      return;
+    }
+    state = value;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class CurrentUserId extends _$CurrentUserId {
+  @override
+  String? build() => null;
+
+  void set(String id) {
+    if (state == id) {
+      return;
+    }
+    state = id;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class CurrentUserPremiumType extends _$CurrentUserPremiumType {
+  @override
+  int build() => 0;
+
+  void set(int type) {
+    if (state == type) {
+      return;
+    }
+    state = type;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ServerReachable extends _$ServerReachable {
+  @override
+  bool build() => true;
+
+  void setReachable({required bool value}) {
+    if (state == value) {
+      return;
+    }
+    state = value;
+  }
+}
+
+class _RouterRefreshNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
+
+CustomTransitionPage<void> _dmShellTransitionPage(
+  BuildContext context,
+  GoRouterState state,
+) {
+  final String? routeName = state.name;
+  final String? channelId = routeName == RouteNames.dms
+      ? null
+      : state.pathParameters['channelId'];
+  final String? messageId = state.pathParameters['messageId'];
+  return shellSlideTransitionPage(
+    context: context,
+    key: dmShellPageKeyForRoute(
+      routeName: routeName,
+      routePageKey: state.pageKey,
+    ),
+    name: routeName,
+    arguments: state.uri.path,
+    child: DMLayout(channelId: channelId, targetMessageId: messageId),
+  );
+}
+
+@Riverpod(keepAlive: true)
+GoRouter fluxerRouter(Ref ref) {
+  final refreshNotifier = _RouterRefreshNotifier();
+  final db = ref.read(fluxerDatabaseProvider);
+
+  ref
+    ..listen(authStateProvider, (_, _) => refreshNotifier.notify())
+    ..listen(serverReachableProvider, (_, _) => refreshNotifier.notify())
+    ..listen(
+      gatewayConnectionFailedProvider,
+      (_, _) => refreshNotifier.notify(),
+    )
+    ..listen(gatewayReadyProvider, (_, _) => refreshNotifier.notify())
+    ..listen(splashExitAllowedProvider, (_, _) => refreshNotifier.notify())
+    ..listen(appStartupProvider, (_, _) => refreshNotifier.notify())
+    ..listen(accountManagerProvider, (_, _) => refreshNotifier.notify())
+    ..listen(
+      addAccountInstanceGuardProvider,
+      (_, _) => refreshNotifier.notify(),
+    );
+
+  void setShellPopupOverlay({required bool hasOverlay}) {
+    ref
+        .read(shellHasPopupOverlayProvider.notifier)
+        .setHasOverlay(value: hasOverlay);
+  }
+
+  void deferProviderWrite(void Function() write) {
+    unawaited(Future<void>(write));
+  }
+
+  ShellPopupRouteObserver createShellPopupRouteObserver() {
+    return ShellPopupRouteObserver(setShellPopupOverlay);
+  }
+
+  final rootShellPopupRouteObserver = createShellPopupRouteObserver();
+  final homeShellPopupRouteObserver = createShellPopupRouteObserver();
+  final notificationsShellPopupRouteObserver = createShellPopupRouteObserver();
+  final youShellPopupRouteObserver = createShellPopupRouteObserver();
+  List<NavigatorObserver> withMeasureNavigatorObserver(
+    List<NavigatorObserver> observers,
+  ) {
+    if (!AppBuildConfig.hasObservabilityConfig) {
+      return observers;
+    }
+    return <NavigatorObserver>[...observers, FluxerMeasureNavigatorObserver()];
+  }
+
+  final List<NavigatorObserver> navigationObservers =
+      withMeasureNavigatorObserver(<NavigatorObserver>[
+        ChannelPersistenceObserver(db),
+        rootShellPopupRouteObserver,
+      ]);
+
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: '/login',
+    errorBuilder: (BuildContext context, GoRouterState state) {
+      return const InvalidDeepLinkScreen();
+    },
+    refreshListenable: refreshNotifier,
+    observers: navigationObservers,
+    redirect: (context, state) {
+      final location = state.matchedLocation;
+      final isOnLoading = location == '/loading';
+
+      final isAuthenticated = ref.read(authStateProvider);
+      final isConnectionFailed = ref.read(gatewayConnectionFailedProvider);
+      final isGatewayReady = ref.read(gatewayReadyProvider);
+      final isStartupComplete = ref.read(appStartupProvider) is AsyncData;
+      final isAccountSwitching = ref.read(accountManagerProvider).isSwitching;
+      final bool isAddingAccount =
+          ref.read(addAccountInstanceGuardProvider) != null;
+
+      if (isAccountSwitching) {
+        deferProviderWrite(
+          () => ref.read(preReconnectingLocationProvider.notifier).clear(),
+        );
+        return isOnLoading ? null : '/loading';
+      }
+
+      if (!isStartupComplete) {
+        return isOnLoading ? null : '/loading';
+      }
+
+      final isLoggingIn = location == '/login';
+      final isOnReconnecting = location == '/reconnecting';
+
+      if (isAuthenticated && isConnectionFailed && !isOnReconnecting) {
+        final String path = state.uri.path;
+        final String query = state.uri.query;
+        deferProviderWrite(
+          () => ref
+              .read(preReconnectingLocationProvider.notifier)
+              .remember(path: path, query: query),
+        );
+        return '/reconnecting';
+      }
+
+      if (isAuthenticated &&
+          !isGatewayReady &&
+          !isOnReconnecting &&
+          !isAddingAccount) {
+        if (!isOnLoading) {
+          final String path = state.uri.path;
+          final String query = state.uri.query;
+          deferProviderWrite(
+            () => ref
+                .read(preReconnectingLocationProvider.notifier)
+                .remember(path: path, query: query),
+          );
+        }
+        return isOnLoading ? null : '/loading';
+      }
+
+      if (isOnLoading) {
+        if (!isAuthenticated) {
+          return '/login';
+        }
+        if (!ref.read(splashExitAllowedProvider)) {
+          return null;
+        }
+        return ref
+            .read(preReconnectingLocationProvider.notifier)
+            .takeOrRestore(
+              ref.read(fluxerDatabaseProvider),
+              currentUserId: ref.read(currentUserIdProvider),
+              preferredPath: currentAccountPendingNavigationPath(
+                pending: ref.read(pendingPushNotificationPathProvider),
+                currentUserId: ref.read(currentUserIdProvider),
+              ),
+            );
+      }
+
+      if (!isAuthenticated) {
+        deferProviderWrite(
+          () => ref.read(preReconnectingLocationProvider.notifier).clear(),
+        );
+      }
+      if (!isAuthenticated && !isLoggingIn) {
+        return '/login';
+      }
+      if (isAuthenticated && !isConnectionFailed && isLoggingIn) {
+        return RoutePaths.me;
+      }
+      if (isAuthenticated &&
+          !isConnectionFailed &&
+          isOnReconnecting &&
+          (isGatewayReady ||
+              ref.read(gatewayConnectionProvider).state ==
+                  GatewayState.connected)) {
+        return ref
+            .read(preReconnectingLocationProvider.notifier)
+            .takeOrRestore(
+              ref.read(fluxerDatabaseProvider),
+              currentUserId: ref.read(currentUserIdProvider),
+              preferredPath: currentAccountPendingNavigationPath(
+                pending: ref.read(pendingPushNotificationPathProvider),
+                currentUserId: ref.read(currentUserIdProvider),
+              ),
+            );
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/loading',
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          return shellInstantTransitionPage(
+            key: state.pageKey,
+            child: const SplashScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/login',
+        name: RouteNames.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/reconnecting',
+        name: RouteNames.reconnecting,
+        builder: (context, state) => const ReconnectingScreen(),
+      ),
+
+      GoRoute(
+        path: '/invite/:code',
+        name: RouteNames.invite,
+        pageBuilder: (context, state) {
+          final String code = state.pathParameters['code'] ?? '';
+          return shellFadeTransitionPage(
+            context: context,
+            key: state.pageKey,
+            child: InviteAcceptPage(code: code),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/gift/:code',
+        name: RouteNames.gift,
+        pageBuilder: (context, state) {
+          final String code = state.pathParameters['code'] ?? '';
+          return shellFadeTransitionPage(
+            context: context,
+            key: state.pageKey,
+            child: GiftAcceptPage(code: code),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/theme/:themeId',
+        name: RouteNames.themePreview,
+        redirect: (context, state) => RoutePaths.me,
+      ),
+
+      GoRoute(
+        path: '/settings/guild/:guildId',
+        name: RouteNames.guildSettings,
+        parentNavigatorKey: rootNavigatorKey,
+        redirect: (BuildContext context, GoRouterState state) {
+          final String? tab = state.uri.queryParameters['tab'];
+          if (tab == null || tab.isEmpty || !isMobileLayout(context)) {
+            return null;
+          }
+          final String guildId = state.pathParameters['guildId'] ?? '';
+          return guildSettingsTabPathFromQuery(guildId, tab);
+        },
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          final String guildId = state.pathParameters['guildId'] ?? '';
+          if (isMobileLayout(context)) {
+            return shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: GuildSettingsOpenGate(
+                guildId: guildId,
+                builder: (BuildContext context) =>
+                    GuildSettingsNavPage(guildId: guildId),
+              ),
+            );
+          }
+          return shellFadeTransitionPage(
+            context: context,
+            key: state.pageKey,
+            opaque: false,
+            child: WideSettingsModalOverlay(
+              child: FutureBuilder<void>(
+                future: guild_settings.loadLibrary(),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: FluxerLoadingSpinner());
+                  }
+                  return GuildSettingsOpenGate(
+                    guildId: guildId,
+                    builder: (BuildContext context) =>
+                        guild_settings.GuildSettingsModal(
+                          guildId: guildId,
+                          initialTab: guildSettingsTabFromQuery(
+                            state.uri.queryParameters['tab'],
+                          ),
+                        ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/settings/guild/:guildId/overview',
+        name: RouteNames.guildSettingsOverview,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsOverviewPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/moderation',
+        name: RouteNames.guildSettingsModeration,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsModerationPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/audit-log',
+        name: RouteNames.guildSettingsAuditLog,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsAuditLogPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/bans',
+        name: RouteNames.guildSettingsBans,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsBansPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/members',
+        name: RouteNames.guildSettingsMembers,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsMembersPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/invites',
+        name: RouteNames.guildSettingsInvites,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsInvitesPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/webhooks',
+        name: RouteNames.guildSettingsWebhooks,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsWebhooksPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/discovery',
+        name: RouteNames.guildSettingsDiscovery,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsDiscoveryPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/channels',
+        name: RouteNames.guildSettingsChannels,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsChannelsPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/roles',
+        name: RouteNames.guildSettingsRoles,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsRolesPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/emoji',
+        name: RouteNames.guildSettingsEmoji,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsEmojiPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/guild/:guildId/stickers',
+        name: RouteNames.guildSettingsStickers,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => shellMobileRootPushPage(
+          context: context,
+          key: state.pageKey,
+          child: SettingsStickersPage(
+            guildId: state.pathParameters['guildId'] ?? '',
+          ),
+        ),
+      ),
+
+      GoRoute(
+        path: '/settings/channel/:channelId',
+        name: RouteNames.channelSettings,
+        parentNavigatorKey: rootNavigatorKey,
+        redirect: (BuildContext context, GoRouterState state) {
+          final String? tab = state.uri.queryParameters['tab'];
+          if (tab == null || tab.isEmpty || !isMobileLayout(context)) {
+            return null;
+          }
+          final String channelId = state.pathParameters['channelId'] ?? '';
+          return channelSettingsTabPathFromQuery(channelId, tab);
+        },
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          final String channelId = state.pathParameters['channelId'] ?? '';
+          if (isMobileLayout(context)) {
+            return shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: ChannelSettingsNavPage(channelId: channelId),
+            );
+          }
+          return shellFadeTransitionPage(
+            context: context,
+            key: state.pageKey,
+            child: ChannelSettingsModal(
+              channelId: channelId,
+              initialTab: channelSettingsTabFromQuery(
+                state.uri.queryParameters['tab'],
+              ),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/settings/channel/:channelId/overview',
+        name: RouteNames.channelSettingsOverview,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: ChannelSettingsOverviewPage(
+                channelId: state.pathParameters['channelId'] ?? '',
+              ),
+            ),
+      ),
+      GoRoute(
+        path: '/settings/channel/:channelId/permissions',
+        name: RouteNames.channelSettingsPermissions,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: ChannelSettingsPermissionsPage(
+                channelId: state.pathParameters['channelId'] ?? '',
+              ),
+            ),
+      ),
+      GoRoute(
+        path: '/settings/channel/:channelId/invites',
+        name: RouteNames.channelSettingsInvites,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: ChannelSettingsInvitesPage(
+                channelId: state.pathParameters['channelId'] ?? '',
+              ),
+            ),
+      ),
+      GoRoute(
+        path: '/settings/channel/:channelId/webhooks',
+        name: RouteNames.channelSettingsWebhooks,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: ChannelSettingsWebhooksPage(
+                channelId: state.pathParameters['channelId'] ?? '',
+              ),
+            ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.legacyDiscover,
+        redirect: (context, state) => RoutePaths.discover,
+      ),
+      GoRoute(
+        path: RoutePaths.discover,
+        name: RouteNames.discover,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          if (isMobileLayout(context)) {
+            return shellMobileRootPushPage(
+              context: context,
+              key: state.pageKey,
+              child: const DiscoveryLayout(),
+            );
+          }
+          return shellFadeTransitionPage(
+            context: context,
+            key: state.pageKey,
+            child: const DiscoveryDesktopShell(),
+          );
+        },
+      ),
+
+      StatefulShellRoute.indexedStack(
+        pageBuilder: (context, state, navigationShell) =>
+            shellFadeTransitionPage(
+              context: context,
+              key: state.pageKey,
+              child: AppLayout(navigationShell: navigationShell),
+            ),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: homeBranchNavigatorKey,
+            observers: withMeasureNavigatorObserver([
+              homeShellPopupRouteObserver,
+            ]),
+            routes: [
+              GoRoute(
+                path: '/channels/@me',
+                name: RouteNames.dms,
+                redirect: (BuildContext context, GoRouterState state) {
+                  if (!shouldAutoSelectDmChannel(context)) {
+                    return null;
+                  }
+                  return resolveDmRootRedirect(
+                    fullPath: state.uri.path,
+                    db: ref.read(fluxerDatabaseProvider),
+                  );
+                },
+                pageBuilder: _dmShellTransitionPage,
+                routes: [
+                  GoRoute(
+                    path: ':channelId',
+                    name: RouteNames.dmChannel,
+                    pageBuilder: _dmShellTransitionPage,
+                    routes: [
+                      GoRoute(
+                        path: 'call',
+                        name: RouteNames.dmChannelCall,
+                        parentNavigatorKey: rootNavigatorKey,
+                        pageBuilder: (context, state) {
+                          final Widget callPage = FutureBuilder<void>(
+                            future: dm_voice_call.loadLibrary(),
+                            builder:
+                                (
+                                  BuildContext context,
+                                  AsyncSnapshot<void> snapshot,
+                                ) {
+                                  if (snapshot.connectionState !=
+                                      ConnectionState.done) {
+                                    return const Scaffold(
+                                      body: Center(
+                                        child: FluxerLoadingSpinner(),
+                                      ),
+                                    );
+                                  }
+                                  return dm_voice_call.DmVoiceCallFullscreenPage(
+                                    channelId:
+                                        state.pathParameters['channelId'] ?? '',
+                                  );
+                                },
+                          );
+                          if (isPhoneVoiceOverlay(context)) {
+                            return shellPhoneVoiceCallTransitionPage(
+                              context: context,
+                              key: state.pageKey,
+                              child: callPage,
+                            );
+                          }
+                          return shellMobileRootPushPage(
+                            context: context,
+                            key: state.pageKey,
+                            child: callPage,
+                          );
+                        },
+                      ),
+                      GoRoute(
+                        path: ':messageId',
+                        name: RouteNames.dmMessage,
+                        pageBuilder: _dmShellTransitionPage,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/channels/@favorites',
+                name: RouteNames.favorites,
+                redirect: (context, state) {
+                  return resolveFavoritesRootRedirect(
+                    fullPath: state.uri.path,
+                    db: ref.read(fluxerDatabaseProvider),
+                  );
+                },
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: const FavoritesLayout(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':channelId',
+                    name: RouteNames.favoritesChannel,
+                    pageBuilder: (context, state) => shellSlideTransitionPage(
+                      context: context,
+                      key: kFavoritesChatPageKey,
+                      name: RouteNames.favoritesChannel,
+                      arguments: state.uri.path,
+                      child: FavoritesLayout(
+                        channelId: state.pathParameters['channelId'],
+                        messageId: state.pathParameters['messageId'],
+                      ),
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: ':messageId',
+                        name: RouteNames.favoritesMessage,
+                        pageBuilder: (context, state) =>
+                            shellSlideTransitionPage(
+                              context: context,
+                              key: state.pageKey,
+                              name: RouteNames.favoritesMessage,
+                              arguments: state.uri.path,
+                              child: FavoritesLayout(
+                                channelId: state.pathParameters['channelId'],
+                                messageId: state.pathParameters['messageId'],
+                              ),
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/channels/:guildId',
+                name: RouteNames.guild,
+                redirect: (context, state) {
+                  if (shouldStayOnGuildChannelList(
+                    uri: state.uri,
+                    extra: state.extra,
+                  )) {
+                    return null;
+                  }
+                  return resolveGuildRootRedirect(
+                    guildId: state.pathParameters['guildId'],
+                    fullPath: state.uri.path,
+                    db: ref.read(fluxerDatabaseProvider),
+                    currentUserId: ref.read(currentUserIdProvider),
+                    trackedUnavailableGuildIds: ref.read(
+                      guildAvailabilityProvider,
+                    ),
+                  );
+                },
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: GuildRootPlaceholder(
+                    guildId: state.pathParameters['guildId'] ?? '',
+                  ),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'members',
+                    name: RouteNames.guildMembers,
+                    pageBuilder: (context, state) => shellSlideTransitionPage(
+                      context: context,
+                      key: state.pageKey,
+                      name: state.name,
+                      child: GuildMembersPage(
+                        guildId: state.pathParameters['guildId'] ?? '',
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':channelId',
+                    name: RouteNames.channel,
+                    pageBuilder: (context, state) {
+                      final guildId = state.pathParameters['guildId']!;
+                      final channelId = state.pathParameters['channelId']!;
+                      return shellSlideTransitionPage(
+                        context: context,
+                        key: guildChatPageKey(guildId),
+                        name: RouteNames.channel,
+                        arguments: state.uri.path,
+                        child: ThreadRouteGate(
+                          guildId: guildId,
+                          channelId: channelId,
+                          child: ChannelLayout(
+                            guildId: guildId,
+                            channelId: channelId,
+                            messageId: state.pathParameters['messageId'],
+                          ),
+                        ),
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: ':messageId',
+                        name: RouteNames.message,
+                        pageBuilder: (context, state) {
+                          final guildId = state.pathParameters['guildId']!;
+                          final channelId = state.pathParameters['channelId']!;
+                          final messageId = state.pathParameters['messageId']!;
+                          return shellSlideTransitionPage(
+                            context: context,
+                            key: state.pageKey,
+                            name: RouteNames.message,
+                            arguments: state.uri.path,
+                            child: ThreadRouteGate(
+                              guildId: guildId,
+                              channelId: channelId,
+                              child: ChannelLayout(
+                                guildId: guildId,
+                                channelId: channelId,
+                                messageId: messageId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: '/bookmarks',
+                name: RouteNames.bookmarks,
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: const SavedMessagesPage(),
+                ),
+              ),
+              GoRoute(
+                path: '/mentions',
+                name: RouteNames.mentions,
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: const RecentMentionsPage(),
+                ),
+              ),
+            ],
+          ),
+
+          StatefulShellBranch(
+            navigatorKey: notificationsBranchNavigatorKey,
+            observers: withMeasureNavigatorObserver([
+              notificationsShellPopupRouteObserver,
+            ]),
+            routes: [
+              GoRoute(
+                path: '/notifications',
+                name: RouteNames.notifications,
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: const NotificationsPage(),
+                ),
+              ),
+            ],
+          ),
+
+          StatefulShellBranch(
+            navigatorKey: youBranchNavigatorKey,
+            observers: withMeasureNavigatorObserver([
+              youShellPopupRouteObserver,
+            ]),
+            routes: [
+              GoRoute(
+                path: '/you',
+                name: RouteNames.you,
+                pageBuilder: (context, state) => shellFadeTransitionPage(
+                  context: context,
+                  key: state.pageKey,
+                  name: state.name,
+                  child: const ProfilePage(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}

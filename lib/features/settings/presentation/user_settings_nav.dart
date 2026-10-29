@@ -1,0 +1,584 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/build/app_build_config.dart';
+import 'package:fluxer_app/core/instance/instance_constants.dart';
+import 'package:fluxer_app/core/platform/alternate_app_icon_settings.dart';
+import 'package:fluxer_app/core/platform/fluxer_platform.dart';
+import 'package:fluxer_app/core/providers/instance/active_instance_provider.dart';
+import 'package:fluxer_app/features/settings/domain/user_settings_nav_group.dart';
+import 'package:fluxer_app/features/settings/domain/user_settings_section.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/settings_fluxer_logo_icon.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/settings_sidebar.dart';
+import 'package:fluxer_app/features/settings/utils/commerce/user_settings_billing_utils.dart';
+import 'package:fluxer_app/features/settings/utils/user_settings/user_settings_nav_l10n.dart';
+import 'package:fluxer_app/features/settings/utils/user_settings/user_settings_search.dart';
+import 'package:fluxer_app/features/settings/utils/user_settings/user_settings_staff_only_utils.dart';
+import 'package:fluxer_app/features/ui/icons/plutonium_product_icon.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+const String kFluxerLabsInviteUrl = 'https://fluxer.gg/fluxer-labs';
+const String kFluxerFeedbackUrl = 'https://feedback.fluxer.com';
+
+bool userSettingsIsMainFluxerInstance(WidgetRef ref) {
+  return ref.watch(fluxerBaseUrlProvider) ==
+      InstanceConstants.defaultApiBaseUrl;
+}
+
+bool userSettingsShowGiveFeedbackNav(WidgetRef ref) {
+  return userSettingsIsMainFluxerInstance(ref);
+}
+
+bool userSettingsShowJoinFluxerLabsNav(WidgetRef ref) {
+  if (!(AppBuildConfig.isBeta || AppBuildConfig.isCanary)) {
+    return false;
+  }
+  return userSettingsIsMainFluxerInstance(ref);
+}
+
+class UserSettingsDesktopNavEntry {
+  const UserSettingsDesktopNavEntry._({
+    this.group,
+    this.section,
+    this.icon,
+    this.leading,
+    this.isSeparator = false,
+    this.isLogout = false,
+    this.isJoinFluxerLabs = false,
+    this.isGiveFeedback = false,
+    this.isWhatsNew = false,
+  });
+
+  const UserSettingsDesktopNavEntry.separator([UserSettingsNavGroup? group])
+    : this._(group: group, isSeparator: true);
+
+  const UserSettingsDesktopNavEntry.link(
+    UserSettingsSection section, {
+    required IconData icon,
+  }) : this._(section: section, icon: icon);
+
+  const UserSettingsDesktopNavEntry.linkWithLeading(
+    UserSettingsSection section, {
+    required Widget leading,
+  }) : this._(section: section, leading: leading);
+
+  const UserSettingsDesktopNavEntry.logout()
+    : this._(icon: PhosphorIconsFill.signOut, isLogout: true);
+
+  const UserSettingsDesktopNavEntry.joinFluxerLabs()
+    : this._(icon: PhosphorIconsFill.testTube, isJoinFluxerLabs: true);
+
+  const UserSettingsDesktopNavEntry.giveFeedback()
+    : this._(icon: PhosphorIconsFill.chatTeardropText, isGiveFeedback: true);
+
+  const UserSettingsDesktopNavEntry.whatsNew()
+    : this._(icon: PhosphorIconsFill.megaphone, isWhatsNew: true);
+
+  final UserSettingsNavGroup? group;
+  final UserSettingsSection? section;
+  final IconData? icon;
+  final Widget? leading;
+  final bool isSeparator;
+  final bool isLogout;
+  final bool isJoinFluxerLabs;
+  final bool isGiveFeedback;
+  final bool isWhatsNew;
+
+  SettingsSidebarItem toSidebarItem(FluxerLocalizations l10n) {
+    if (isSeparator) {
+      if (group == null) {
+        return const SettingsSidebarItem.separator();
+      }
+      return SettingsSidebarItem.separator(
+        userSettingsNavGroupLabel(l10n, group!),
+      );
+    }
+    if (isLogout) {
+      return SettingsSidebarItem(
+        l10n.userSettingsNavLogOut,
+        icon: icon,
+        isDestructive: true,
+      );
+    }
+    if (isJoinFluxerLabs) {
+      return SettingsSidebarItem(l10n.userSettingsJoinFluxerLabs, icon: icon);
+    }
+    if (isGiveFeedback) {
+      return SettingsSidebarItem(l10n.userSettingsGiveFeedback, icon: icon);
+    }
+    if (isWhatsNew) {
+      return SettingsSidebarItem(l10n.userSettingsNavWhatsNew, icon: icon);
+    }
+    return SettingsSidebarItem(
+      userSettingsSectionLabel(l10n, section!),
+      icon: icon,
+      leading: leading,
+    );
+  }
+
+  String displayLabel(FluxerLocalizations l10n) {
+    if (isLogout) {
+      return l10n.userSettingsNavLogOut;
+    }
+    if (isJoinFluxerLabs) {
+      return l10n.userSettingsJoinFluxerLabs;
+    }
+    if (isGiveFeedback) {
+      return l10n.userSettingsGiveFeedback;
+    }
+    if (isWhatsNew) {
+      return l10n.userSettingsNavWhatsNew;
+    }
+    return userSettingsSectionLabel(l10n, section!);
+  }
+}
+
+const _userSettingsDesktopNavYourAccount = [
+  UserSettingsDesktopNavEntry.separator(UserSettingsNavGroup.yourAccount),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.profile,
+    icon: PhosphorIconsFill.user,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.securityLogin,
+    icon: PhosphorIconsFill.shieldCheck,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.privacyDashboard,
+    icon: PhosphorIconsFill.eyeSlash,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.authorizedApps,
+    icon: PhosphorIconsFill.robot,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.blockedUsers,
+    icon: PhosphorIconsFill.prohibit,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.linkedDevices,
+    icon: PhosphorIconsFill.devices,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.connections,
+    icon: PhosphorIconsFill.userList,
+  ),
+];
+
+const _userSettingsDesktopNavBilling = [
+  UserSettingsDesktopNavEntry.separator(UserSettingsNavGroup.billing),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.fluxerPlutonium,
+    icon: kPlutoniumProductIcon,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.giftsAndCodes,
+    icon: PhosphorIconsFill.gift,
+  ),
+];
+
+const _userSettingsDesktopNavApplicationStart = [
+  UserSettingsDesktopNavEntry.separator(UserSettingsNavGroup.application),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.lookAndFeel,
+    icon: PhosphorIconsFill.paintBrush,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.notifications,
+    icon: PhosphorIconsFill.bell,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.accessibility,
+    icon: PhosphorIconsFill.personSimpleCircle,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.chat,
+    icon: PhosphorIconsFill.chatCircle,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.audioAndVideo,
+    icon: PhosphorIconsFill.microphone,
+  ),
+];
+
+const _userSettingsDesktopNavApplicationShortcuts = [
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.shortcuts,
+    icon: PhosphorIconsFill.keyboard,
+  ),
+];
+
+const _userSettingsDesktopNavApplicationEnd = [
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.languageAndTime,
+    icon: PhosphorIconsBold.translate,
+  ),
+];
+
+const _userSettingsDesktopNavAfterLanguageAndTime = [
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.advanced,
+    icon: PhosphorIconsFill.gear,
+  ),
+  UserSettingsDesktopNavEntry.separator(UserSettingsNavGroup.developer),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.applications,
+    icon: PhosphorIconsBold.code,
+  ),
+];
+
+const _userSettingsDesktopNavStaffOnly = [
+  UserSettingsDesktopNavEntry.separator(UserSettingsNavGroup.staffOnly),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.developerTools,
+    icon: PhosphorIconsFill.code,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.limitsConfig,
+    icon: PhosphorIconsFill.flag,
+  ),
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.featureFlags,
+    icon: PhosphorIconsFill.flag,
+  ),
+];
+
+const _userSettingsDesktopNavAppLicenses = [
+  UserSettingsDesktopNavEntry.link(
+    UserSettingsSection.appLicenses,
+    icon: PhosphorIconsFill.scroll,
+  ),
+];
+
+const _userSettingsDesktopNavLogout = [UserSettingsDesktopNavEntry.logout()];
+
+List<UserSettingsDesktopNavEntry> buildUserSettingsDesktopNav({
+  required bool showBilling,
+  required bool showGiveFeedback,
+  required bool showJoinFluxerLabs,
+  required bool isTouchPrimary,
+  bool showGifts = true,
+}) => [
+  ..._userSettingsDesktopNavYourAccount,
+  if (showBilling)
+    ..._userSettingsDesktopNavBilling.where(
+      (UserSettingsDesktopNavEntry entry) =>
+          showGifts || entry.section != UserSettingsSection.giftsAndCodes,
+    ),
+  ..._userSettingsDesktopNavApplicationStart,
+  if (!isTouchPrimary) ..._userSettingsDesktopNavApplicationShortcuts,
+  ..._userSettingsDesktopNavApplicationEnd,
+  if (isFluxerNativeMobileOs)
+    const UserSettingsDesktopNavEntry.link(
+      UserSettingsSection.defaultApps,
+      icon: PhosphorIconsFill.squaresFour,
+    ),
+  if (isAlternateAppIconSettingsAvailable)
+    const UserSettingsDesktopNavEntry.linkWithLeading(
+      UserSettingsSection.appIcon,
+      leading: SettingsFluxerLogoIcon(),
+    ),
+  ..._userSettingsDesktopNavAfterLanguageAndTime,
+  if (AppBuildConfig.isCanary) ..._userSettingsDesktopNavStaffOnly,
+  const UserSettingsDesktopNavEntry.whatsNew(),
+  if (showGiveFeedback) const UserSettingsDesktopNavEntry.giveFeedback(),
+  if (showJoinFluxerLabs) const UserSettingsDesktopNavEntry.joinFluxerLabs(),
+  ..._userSettingsDesktopNavAppLicenses,
+  ..._userSettingsDesktopNavLogout,
+];
+
+int? indexForUserSettingsSection(
+  UserSettingsSection section, {
+  required bool showBilling,
+  required bool showGiveFeedback,
+  required bool showJoinFluxerLabs,
+  required bool isTouchPrimary,
+  bool showGifts = true,
+}) {
+  if (!isUserSettingsStaffOnlySectionAvailable(section)) {
+    return null;
+  }
+  if (!isUserSettingsBillingSectionAvailable(
+    section,
+    showBilling: showBilling,
+    showGifts: showGifts,
+  )) {
+    return null;
+  }
+  final List<UserSettingsDesktopNavEntry> nav = buildUserSettingsDesktopNav(
+    showBilling: showBilling,
+    showGifts: showGifts,
+    showGiveFeedback: showGiveFeedback,
+    showJoinFluxerLabs: showJoinFluxerLabs,
+    isTouchPrimary: isTouchPrimary,
+  );
+  for (var i = 0; i < nav.length; i++) {
+    if (nav[i].section == section) {
+      return i;
+    }
+  }
+  return null;
+}
+
+IconData? iconForUserSettingsSection(
+  UserSettingsSection section, {
+  required bool showBilling,
+  required bool showGiveFeedback,
+  required bool showJoinFluxerLabs,
+  required bool isTouchPrimary,
+  bool showGifts = true,
+}) {
+  if (section == UserSettingsSection.themeColors) {
+    return PhosphorIconsFill.palette;
+  }
+  for (final UserSettingsDesktopNavEntry entry in buildUserSettingsDesktopNav(
+    showBilling: showBilling,
+    showGifts: showGifts,
+    showGiveFeedback: showGiveFeedback,
+    showJoinFluxerLabs: showJoinFluxerLabs,
+    isTouchPrimary: isTouchPrimary,
+  )) {
+    if (entry.section == section) {
+      return entry.icon;
+    }
+  }
+  return null;
+}
+
+Widget? leadingForUserSettingsSection(UserSettingsSection section) {
+  if (section == UserSettingsSection.appIcon &&
+      isAlternateAppIconSettingsAvailable) {
+    return const SettingsFluxerLogoIcon();
+  }
+  return null;
+}
+
+List<FluxerSettingsNavGroup> buildUserSettingsMobileNavGroups({
+  required FluxerLocalizations l10n,
+  required void Function(UserSettingsSection section) onOpenSection,
+  required VoidCallback onOpenAppLogs,
+  required VoidCallback onOpenWhatsNew,
+  required VoidCallback onJoinFluxerLabs,
+  required VoidCallback onGiveFeedback,
+  required VoidCallback onLogout,
+  required bool showBilling,
+  required bool showGiveFeedback,
+  required bool showJoinFluxerLabs,
+  required bool isTouchPrimary,
+  bool showGifts = true,
+}) {
+  FluxerSettingsNavItem link(UserSettingsSection section, IconData icon) {
+    return FluxerSettingsNavItem(
+      label: userSettingsSectionLabel(l10n, section),
+      icon: icon,
+      onTap: () => onOpenSection(section),
+    );
+  }
+
+  return [
+    FluxerSettingsNavGroup(
+      label: userSettingsNavGroupLabel(l10n, UserSettingsNavGroup.yourAccount),
+      items: [
+        link(UserSettingsSection.securityLogin, PhosphorIconsFill.shieldCheck),
+        link(UserSettingsSection.privacyDashboard, PhosphorIconsFill.eyeSlash),
+        link(UserSettingsSection.authorizedApps, PhosphorIconsFill.robot),
+        link(UserSettingsSection.blockedUsers, PhosphorIconsFill.prohibit),
+        link(UserSettingsSection.linkedDevices, PhosphorIconsFill.devices),
+        link(UserSettingsSection.connections, PhosphorIconsFill.userList),
+      ],
+    ),
+    if (showBilling)
+      FluxerSettingsNavGroup(
+        label: userSettingsNavGroupLabel(l10n, UserSettingsNavGroup.billing),
+        items: [
+          link(UserSettingsSection.fluxerPlutonium, kPlutoniumProductIcon),
+          if (showGifts)
+            link(UserSettingsSection.giftsAndCodes, PhosphorIconsFill.gift),
+        ],
+      ),
+    FluxerSettingsNavGroup(
+      label: userSettingsNavGroupLabel(l10n, UserSettingsNavGroup.application),
+      items: [
+        link(UserSettingsSection.lookAndFeel, PhosphorIconsFill.paintBrush),
+        link(UserSettingsSection.notifications, PhosphorIconsFill.bell),
+        link(
+          UserSettingsSection.accessibility,
+          PhosphorIconsFill.personSimpleCircle,
+        ),
+        link(UserSettingsSection.chat, PhosphorIconsFill.chatCircle),
+        link(UserSettingsSection.audioAndVideo, PhosphorIconsFill.microphone),
+        if (!isTouchPrimary)
+          link(UserSettingsSection.shortcuts, PhosphorIconsFill.keyboard),
+        link(UserSettingsSection.languageAndTime, PhosphorIconsBold.translate),
+        if (isFluxerNativeMobileOs)
+          link(UserSettingsSection.defaultApps, PhosphorIconsFill.squaresFour),
+        if (isAlternateAppIconSettingsAvailable)
+          FluxerSettingsNavItem(
+            label: userSettingsSectionLabel(l10n, UserSettingsSection.appIcon),
+            leading: leadingForUserSettingsSection(UserSettingsSection.appIcon),
+            onTap: () => onOpenSection(UserSettingsSection.appIcon),
+          ),
+        link(UserSettingsSection.advanced, PhosphorIconsFill.gear),
+      ],
+    ),
+    FluxerSettingsNavGroup(
+      label: userSettingsNavGroupLabel(l10n, UserSettingsNavGroup.developer),
+      items: [
+        link(UserSettingsSection.applications, PhosphorIconsBold.code),
+        FluxerSettingsNavItem(
+          label: l10n.userSettingsNavAppLogs,
+          icon: PhosphorIconsFill.list,
+          onTap: onOpenAppLogs,
+        ),
+      ],
+    ),
+    if (AppBuildConfig.isCanary)
+      FluxerSettingsNavGroup(
+        label: userSettingsNavGroupLabel(l10n, UserSettingsNavGroup.staffOnly),
+        items: [
+          link(UserSettingsSection.developerTools, PhosphorIconsFill.code),
+          link(UserSettingsSection.limitsConfig, PhosphorIconsFill.flag),
+          link(UserSettingsSection.featureFlags, PhosphorIconsFill.flag),
+        ],
+      ),
+    FluxerSettingsNavGroup(
+      items: [
+        FluxerSettingsNavItem(
+          label: l10n.userSettingsNavWhatsNew,
+          icon: PhosphorIconsFill.megaphone,
+          onTap: onOpenWhatsNew,
+        ),
+        if (showGiveFeedback)
+          FluxerSettingsNavItem(
+            label: l10n.userSettingsGiveFeedback,
+            icon: PhosphorIconsFill.chatTeardropText,
+            onTap: onGiveFeedback,
+          ),
+        if (showJoinFluxerLabs)
+          FluxerSettingsNavItem(
+            label: l10n.userSettingsJoinFluxerLabs,
+            icon: PhosphorIconsFill.testTube,
+            onTap: onJoinFluxerLabs,
+          ),
+        link(UserSettingsSection.appLicenses, PhosphorIconsFill.scroll),
+        FluxerSettingsNavItem(
+          label: l10n.userSettingsNavLogOut,
+          icon: PhosphorIconsFill.signOut,
+          isDanger: true,
+          onTap: onLogout,
+        ),
+      ],
+    ),
+  ];
+}
+
+IconData _searchSectionIcon(
+  UserSettingsSection section, {
+  required bool showBilling,
+  required bool showGiveFeedback,
+  required bool showJoinFluxerLabs,
+  required bool isTouchPrimary,
+}) {
+  return iconForUserSettingsSection(
+        section,
+        showBilling: showBilling,
+        showGiveFeedback: showGiveFeedback,
+        showJoinFluxerLabs: showJoinFluxerLabs,
+        isTouchPrimary: isTouchPrimary,
+      ) ??
+      PhosphorIconsFill.gear;
+}
+
+final class UserSettingsSearchSidebar {
+  const UserSettingsSearchSidebar({
+    required this.items,
+    required this.hitAtIndex,
+  });
+
+  final List<SettingsSidebarItem> items;
+  final List<UserSettingsSearchHit?> hitAtIndex;
+}
+
+UserSettingsSearchSidebar buildUserSettingsSearchSidebar({
+  required FluxerLocalizations l10n,
+  required List<UserSettingsSearchHit> hits,
+  required bool showBilling,
+  required bool isTouchPrimary,
+}) {
+  final List<SettingsSidebarItem> items = [];
+  final List<UserSettingsSearchHit?> hitAtIndex = [];
+  for (final MapEntry<UserSettingsSection, List<UserSettingsSearchHit>> entry
+      in groupUserSettingsSearchHits(hits)) {
+    final UserSettingsSection section = entry.key;
+    final List<UserSettingsSearchHit> sectionHits = entry.value;
+    final bool onlySectionHit =
+        sectionHits.length == 1 && sectionHits.first.fieldId == null;
+    if (!onlySectionHit) {
+      items.add(
+        SettingsSidebarItem.separator(userSettingsSectionLabel(l10n, section)),
+      );
+      hitAtIndex.add(null);
+    }
+    final Widget? leading = leadingForUserSettingsSection(section);
+    final IconData? icon = leading == null
+        ? _searchSectionIcon(
+            section,
+            showBilling: showBilling,
+            showGiveFeedback: false,
+            showJoinFluxerLabs: false,
+            isTouchPrimary: isTouchPrimary,
+          )
+        : null;
+    for (final UserSettingsSearchHit hit in sectionHits) {
+      items.add(SettingsSidebarItem(hit.label, icon: icon, leading: leading));
+      hitAtIndex.add(hit);
+    }
+  }
+  return UserSettingsSearchSidebar(items: items, hitAtIndex: hitAtIndex);
+}
+
+List<FluxerSettingsNavGroup> buildUserSettingsSearchNavGroups({
+  required FluxerLocalizations l10n,
+  required List<UserSettingsSearchHit> hits,
+  required void Function(UserSettingsSection section, {String? initialFieldId})
+  onOpen,
+  required bool showBilling,
+  required bool isTouchPrimary,
+}) {
+  FluxerSettingsNavItem searchHitItem(
+    UserSettingsSection section,
+    UserSettingsSearchHit hit,
+  ) {
+    final Widget? leading = leadingForUserSettingsSection(section);
+    return FluxerSettingsNavItem(
+      label: hit.label,
+      hint: hit.fieldId == null
+          ? null
+          : userSettingsSectionLabel(l10n, section),
+      icon: leading == null
+          ? _searchSectionIcon(
+              section,
+              showBilling: showBilling,
+              showGiveFeedback: false,
+              showJoinFluxerLabs: false,
+              isTouchPrimary: isTouchPrimary,
+            )
+          : null,
+      leading: leading,
+      onTap: () => onOpen(section, initialFieldId: hit.fieldId),
+    );
+  }
+
+  return [
+    for (final MapEntry<UserSettingsSection, List<UserSettingsSearchHit>> entry
+        in groupUserSettingsSearchHits(hits))
+      FluxerSettingsNavGroup(
+        label: userSettingsSectionLabel(l10n, entry.key),
+        items: [
+          for (final UserSettingsSearchHit hit in entry.value)
+            searchHitItem(entry.key, hit),
+        ],
+      ),
+  ];
+}

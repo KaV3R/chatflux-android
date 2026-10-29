@@ -1,0 +1,196 @@
+// Root ProviderScope built by a helper; the lint only exempts a
+// ProviderScope written inline in pumpWidget.
+// ignore_for_file: riverpod_lint/scoped_providers_should_specify_dependencies
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/instance/instance_runtime_config.dart';
+import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
+import 'package:fluxer_app/features/shell/presentation/splash_reveal_overlay.dart';
+import 'package:fluxer_app/features/ui/background/starfield_background.dart';
+import 'package:fluxer_app/features/ui/icons/instance_branding_image.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+Widget _wrap(Widget child) {
+  return ProviderScope(
+    overrides: [
+      instanceRuntimeConfigProvider.overrideWithValue(
+        InstanceRuntimeConfig.defaults,
+      ),
+    ],
+    child: MaterialApp(home: child),
+  );
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('SplashRevealOverlay', () {
+    testWidgets('completes zoom transition without throwing', (tester) async {
+      var completed = false;
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (BuildContext context) {
+              return Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      SplashRevealOverlay.show(
+                        context: context,
+                        coverColor: const Color(0xFF080616),
+                        logoBrandColor: const Color(0xFF7A57BF),
+                        logoBrandSymbolColor: Colors.white,
+                        logoCenterGlobal: const Offset(200, 400),
+                        useLogoZoomTransition: true,
+                        animationsEnabled: true,
+                        onComplete: () => completed = true,
+                      );
+                    },
+                    child: const Text('reveal'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('reveal'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(completed, isTrue);
+    });
+
+    testWidgets('disposing mid-animation does not throw', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (BuildContext context) {
+              return Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      SplashRevealOverlay.show(
+                        context: context,
+                        coverColor: const Color(0xFF080616),
+                        logoBrandColor: const Color(0xFF7A57BF),
+                        logoBrandSymbolColor: Colors.white,
+                        logoCenterGlobal: const Offset(200, 400),
+                        useLogoZoomTransition: true,
+                        animationsEnabled: true,
+                      );
+                    },
+                    child: const Text('reveal'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('reveal'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('excludes overlay content from the semantics tree', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (BuildContext context) {
+              return Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      SplashRevealOverlay.show(
+                        context: context,
+                        coverColor: const Color(0xFF080616),
+                        logoBrandColor: const Color(0xFF7A57BF),
+                        logoBrandSymbolColor: Colors.white,
+                        logoCenterGlobal: const Offset(200, 400),
+                        useLogoZoomTransition: true,
+                        animationsEnabled: true,
+                      );
+                    },
+                    child: const Text('reveal'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('reveal'));
+      await tester.pump();
+
+      expect(find.byType(StarfieldBackground), findsOneWidget);
+      expect(
+        find.ancestor(
+          of: find.byType(StarfieldBackground),
+          matching: find.byType(ExcludeSemantics),
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.ancestor(
+          of: find.byType(InstanceBrandMark),
+          matching: find.byType(ExcludeSemantics),
+        ),
+        findsWidgets,
+      );
+
+      await tester.pumpAndSettle();
+      handle.dispose();
+    });
+  });
+
+  group('splashRevealSymbolOpacity', () {
+    test('stays solid through the pulse phase', () {
+      expect(splashRevealSymbolOpacity(0), 1);
+      expect(
+        splashRevealSymbolOpacity(SplashRevealOverlay.pulseEndFraction),
+        1,
+      );
+    });
+
+    test('dissolves monotonically to zero as the logo expands', () {
+      var previous = splashRevealSymbolOpacity(
+        SplashRevealOverlay.pulseEndFraction,
+      );
+      for (double p = 0.1; p <= 1.0; p += 0.05) {
+        final double next = splashRevealSymbolOpacity(p);
+        expect(next, lessThanOrEqualTo(previous));
+        previous = next;
+      }
+      expect(splashRevealSymbolOpacity(1), 0);
+    });
+
+    test('fade is visible while the waves still fit on screen', () {
+      expect(splashRevealSymbolOpacity(0.15), greaterThan(0.9));
+      expect(splashRevealSymbolOpacity(0.36), lessThan(0.5));
+      expect(splashRevealSymbolOpacity(0.54), 0);
+    });
+
+    test('starts more opaque than the cover so the app shows behind first', () {
+      for (double p = 0.12; p <= 0.24; p += 0.06) {
+        expect(
+          splashRevealSymbolOpacity(p),
+          greaterThan(splashRevealLayerOpacity(p, reducedMotion: false)),
+        );
+      }
+    });
+  });
+}

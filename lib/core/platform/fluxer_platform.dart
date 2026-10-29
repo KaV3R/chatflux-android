@@ -1,0 +1,86 @@
+import 'dart:io';
+import 'dart:math' as math;
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
+
+const double kFluxerMobileFormFactorMaxShortestSide = 600;
+
+const bool kFluxerMobileFormFactorBuild =
+    // Compile-time flag for Linux mobile form factor testing.
+    // ignore: do_not_use_environment
+    bool.fromEnvironment('LINUX_MOBILE');
+
+bool? _isRuntimeMobileFormFactor;
+
+bool get isFluxerNativeMobileOs => Platform.isAndroid || Platform.isIOS;
+
+bool get isNativeVoiceCallKitPlatform => isFluxerNativeMobileOs;
+
+bool _isFluxerDesktopClassOs() {
+  return Platform.isLinux || Platform.isMacOS || Platform.isWindows;
+}
+
+void configureFluxerMobileDetection() {
+  if (isFluxerNativeMobileOs || !_isFluxerDesktopClassOs()) {
+    _isRuntimeMobileFormFactor = false;
+    return;
+  }
+  if (kFluxerMobileFormFactorBuild) {
+    _isRuntimeMobileFormFactor = true;
+    return;
+  }
+  final FlutterView? view =
+      PlatformDispatcher.instance.implicitView ??
+      (PlatformDispatcher.instance.views.isNotEmpty
+          ? PlatformDispatcher.instance.views.first
+          : null);
+  if (view == null) {
+    _isRuntimeMobileFormFactor = false;
+    return;
+  }
+  final double devicePixelRatio = view.devicePixelRatio;
+  final Size logicalSize = view.physicalSize / devicePixelRatio;
+  _isRuntimeMobileFormFactor = isFluxerRuntimeMobileFormFactorFromLogicalSize(
+    logicalSize,
+  );
+}
+
+@visibleForTesting
+void debugSetFluxerRuntimeMobileFormFactor({required bool? value}) {
+  _isRuntimeMobileFormFactor = value;
+}
+
+@visibleForTesting
+bool isFluxerRuntimeMobileFormFactorFromLogicalSize(Size logicalSize) {
+  if (logicalSize.isEmpty) {
+    return false;
+  }
+  return isFluxerMobileFormFactorShortestSide(
+    math.min(logicalSize.width, logicalSize.height),
+  );
+}
+
+@visibleForTesting
+bool isFluxerMobileFormFactorShortestSide(double shortestLogicalSide) {
+  return shortestLogicalSide < kFluxerMobileFormFactorMaxShortestSide;
+}
+
+bool get isFluxerRuntimeMobileFormFactor {
+  if (isFluxerNativeMobileOs || !_isFluxerDesktopClassOs()) {
+    return false;
+  }
+  if (kFluxerMobileFormFactorBuild) {
+    return true;
+  }
+  return _isRuntimeMobileFormFactor ?? false;
+}
+
+bool get isFluxerDesktopOs =>
+    _isFluxerDesktopClassOs() && !isFluxerRuntimeMobileFormFactor;
+
+bool get isFluxerMobileOs =>
+    isFluxerNativeMobileOs || isFluxerRuntimeMobileFormFactor;
+
+bool get isFluxerLinuxMobileVoiceTarget =>
+    Platform.isLinux && isFluxerRuntimeMobileFormFactor;

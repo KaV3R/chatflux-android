@@ -1,0 +1,159 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_providers.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_sync_provider.dart';
+import 'package:fluxer_app/features/settings/domain/guild/guild_settings_tab.dart';
+import 'package:fluxer_app/features/settings/presentation/delete_community_flow.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/guild/guild_settings_page_shell.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/wide_settings_content_layout.dart';
+import 'package:fluxer_app/features/settings/providers/guild/guild_settings_tab_providers.dart';
+import 'package:fluxer_app/features/shell/hosted_ui/hosted_ui_background_bleed.dart';
+import 'package:fluxer_app/features/shell/hosted_ui/iphone_duo_hosted_ui.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/features/ui/settings/fluxer_settings_nav_list.dart';
+import 'package:fluxer_app/features/ui/toast/fluxer_toast.dart';
+import 'package:fluxer_app/features/ui/toast/toast_provider.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class GuildSettingsNavPage extends ConsumerStatefulWidget {
+  const GuildSettingsNavPage({required this.guildId, super.key});
+
+  final String guildId;
+
+  @override
+  ConsumerState<GuildSettingsNavPage> createState() =>
+      _GuildSettingsNavPageState();
+}
+
+class _GuildSettingsNavPageState extends ConsumerState<GuildSettingsNavPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(guildSyncProvider.notifier).syncIfNeeded(widget.guildId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final int permissions = ref.watch(
+      guildSettingsPermissionsProvider(widget.guildId),
+    );
+    final Guild? guild = ref.watch(guildByIdProvider(widget.guildId)).value;
+    final List<GuildSettingsTab> tabs = visibleGuildSettingsTabsForRef(
+      ref: ref,
+      permissions: permissions,
+      guild: guild,
+    );
+    final bool canDelete = canDeleteCommunity(
+      guild: guild,
+      currentUserId: ref.watch(currentUserIdProvider),
+      isStockCommunity: ref
+          .watch(instanceRuntimeConfigProvider)
+          .isStockCommunityGuild(widget.guildId),
+    );
+    final Color backgroundColor = guildSettingsPageBackgroundColor(context);
+    return HostedUiBackgroundBleed(
+      color: backgroundColor,
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: backgroundColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          automaticallyImplyLeading: false,
+          title: Text(l10n.guildSettingsCommunitySettings),
+          leading: showsInAppShellBackButton(context)
+              ? IconButton(
+                  icon: const PhosphorIcon(PhosphorIconsBold.arrowLeft),
+                  onPressed: () => context.pop(),
+                )
+              : null,
+        ),
+        body: FluxerSettingsNavList(
+          padding: settingsScrollPadding(context),
+          groups: _buildNavGroups(l10n, tabs, context, widget.guildId, ref),
+          footer: canDelete
+              ? Padding(
+                  padding: EdgeInsets.only(top: context.layout.s2),
+                  child: FluxerMenuGroup(
+                    children: <Widget>[
+                      FluxerBottomSheetMenuItem(
+                        label: l10n.guildSettingsDeleteCommunity,
+                        icon: PhosphorIconsFill.trash,
+                        isDanger: true,
+                        onTap: () => unawaited(
+                          DeleteCommunityFlow.confirmAndDelete(
+                            context,
+                            ref,
+                            guildId: widget.guildId,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  List<FluxerSettingsNavGroup> _buildNavGroups(
+    FluxerLocalizations l10n,
+    List<GuildSettingsTab> tabs,
+    BuildContext context,
+    String guildId,
+    WidgetRef ref,
+  ) {
+    final List<FluxerSettingsNavGroup> groups = <FluxerSettingsNavGroup>[];
+    String? currentCategory;
+    List<FluxerSettingsNavItem> currentItems = <FluxerSettingsNavItem>[];
+    void flushGroup() {
+      if (currentItems.isEmpty) {
+        return;
+      }
+      groups.add(
+        FluxerSettingsNavGroup(label: currentCategory, items: currentItems),
+      );
+      currentItems = <FluxerSettingsNavItem>[];
+    }
+
+    for (final GuildSettingsTab tab in tabs) {
+      final String? category = guildSettingsTabCategoryLabel(l10n, tab);
+      if (category != currentCategory) {
+        flushGroup();
+        currentCategory = category;
+      }
+      final bool isComingSoon = isGuildSettingsTabComingSoon(tab);
+      currentItems.add(
+        FluxerSettingsNavItem(
+          label: guildSettingsTabTitle(l10n, tab),
+          icon: guildSettingsTabIcon(tab),
+          onTap: () => context.push(guildSettingsTabPath(guildId, tab)),
+          isDisabled: isComingSoon,
+          onDisabledTap: () {
+            ref
+                .read(toastProvider.notifier)
+                .show(FluxerToast(message: l10n.comingSoon));
+          },
+        ),
+      );
+    }
+    flushGroup();
+    return groups;
+  }
+}

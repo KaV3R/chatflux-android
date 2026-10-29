@@ -1,0 +1,284 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/push/android/media/cache.dart';
+import 'package:fluxer_app/core/push/android/media/instance_urls.dart';
+import 'package:fluxer_app/core/push/android/pipeline.dart';
+import 'package:fluxer_app/core/push/push_message.dart';
+import 'package:fluxer_app/core/push/web_push/web_push_codec.dart';
+import 'package:fluxer_app/core/push/web_push/web_push_crypto.dart';
+import 'package:fluxer_app/core/push/web_push/web_push_key_store.dart';
+import 'package:image/image.dart' as img;
+
+void main() {
+  test('background ciphertext notifications show locally', () {
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: true,
+        payload: const <String, String>{'channel_id': 'c'},
+      ),
+      AndroidPushIncomingAction.showLocally,
+    );
+  });
+
+  test('foreground clears go to the coordinator', () {
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: false,
+        payload: const <String, String>{
+          'type': 'notification_clear',
+          'channel_id': 'c',
+        },
+      ),
+      AndroidPushIncomingAction.emit,
+    );
+  });
+
+  test('undecrypted payloads are dropped', () {
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: false,
+        backgroundMode: true,
+        payload: const <String, String>{},
+      ),
+      AndroidPushIncomingAction.discard,
+    );
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: false,
+        backgroundMode: false,
+        payload: const <String, String>{},
+      ),
+      AndroidPushIncomingAction.discard,
+    );
+  });
+
+  test('call ring always shows an incoming call', () {
+    const Map<String, String> ring = <String, String>{
+      'type': 'call_ring',
+      'channel_id': 'c',
+      'message_id': 'm',
+      'expires_at_ms': '9999999999999',
+    };
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: false,
+        payload: ring,
+      ),
+      AndroidPushIncomingAction.showIncomingCall,
+    );
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: true,
+        payload: ring,
+      ),
+      AndroidPushIncomingAction.showIncomingCall,
+    );
+  });
+
+  test('an expired call ring is dropped', () {
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: true,
+        payload: const <String, String>{
+          'type': 'call_ring',
+          'channel_id': 'c',
+          'message_id': 'm',
+          'expires_at_ms': '1',
+        },
+      ),
+      AndroidPushIncomingAction.discard,
+    );
+  });
+
+  test('background clears are handled locally', () {
+    expect(
+      resolveAndroidPushIncomingAction(
+        decrypted: true,
+        backgroundMode: true,
+        payload: const <String, String>{
+          'type': 'notification_clear',
+          'channel_id': 'c',
+        },
+      ),
+      AndroidPushIncomingAction.handleClear,
+    );
+  });
+
+  test('foreground ciphertext is returned for the coordinator', () async {
+    FlutterSecureStorage.setMockInitialValues(<String, String>{});
+    final WebPushKeyStore store = WebPushKeyStore(
+      storage: const FlutterSecureStorage(),
+    );
+    final WebPushAccountKeys keys = await store.ensureKeys('user-a');
+    final WebPushKeyPair pair = _pairFrom(keys);
+    final Uint8List record = await encryptWebPushRecord(
+      plaintext: utf8.encode(
+        '{"title":"Alice","body":"ping","message_id":"m","channel_id":"c"}',
+      ),
+      recipientPublicKey: pair.publicKey,
+      authSecret: pair.authSecret,
+    );
+    final PushMessage? message = await AndroidPushPipeline.handleCiphertext(
+      ciphertextBase64: encodeWebPushKey(record),
+      backgroundMode: false,
+      keyStore: store,
+    );
+    expect(message?.title, 'Alice');
+    expect(message?.payload['channel_id'], 'c');
+    expect(message?.payload['target_user_id'], 'user-a');
+  });
+
+  test('invalid ciphertext is dropped', () async {
+    final PushMessage? message = await AndroidPushPipeline.handleCiphertext(
+      ciphertextBase64: '!!!',
+      backgroundMode: true,
+    );
+    expect(message, isNull);
+  });
+
+  test('avatar prefers author_avatar_url and skips non-http icons', () {
+    final PushMediaInstanceUrls endpoints = PushMediaInstanceUrls.official();
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'author_avatar_url': 'https://cdn.example/a.png',
+        'icon': 'https://cdn.example/b.png',
+      }, endpoints: endpoints),
+      'https://cdn.example/a.png?format=png&animated=false&size=160',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'icon': '/icons/app.png',
+      }, endpoints: endpoints),
+      isNull,
+    );
+    expect(
+      pushAttachmentImageUrl(<String, String>{
+        'has_media': 'true',
+        'image_url': 'https://cdn.example/pic.png',
+        'image': 'https://cdn.example/other.png',
+      }, endpoints: endpoints),
+      'https://cdn.example/pic.png',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'icon': 'https://cdn.example/avatars/99/a.webp?animated=true&size=4096',
+      }, endpoints: endpoints),
+      'https://cdn.example/avatars/99/a.webp?format=png&animated=false&size=160',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'icon': 'https://cdn.example/icon.png',
+        'author_id': '7',
+      }, endpoints: endpoints),
+      'https://fluxerstatic.com/avatars/1.png',
+    );
+  });
+
+  test('avatar uses default static avatars like the in-app avatar', () {
+    final PushMediaInstanceUrls endpoints = PushMediaInstanceUrls.official();
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'author_id': '7',
+      }, endpoints: endpoints),
+      'https://fluxerstatic.com/avatars/1.png',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'icon': 'https://fluxerstatic.com/avatars/3.png',
+      }, endpoints: endpoints),
+      'https://fluxerstatic.com/avatars/3.png',
+    );
+    expect(
+      pushNotificationStaticImageUrl(
+        'https://fluxerstatic.com/avatars/2.png',
+        size: 160,
+      ),
+      'https://fluxerstatic.com/avatars/2.png',
+    );
+    expect(
+      pushAuthorIdFromAvatarUrl(
+        'https://cdn.example/avatars/123456789012345678/deadbeef.webp',
+      ),
+      '123456789012345678',
+    );
+  });
+
+  test('avatar and attachment URLs follow the account instance CDNs', () {
+    const PushMediaInstanceUrls endpoints = PushMediaInstanceUrls(
+      mediaBaseUrl: 'https://media.selfhosted.test',
+      staticCdn: 'https://static.selfhosted.test',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'author_id': '7',
+      }, endpoints: endpoints),
+      'https://static.selfhosted.test/avatars/1.png',
+    );
+    expect(
+      pushAuthorAvatarUrl(<String, String>{
+        'author_avatar_url':
+            'https://fluxerusercontent.com/avatars/1/deadbeef.webp?size=160',
+      }, endpoints: endpoints),
+      'https://media.selfhosted.test/avatars/1/deadbeef.webp?format=png&animated=false&size=160',
+    );
+    expect(
+      pushAttachmentImageUrl(<String, String>{
+        'has_media': 'true',
+        'image_url': 'https://fluxerusercontent.com/attachments/1/preview.webp',
+      }, endpoints: endpoints),
+      'https://media.selfhosted.test/attachments/1/preview.webp',
+    );
+  });
+
+  test('notification images are scaled down before they are posted', () {
+    final Uint8List source = Uint8List.fromList(
+      img.encodePng(img.Image(width: 40, height: 10)),
+    );
+    final Uint8List? encoded = encodePushNotificationImage(source, maxEdge: 16);
+    expect(encoded, isNotNull);
+    final img.Image? decoded = img.decodeJpg(encoded!);
+    expect(decoded, isNotNull);
+    expect(decoded!.width, lessThanOrEqualTo(16));
+    expect(decoded.height, lessThanOrEqualTo(16));
+  });
+
+  test('notification avatars are circular PNGs with transparent corners', () {
+    final img.Image opaque = img.Image(width: 60, height: 40)
+      ..clear(img.ColorRgb8(200, 30, 30));
+    final Uint8List? encoded = encodePushNotificationAvatar(
+      Uint8List.fromList(img.encodeJpg(opaque)),
+      size: 32,
+    );
+    expect(encoded, isNotNull);
+    final img.Image? decoded = img.decodePng(encoded!);
+    expect(decoded, isNotNull);
+    expect(decoded!.width, 32);
+    expect(decoded.height, 32);
+    expect(decoded.numChannels, 4);
+    for (final (int x, int y) in <(int, int)>[
+      (0, 0),
+      (31, 0),
+      (0, 31),
+      (31, 31),
+    ]) {
+      expect(decoded.getPixel(x, y).a, 0);
+    }
+    expect(decoded.getPixel(16, 16).a, 255);
+  });
+}
+
+WebPushKeyPair _pairFrom(WebPushAccountKeys keys) {
+  return WebPushKeyPair(
+    privateKey: decodeWebPushKey(keys.privateKey!),
+    publicKey: decodeWebPushKey(keys.publicKey),
+    authSecret: decodeWebPushKey(keys.authSecret),
+  );
+}

@@ -1,0 +1,1789 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/chat/providers/core/chat_view_model.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/shell/presentation/sidebar_drawer.dart';
+import 'package:fluxer_app/features/shell/providers/drawer/drawer_providers.dart';
+import 'package:fluxer_app/features/shell/providers/drawer/reveal_side_provider.dart';
+import 'package:fluxer_app/features/shell/providers/layout/shell_popup_overlay_provider.dart';
+import 'package:fluxer_app/features/threads/providers/thread_entered_from_parent_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/gestures/defer_horizontal_drag_while_coasting.dart';
+import 'package:fluxer_app/shared/gestures/nested_horizontal_scrollable.dart';
+import 'package:fluxer_app/shared/markdown/native_markdown_parser.dart';
+import 'package:fluxer_app/shared/widgets/playback_seek_gesture_target.dart';
+import 'package:fluxer_markdown/src/widgets/fluxer_markdown.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod/src/framework.dart' show Override;
+
+import '../../../shared/gestures/wide_markdown_table_test_helpers.dart';
+
+void main() {
+  group('isSidebarDrawerLockedForLocation', () {
+    test('locks DM list and guild root without a channel', () {
+      expect(isSidebarDrawerLockedForLocation('/channels/@me'), isTrue);
+      expect(isSidebarDrawerLockedForLocation('/channels/guild'), isTrue);
+      expect(
+        isSidebarDrawerLockedForLocation('/channels/guild/channel'),
+        isFalse,
+      );
+    });
+
+    test('locks favorites root without a channel', () {
+      expect(isSidebarDrawerLockedForLocation('/channels/@favorites'), isTrue);
+      expect(
+        isSidebarDrawerLockedForLocation('/channels/@favorites/abc'),
+        isFalse,
+      );
+    });
+  });
+
+  group('isCompactWideDrawerPeekMode', () {
+    testWidgets('is true only for compact-wide peek reveal', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shellLocationProvider.overrideWithValue(
+              '/channels/guild-1/channel-1',
+            ),
+            currentRevealSideProvider.overrideWithValue(RevealSide.left),
+          ],
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: MediaQuery(
+              data: const MediaQueryData(size: Size(744, 1133)),
+              child: Builder(
+                builder: (BuildContext context) {
+                  return Text(
+                    isCompactWideDrawerPeekMode(
+                          context,
+                          shellLocation: '/channels/guild-1/channel-1',
+                          revealSide: RevealSide.left,
+                        )
+                        ? 'yes'
+                        : 'no',
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('yes'), findsOneWidget);
+    });
+
+    testWidgets('is false when chat is full screen', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: MediaQuery(
+            data: const MediaQueryData(size: Size(744, 1133)),
+            child: Builder(
+              builder: (BuildContext context) {
+                return Text(
+                  isCompactWideDrawerPeekMode(
+                        context,
+                        shellLocation: '/channels/guild-1/channel-1',
+                        revealSide: RevealSide.main,
+                      )
+                      ? 'yes'
+                      : 'no',
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('no'), findsOneWidget);
+    });
+  });
+
+  group('sidebarDrawerTargetForDrag', () {
+    test('uses fling velocity before position threshold', () {
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 0,
+          width: 400,
+          primaryVelocity: 700,
+          completionThreshold: 0.4,
+        ),
+        RevealSide.left,
+      );
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 400,
+          width: 400,
+          primaryVelocity: -700,
+          completionThreshold: 0.4,
+        ),
+        RevealSide.main,
+      );
+    });
+
+    test('falls back to position threshold without a fling', () {
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 159,
+          width: 400,
+          primaryVelocity: 0,
+          completionThreshold: 0.4,
+        ),
+        RevealSide.main,
+      );
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 160,
+          width: 400,
+          primaryVelocity: 0,
+          completionThreshold: 0.4,
+        ),
+        RevealSide.left,
+      );
+    });
+
+    test('uses peek width as the completion basis when provided', () {
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 100,
+          width: 1000,
+          primaryVelocity: 0,
+          completionThreshold: 0.4,
+          peekWidth: 342,
+        ),
+        RevealSide.main,
+      );
+      expect(
+        sidebarDrawerTargetForDrag(
+          translate: 140,
+          width: 1000,
+          primaryVelocity: 0,
+          completionThreshold: 0.4,
+          peekWidth: 342,
+        ),
+        RevealSide.left,
+      );
+    });
+  });
+
+  group('drawerTranslatePastHalfScreen', () {
+    test('is false until the slider passes half the screen', () {
+      expect(
+        drawerTranslatePastHalfScreen(translate: 0, screenWidth: 400),
+        isFalse,
+      );
+      expect(
+        drawerTranslatePastHalfScreen(translate: 200, screenWidth: 400),
+        isFalse,
+      );
+      expect(
+        drawerTranslatePastHalfScreen(translate: 201, screenWidth: 400),
+        isTrue,
+      );
+    });
+
+    test('stays false for a compact-wide peek', () {
+      expect(
+        drawerTranslatePastHalfScreen(translate: 342, screenWidth: 984),
+        isFalse,
+      );
+    });
+  });
+
+  testWidgets('tracks opening drags from anywhere on the surface', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(80, 0));
+    await tester.pump();
+
+    expect(_sliderDx(tester), 80);
+
+    await gesture.moveBy(const Offset(180, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+  });
+
+  testWidgets('marks past half after the slider crosses mid-screen', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(10, 400));
+    await gesture.moveBy(const Offset(180, 0));
+    await tester.pump();
+
+    expect(_sliderDx(tester), 180);
+    expect(container.read(drawerPastHalfScreenProvider), isFalse);
+
+    await gesture.moveBy(const Offset(40, 0));
+    await tester.pump();
+
+    expect(_sliderDx(tester), 220);
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('keeps past half when reparented during build', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    var wrapInTransform = true;
+
+    Widget app() {
+      return UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(
+          routerConfig: router,
+          builder: (BuildContext context, Widget? child) {
+            final Widget media = MediaQuery(
+              data: const MediaQueryData(size: Size(400, 800)),
+              child: child ?? const SizedBox.shrink(),
+            );
+            if (!wrapInTransform) {
+              return media;
+            }
+            return Transform.scale(scale: 1.01, child: media);
+          },
+        ),
+      );
+    }
+
+    await tester.pumpWidget(app());
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+
+    wrapInTransform = false;
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+  });
+
+  testWidgets('clears past half after the drawer leaves the tree', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const SizedBox.shrink(),
+      ),
+    );
+    await tester.pump();
+
+    expect(container.read(drawerPastHalfScreenProvider), isFalse);
+  });
+
+  testWidgets('committed drawer drag keeps tracking after a vertical arc', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(80, 0));
+    await tester.pump();
+    expect(_sliderDx(tester), 80);
+
+    await gesture.moveBy(const Offset(100, 200));
+    await tester.pump();
+    expect(_sliderDx(tester), 180);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 400);
+  });
+
+  testWidgets('vertical-dominant drag from mid-chat does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(12, 40));
+    await gesture.moveBy(const Offset(0, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('batched first move Offset(12, 40) does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router, touchSlop: 8),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(12, 40));
+    await gesture.moveBy(const Offset(0, 200));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('arched diagonal drag does not open the drawer', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router, touchSlop: 8),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(20, 16));
+    await gesture.moveBy(const Offset(8, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('ambiguous first move Offset(20, 16) does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(20, 16));
+    await gesture.moveBy(const Offset(8, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('large vertical move Offset(8, 80) does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(8, 80));
+    await gesture.moveBy(const Offset(0, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('large vertical move Offset(12, 80) does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(12, 80));
+    await gesture.moveBy(const Offset(0, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('45 degree coalesced jump does not open the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(40, 40));
+    await gesture.moveBy(const Offset(8, 160));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('vertical fling does not open the drawer', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    await tester.flingFrom(const Offset(200, 400), const Offset(0, 300), 2000);
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('coasting message list defers the drawer', (tester) async {
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: _drawerHarnessWithCoastDefer,
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(80, 0));
+    await tester.pump();
+    expect(_sliderDx(tester), 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('blocks closing swipe on guild root without a channel', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+
+    await tester.dragFrom(const Offset(240, 400), const Offset(-260, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+  });
+
+  testWidgets('allows closing with a swipe from anywhere when open', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+
+    expect(_sliderIgnorePointer(tester).ignoring, isFalse);
+    expect(find.byKey(kDrawerPeekInactiveScrimKey), findsNothing);
+
+    await tester.dragFrom(const Offset(240, 400), const Offset(-260, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('peeks to channel list width on compact-wide mobile', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const Size compactWideSize = Size(984, 800);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: compactWideSize,
+      ),
+    );
+    await tester.pump();
+
+    await tester.dragFrom(const Offset(20, 400), const Offset(400, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), peekWidth);
+    expect(_sliderDx(tester), lessThan(compactWideSize.width));
+    expect(container.read(drawerPastHalfScreenProvider), isFalse);
+    expect(
+      tester
+          .widget<ChatSwipeToReplyScope>(find.byType(ChatSwipeToReplyScope))
+          .enabled,
+      isFalse,
+    );
+    expect(_sliderIgnorePointer(tester).ignoring, isTrue);
+    expect(_sliderScrimOpacity(tester), kDrawerPeekInactiveScrimOpacity);
+  });
+
+  testWidgets('tapping peeked chat restores it without hitting content', (
+    tester,
+  ) async {
+    var sliderTaps = 0;
+    var baseTaps = 0;
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () => _drawerHarnessWithTaps(
+        onBaseTap: () => baseTaps++,
+        onSliderTap: () => sliderTaps++,
+      ),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const Size compactWideSize = Size(984, 800);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: compactWideSize,
+      ),
+    );
+    await tester.pump();
+
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), peekWidth);
+
+    await tester.tapAt(const Offset(peekWidth + 80, 400));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 0);
+    expect(sliderTaps, 0);
+    expect(baseTaps, 0);
+
+    await tester.tapAt(const Offset(200, 400));
+    await tester.pump();
+
+    expect(sliderTaps, 1);
+    expect(baseTaps, 0);
+  });
+
+  testWidgets('chat taps work while compact-wide chat is fully open', (
+    tester,
+  ) async {
+    var sliderTaps = 0;
+    var baseTaps = 0;
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () => _drawerHarnessWithTaps(
+        onBaseTap: () => baseTaps++,
+        onSliderTap: () => sliderTaps++,
+      ),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: const Size(984, 800),
+      ),
+    );
+    await tester.pump();
+
+    expect(_sliderDx(tester), 0);
+
+    await tester.tapAt(const Offset(200, 400));
+    await tester.pump();
+
+    expect(sliderTaps, 1);
+    expect(baseTaps, 0);
+  });
+
+  testWidgets('tapping the peeked sidebar still reaches sidebar content', (
+    tester,
+  ) async {
+    var sliderTaps = 0;
+    var baseTaps = 0;
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () => _drawerHarnessWithTaps(
+        onBaseTap: () => baseTaps++,
+        onSliderTap: () => sliderTaps++,
+      ),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const Size compactWideSize = Size(984, 800);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: compactWideSize,
+      ),
+    );
+    await tester.pump();
+
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), peekWidth);
+
+    await tester.tapAt(const Offset(40, 400));
+    await tester.pump();
+
+    expect(_sliderDx(tester), peekWidth);
+    expect(baseTaps, 1);
+    expect(sliderTaps, 0);
+  });
+
+  testWidgets('swiping peeked chat still restores full screen', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const Size compactWideSize = Size(984, 800);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: compactWideSize,
+      ),
+    );
+    await tester.pump();
+
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), peekWidth);
+
+    await tester.dragFrom(
+      const Offset(peekWidth + 80, 400),
+      const Offset(-260, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('fully reveals when drawer is locked on compact-wide', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const Size compactWideSize = Size(984, 800);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: compactWideSize,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), compactWideSize.width);
+    expect(container.read(drawerPastHalfScreenProvider), isTrue);
+  });
+
+  testWidgets('keeps open progress when width changes', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: const Size(600, 800),
+      ),
+    );
+    await tester.pump();
+
+    expect(_sliderDx(tester), 600);
+  });
+
+  testWidgets('open drawer settles to peek after growing into compact-wide', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: const Size(984, 800),
+      ),
+    );
+    await tester.pump();
+
+    expect(_sliderDx(tester), peekWidth);
+    expect(_sliderIgnorePointer(tester).ignoring, isTrue);
+    expect(_sliderScrimOpacity(tester), kDrawerPeekInactiveScrimOpacity);
+    expect(container.read(drawerPastHalfScreenProvider), isFalse);
+  });
+
+  testWidgets('ignores horizontal drag while a popup overlay is open', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = ProviderContainer(
+      overrides: [
+        fluxerRouterProvider.overrideWithValue(router),
+        shellHasPopupOverlayProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+
+    await tester.dragFrom(const Offset(20, 400), const Offset(200, 0));
+    await tester.pump();
+
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('keeps swipe-to-reply enabled while the chat is full screen', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<ChatSwipeToReplyScope>(find.byType(ChatSwipeToReplyScope))
+          .enabled,
+      isTrue,
+    );
+    expect(_sliderIgnorePointer(tester).ignoring, isFalse);
+    expect(find.byKey(kDrawerPeekInactiveScrimKey), findsNothing);
+  });
+
+  testWidgets('marks the chat off screen while the channel list is open', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+
+    expect(_chatOnScreen(tester), isTrue);
+
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+    await tester.pump();
+
+    expect(_chatOnScreen(tester), isFalse);
+
+    await tester.pumpAndSettle();
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.main);
+    await tester.pump();
+
+    expect(_chatOnScreen(tester), isTrue);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('keeps the peeked chat on screen on compact-wide mobile', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: const Size(984, 800),
+      ),
+    );
+    await tester.pump();
+
+    container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+    await tester.pumpAndSettle();
+
+    expect(_chatOnScreen(tester), isTrue);
+  });
+
+  testWidgets('wraps drawer layers in repaint boundaries', (tester) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+
+    expect(find.byType(RepaintBoundary), findsAtLeastNWidgets(2));
+  });
+
+  testWidgets('rightward drag on wide table scrolls table instead of drawer', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/channels/guild/channel',
+      routes: [
+        GoRoute(
+          path: '/channels/:guildId',
+          builder: (context, state) => _drawerHarnessWithWideTable(),
+          routes: [
+            GoRoute(
+              path: ':channelId',
+              builder: (context, state) => _drawerHarnessWithWideTable(),
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+    final ScrollableState scrollable = tableScrollableState(tester);
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    scrollable.position.jumpTo(scrollable.position.maxScrollExtent / 2);
+    await tester.pump();
+    final double before = scrollable.position.pixels;
+    await tester.dragFrom(tableDragStart(tester), const Offset(120, 0));
+    await tester.pumpAndSettle();
+    expect(scrollable.position.pixels, lessThan(before));
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('first move of exactly touch slop on wide table stays in table', (
+    tester,
+  ) async {
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: _drawerHarnessWithWideTable,
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+    final ScrollableState scrollable = tableScrollableState(tester);
+    scrollable.position.jumpTo(scrollable.position.maxScrollExtent / 2);
+    await tester.pump();
+    final double before = scrollable.position.pixels;
+    final gesture = await tester.startGesture(tableDragStart(tester));
+    await gesture.moveBy(const Offset(kTouchSlop, 0));
+    await gesture.moveBy(const Offset(60, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(scrollable.position.pixels, lessThan(before));
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('rightward drag on narrow table opens the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: _drawerHarnessWithNarrowTable,
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+    expect(tableScrollableState(tester).position.maxScrollExtent, 0);
+    await tester.dragFrom(tableDragStart(tester), const Offset(200, 0));
+    await tester.pumpAndSettle();
+    expect(_sliderDx(tester), 400);
+  });
+
+  testWidgets('ignores horizontal drag on playback seek surface', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/channels/guild/channel',
+      routes: [
+        GoRoute(
+          path: '/channels/:guildId',
+          builder: (context, state) => _drawerHarnessWithPlaybackSeek(),
+          routes: [
+            GoRoute(
+              path: ':channelId',
+              builder: (context, state) => _drawerHarnessWithPlaybackSeek(),
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    final Offset seekCenter = tester.getCenter(
+      find.byKey(kPlaybackSeekShellGestureBlockKey),
+    );
+    await tester.dragFrom(seekCenter, const Offset(200, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('opens drawer when dragging an inactive playback seek surface', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/channels/guild/channel',
+      routes: [
+        GoRoute(
+          path: '/channels/:guildId',
+          builder: (context, state) => _drawerHarnessWithInactivePlaybackSeek(),
+          routes: [
+            GoRoute(
+              path: ':channelId',
+              builder: (context, state) =>
+                  _drawerHarnessWithInactivePlaybackSeek(),
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    final Offset seekCenter = tester.getCenter(find.byKey(_inactiveSeekKey));
+    await tester.dragFrom(seekCenter, const Offset(200, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 400);
+  });
+
+  testWidgets('ignores horizontal drag on the expression panel surface', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/channels/guild/channel',
+      routes: [
+        GoRoute(
+          path: '/channels/:guildId',
+          builder: (context, state) => _drawerHarnessWithExpressionPanel(),
+          routes: [
+            GoRoute(
+              path: ':channelId',
+              builder: (context, state) => _drawerHarnessWithExpressionPanel(),
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    final Offset panelCenter = tester.getCenter(
+      find.byKey(kExpressionPanelShellGestureBlockKey),
+    );
+    await tester.dragFrom(panelCenter, const Offset(200, 0));
+    await tester.pumpAndSettle();
+
+    expect(_sliderDx(tester), 0);
+  });
+
+  testWidgets('exposes only chat pane semantics when chat is full screen', (
+    tester,
+  ) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: _drawerHarnessWithPaneLabels,
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(
+      router,
+      extraOverrides: <Override>[
+        currentRevealSideProvider.overrideWithValue(RevealSide.main),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Chat pane'), findsOneWidget);
+    expect(find.bySemanticsLabel('Sidebar pane'), findsNothing);
+    handle.dispose();
+  });
+
+  testWidgets('exposes only sidebar pane semantics when drawer is open', (
+    tester,
+  ) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: _drawerHarnessWithPaneLabels,
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(
+      router,
+      extraOverrides: <Override>[
+        currentRevealSideProvider.overrideWithValue(RevealSide.left),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Sidebar pane'), findsOneWidget);
+    expect(find.bySemanticsLabel('Chat pane'), findsNothing);
+    handle.dispose();
+  });
+
+  testWidgets('chat keeps animating after the channel list fully covers it '
+      '(#713)', (tester) async {
+    final baseLog = _TickLog();
+    final sliderLog = _TickLog();
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () =>
+          _drawerHarnessWithTickProbes(base: baseLog, slider: sliderLog),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+    final Set<State<_TickProbe>> mountedProbes = {...sliderLog.states};
+    expect(await _ticksDuring(tester, sliderLog), greaterThan(0));
+
+    await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+    await tester.pump();
+    expect(_sliderDx(tester), lessThan(400));
+    expect(await _ticksDuring(tester, sliderLog, ms: 50), greaterThan(0));
+
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(_sliderDx(tester), 400);
+    await tester.pump();
+    expect(await _ticksDuring(tester, sliderLog, ms: 300), 0);
+
+    final TestGesture gesture = await tester.startGesture(
+      const Offset(240, 400),
+    );
+    await gesture.moveBy(const Offset(-40, 0));
+    await gesture.moveBy(const Offset(-40, 0));
+    await tester.pump();
+    expect(_sliderDx(tester), lessThan(400));
+    expect(await _ticksDuring(tester, sliderLog), greaterThan(0));
+
+    await gesture.moveBy(const Offset(-240, 0));
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(_sliderDx(tester), 0);
+    expect(await _ticksDuring(tester, sliderLog), greaterThan(0));
+    expect(sliderLog.states, mountedProbes);
+  });
+
+  testWidgets('channel list keeps animating under a full screen chat (#713)', (
+    tester,
+  ) async {
+    final baseLog = _TickLog();
+    final sliderLog = _TickLog();
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () =>
+          _drawerHarnessWithTickProbes(base: baseLog, slider: sliderLog),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(
+      _buildDrawerApp(container: container, router: router),
+    );
+    await tester.pump();
+    final Set<State<_TickProbe>> mountedProbes = {...baseLog.states};
+    expect(await _ticksDuring(tester, baseLog, ms: 300), 0);
+
+    final TestGesture gesture = await tester.startGesture(
+      const Offset(10, 400),
+    );
+    await gesture.moveBy(const Offset(40, 0));
+    await gesture.moveBy(const Offset(40, 0));
+    await tester.pump();
+    expect(_sliderDx(tester), greaterThan(0));
+    expect(await _ticksDuring(tester, baseLog), greaterThan(0));
+
+    await gesture.moveBy(const Offset(-80, 0));
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(_sliderDx(tester), 0);
+    await tester.pump();
+    expect(await _ticksDuring(tester, baseLog, ms: 300), 0);
+    expect(baseLog.states, mountedProbes);
+  });
+
+  testWidgets('peeked compact-wide chat keeps animating (#713)', (
+    tester,
+  ) async {
+    final baseLog = _TickLog();
+    final sliderLog = _TickLog();
+    final router = _routerFor(
+      '/channels/guild/channel',
+      harness: () =>
+          _drawerHarnessWithTickProbes(base: baseLog, slider: sliderLog),
+    );
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+    const double peekWidth =
+        Breakpoints.guildListWidth + Breakpoints.channelSidebarWidth;
+
+    await tester.pumpWidget(
+      _buildDrawerApp(
+        container: container,
+        router: router,
+        size: const Size(984, 800),
+      ),
+    );
+    await tester.pump();
+    await tester.dragFrom(const Offset(20, 400), const Offset(400, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(_sliderDx(tester), peekWidth);
+    await tester.pump();
+
+    expect(await _ticksDuring(tester, sliderLog), greaterThan(0));
+  });
+
+  testWidgets('swipe on a thread entered from its parent goes to the parent '
+      'channel', (tester) async {
+    final router = _routerFor('/channels/guild-1/thread-1');
+    addTearDown(router.dispose);
+    final container = await _swipeOnThread(
+      tester,
+      router: router,
+      fromParent: true,
+    );
+
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      '/channels/guild-1/channel-1',
+    );
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+  });
+
+  testWidgets('swipe on a thread entered from the channel list reveals the '
+      'drawer', (tester) async {
+    final router = _routerFor('/channels/guild-1/thread-1');
+    addTearDown(router.dispose);
+    final container = await _swipeOnThread(
+      tester,
+      router: router,
+      fromParent: false,
+    );
+
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      '/channels/guild-1/thread-1',
+    );
+    expect(container.read(currentRevealSideProvider), RevealSide.left);
+  });
+
+  testWidgets('swipe back to the parent switches the chat before the route '
+      'changes', (tester) async {
+    final router = _routerFor('/channels/guild-1/thread-1');
+    addTearDown(router.dispose);
+    final container = await _swipeOnThread(
+      tester,
+      router: router,
+      fromParent: true,
+    );
+
+    final recorder =
+        container.read(chatViewModelProvider.notifier)
+            as _SwitchRecordingChatViewModel;
+    expect(recorder.switches, <(String, String)>[
+      ('channel-1', '/channels/guild-1/thread-1'),
+    ]);
+  });
+}
+
+Future<ProviderContainer> _swipeOnThread(
+  WidgetTester tester, {
+  required GoRouter router,
+  required bool fromParent,
+}) async {
+  final container = _containerFor(
+    router,
+    extraOverrides: <Override>[
+      channelByIdProvider('thread-1').overrideWith(
+        (ref) => Stream<Channel?>.value(
+          const Channel(
+            id: 'thread-1',
+            guildId: 'guild-1',
+            name: 'thread',
+            type: ChannelType.publicThread,
+            parentId: 'channel-1',
+          ),
+        ),
+      ),
+      channelByIdProvider('channel-1').overrideWith(
+        (ref) => Stream<Channel?>.value(
+          const Channel(id: 'channel-1', guildId: 'guild-1', name: 'parent'),
+        ),
+      ),
+      chatViewModelProvider.overrideWith(
+        () => _SwitchRecordingChatViewModel(router),
+      ),
+    ],
+  );
+  await container
+      .listen(channelByIdProvider('thread-1').future, (_, _) {})
+      .read();
+  await container
+      .listen(channelByIdProvider('channel-1').future, (_, _) {})
+      .read();
+  container
+      .read(threadEnteredFromParentProvider.notifier)
+      .enter('thread-1', fromParent: fromParent);
+
+  await tester.pumpWidget(
+    _buildDrawerApp(container: container, router: router),
+  );
+  await tester.pump();
+  expect(container.read(currentRevealSideProvider), RevealSide.main);
+
+  await tester.dragFrom(const Offset(10, 400), const Offset(260, 0));
+  await tester.pumpAndSettle();
+  return container;
+}
+
+class _SwitchRecordingChatViewModel extends ChatViewModel {
+  _SwitchRecordingChatViewModel(this.router);
+
+  final GoRouter router;
+  final List<(String, String)> switches = <(String, String)>[];
+
+  @override
+  ChatViewState build() {
+    return const ChatViewState(
+      channelId: 'thread-1',
+      messages: [],
+      replyingTo: null,
+      replyMentioning: false,
+      editingMessage: null,
+      messageText: '',
+      scrollToBottomSignal: 0,
+      isLoading: false,
+      isSyncingMessages: false,
+      isLoadingMore: false,
+      isLoadingNewer: false,
+      hasMoreMessages: false,
+      hasMoreNewerMessages: false,
+      errorMessage: null,
+    );
+  }
+
+  @override
+  Future<void> switchChannel(
+    String channelId, {
+    String? targetMessageId,
+    bool loadMessages = true,
+  }) async {
+    switches.add((
+      channelId,
+      router.routerDelegate.currentConfiguration.uri.path,
+    ));
+  }
+}
+
+const _sliderKey = ValueKey<String>('slider');
+const _inactiveSeekKey = ValueKey<String>('inactive-seek');
+
+class _TickLog {
+  int ticks = 0;
+  final Set<State<_TickProbe>> states = <State<_TickProbe>>{};
+}
+
+class _TickProbe extends StatefulWidget {
+  const _TickProbe({required this.log});
+
+  final _TickLog log;
+
+  @override
+  State<_TickProbe> createState() => _TickProbeState();
+}
+
+class _TickProbeState extends State<_TickProbe>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.log.states.add(this);
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..addListener(() => widget.log.ticks++)
+          ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.expand();
+}
+
+Future<int> _ticksDuring(
+  WidgetTester tester,
+  _TickLog log, {
+  int ms = 100,
+}) async {
+  final int before = log.ticks;
+  await tester.pump(Duration(milliseconds: ms));
+  return log.ticks - before;
+}
+
+Widget _drawerHarnessWithTickProbes({
+  required _TickLog base,
+  required _TickLog slider,
+}) {
+  return SidebarDrawer(
+    revealDuration: const Duration(milliseconds: 200),
+    snapBackDuration: const Duration(milliseconds: 200),
+    base: ColoredBox(
+      color: Colors.blue,
+      child: _TickProbe(log: base),
+    ),
+    slider: ColoredBox(
+      key: _sliderKey,
+      color: Colors.red,
+      child: _TickProbe(log: slider),
+    ),
+  );
+}
+
+GoRouter _routerFor(
+  String initialLocation, {
+  Widget Function() harness = _drawerHarness,
+}) {
+  return GoRouter(
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(
+        path: '/channels/:guildId',
+        builder: (context, state) => harness(),
+        routes: [
+          GoRoute(path: ':channelId', builder: (context, state) => harness()),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _drawerHarness() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: ColoredBox(key: _sliderKey, color: Colors.red),
+  );
+}
+
+Widget _drawerHarnessWithTaps({
+  required VoidCallback onBaseTap,
+  required VoidCallback onSliderTap,
+}) {
+  return SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: GestureDetector(
+      onTap: onBaseTap,
+      behavior: HitTestBehavior.opaque,
+      child: const ColoredBox(color: Colors.blue),
+    ),
+    slider: GestureDetector(
+      onTap: onSliderTap,
+      behavior: HitTestBehavior.opaque,
+      child: const ColoredBox(key: _sliderKey, color: Colors.red),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithCoastDefer() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: DeferHorizontalDragWhileCoasting(
+      defer: true,
+      child: ColoredBox(key: _sliderKey, color: Colors.red),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithWideTable() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: SizedBox(
+      key: _sliderKey,
+      width: 400,
+      height: 120,
+      child: FluxerMarkdown(
+        astParser: parseNativeFluxerMarkdownAst,
+        data: kWideMarkdownTable,
+        config: kWideTableMarkdownConfig,
+      ),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithNarrowTable() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: SizedBox(
+      key: _sliderKey,
+      width: 400,
+      height: 120,
+      child: FluxerMarkdown(
+        astParser: parseNativeFluxerMarkdownAst,
+        data: kNarrowMarkdownTable,
+        config: kWideTableMarkdownConfig,
+      ),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithPlaybackSeek() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: SizedBox(
+      key: _sliderKey,
+      width: 400,
+      height: 600,
+      child: Stack(
+        children: <Widget>[
+          ColoredBox(color: Colors.red),
+          Positioned(
+            left: 16,
+            right: 16,
+            top: 200,
+            child: SizedBox(
+              key: kPlaybackSeekShellGestureBlockKey,
+              height: 44,
+              child: ColoredBox(color: Colors.orange),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithInactivePlaybackSeek() {
+  final colorTheme = buildDarkColorTheme();
+  return SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: const ColoredBox(color: Colors.blue),
+    slider: Theme(
+      data: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      child: SizedBox(
+        key: _sliderKey,
+        width: 400,
+        height: 600,
+        child: Stack(
+          children: <Widget>[
+            const ColoredBox(color: Colors.red),
+            Positioned(
+              left: 16,
+              right: 16,
+              top: 200,
+              child: PlaybackSeekGestureTarget(
+                enabled: false,
+                onSeekFraction: (double _) {},
+                child: const ColoredBox(
+                  key: _inactiveSeekKey,
+                  color: Colors.orange,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithExpressionPanel() {
+  return const SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: ColoredBox(color: Colors.blue),
+    slider: SizedBox(
+      key: _sliderKey,
+      width: 400,
+      height: 600,
+      child: Stack(
+        children: <Widget>[
+          ColoredBox(color: Colors.red),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 200,
+            child: ColoredBox(
+              key: kExpressionPanelShellGestureBlockKey,
+              color: Colors.green,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _drawerHarnessWithPaneLabels() {
+  return SidebarDrawer(
+    revealDuration: Duration.zero,
+    snapBackDuration: Duration.zero,
+    base: Semantics(
+      container: true,
+      label: 'Sidebar pane',
+      child: const ColoredBox(color: Colors.blue),
+    ),
+    slider: Semantics(
+      container: true,
+      label: 'Chat pane',
+      child: const ColoredBox(key: _sliderKey, color: Colors.red),
+    ),
+  );
+}
+
+ProviderContainer _containerFor(
+  GoRouter router, {
+  List<Override> extraOverrides = const <Override>[],
+}) {
+  final container = ProviderContainer(
+    overrides: <Override>[
+      fluxerRouterProvider.overrideWithValue(router),
+      ...extraOverrides,
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
+Widget _buildDrawerApp({
+  required ProviderContainer container,
+  required GoRouter router,
+  Size size = const Size(400, 800),
+  double? touchSlop,
+}) {
+  final colorTheme = buildDarkColorTheme();
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp.router(
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      routerConfig: router,
+      builder: (context, child) => MediaQuery(
+        data: MediaQueryData(
+          size: size,
+          disableAnimations: true,
+          gestureSettings: touchSlop == null
+              ? const DeviceGestureSettings(touchSlop: kTouchSlop)
+              : DeviceGestureSettings(touchSlop: touchSlop),
+        ),
+        child: child ?? const SizedBox.shrink(),
+      ),
+    ),
+  );
+}
+
+double _sliderDx(WidgetTester tester) {
+  final transform = tester.widget<Transform>(
+    find.ancestor(of: find.byKey(_sliderKey), matching: find.byType(Transform)),
+  );
+  return transform.transform.getTranslation().x;
+}
+
+IgnorePointer _sliderIgnorePointer(WidgetTester tester) {
+  return tester.widget<IgnorePointer>(
+    find
+        .ancestor(
+          of: find.byKey(_sliderKey),
+          matching: find.byType(IgnorePointer),
+        )
+        .first,
+  );
+}
+
+double _sliderScrimOpacity(WidgetTester tester) {
+  return tester
+      .widget<ColoredBox>(find.byKey(kDrawerPeekInactiveScrimKey))
+      .color
+      .a;
+}
+
+bool _chatOnScreen(WidgetTester tester) =>
+    tester.widget<ChatOnScreenScope>(find.byType(ChatOnScreenScope)).onScreen;

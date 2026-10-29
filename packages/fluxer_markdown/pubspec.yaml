@@ -1,0 +1,39 @@
+name: fluxer_markdown
+description: Fluxer markdown renderer with context-based feature flags.
+version: 1.0.0
+publish_to: none
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  windows:
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  cached_network_image_ce: ^4.1.1
+  flutter:
+    sdk: flutter
+  flutter_highlight: ^0.7.0
+  flutter_svg: ^2.2.4
+  highlight: ^0.7.0
+  intl: ^0.20.2
+  katex: ^1.0.0
+  markdown: ^7.3.1
+  material_ui: ^1.0.0
+  phosphor_flutter:
+    git:
+      url: https://github.com/Niural/phosphor_flutter
+  url_launcher: ^6.3.2
+  visibility_detector: ^0.4.0+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  fluxer_markdown_native:
+    path: ../fluxer_markdown_native
+  lint_hard: ^7.1.2

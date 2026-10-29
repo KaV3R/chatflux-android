@@ -1,0 +1,31 @@
+import 'dart:io';
+
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:fluxer_app/core/database/sqlite_pragmas.dart';
+import 'package:fluxer_app/core/platform/fluxer_platform.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+const int kSqliteReadPoolSize = 2;
+
+QueryExecutor openFluxerSqliteConnection() {
+  return LazyDatabase(() async {
+    final File file = await _resolveDatabaseFile();
+    await file.parent.create(recursive: true);
+    return NativeDatabase.createInBackground(
+      file,
+      setup: driftSqliteSetup(isMobile: isFluxerNativeMobileOs),
+      readPool: kSqliteReadPoolSize,
+    );
+  });
+}
+
+Future<File> _resolveDatabaseFile() async {
+  if (isFluxerDesktopOs) {
+    final Directory dir = await getApplicationDocumentsDirectory();
+    return File(p.join(dir.path, 'fluxer_app', 'fluxer.db'));
+  }
+  final Directory dir = await getApplicationDocumentsDirectory();
+  return File(p.join(dir.path, 'fluxer.sqlite'));
+}

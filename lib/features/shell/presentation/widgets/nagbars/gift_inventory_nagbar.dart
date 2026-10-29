@@ -1,0 +1,54 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/features/settings/domain/user_settings_section.dart';
+import 'package:fluxer_app/features/settings/utils/commerce/open_user_billing_settings.dart';
+import 'package:fluxer_app/features/shell/data/nagbar_user_updates.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/shell/presentation/widgets/nagbars/nagbar_widget.dart';
+import 'package:fluxer_app/features/shell/providers/nagbar/nagbar_providers.dart';
+import 'package:fluxer_app/features/shell/providers/user/current_user_private_provider.dart';
+import 'package:fluxer_app/features/ui/nagbar/fluxer_nagbar.dart';
+import 'package:fluxer_app/features/ui/nagbar/fluxer_nagbar_button.dart';
+import 'package:fluxer_app/features/ui/nagbar/fluxer_nagbar_content.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+class GiftInventoryNagbar extends ConsumerWidget implements NagbarWidget {
+  const GiftInventoryNagbar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = FluxerLocalizations.of(context);
+    final user = ref.watch(currentUserPrivateReadProvider);
+    final count = user?.unreadGiftInventoryCount ?? 1;
+    final isMobile = isMobileLayout(context);
+    final message = count <= 1
+        ? l10n.nagbarGiftInventoryOne
+        : l10n.nagbarGiftInventoryMany(count);
+
+    Future<void> dismiss() async {
+      await ref.read(nagbarDismissalsProvider.notifier).dismissGiftInventory();
+      await clearUnreadGiftInventoryFlag(ref);
+    }
+
+    return FluxerNagbar(
+      isMobile: isMobile,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      textColor: Colors.white,
+      dismissible: true,
+      onDismiss: dismiss,
+      child: FluxerNagbarContent(
+        isMobile: isMobile,
+        message: message,
+        onDismiss: dismiss,
+        actions: FluxerNagbarButton(
+          isMobile: isMobile,
+          label: l10n.nagbarViewGiftInventory,
+          onPressed: () => openUserBillingSettings(
+            context,
+            UserSettingsSection.giftsAndCodes,
+          ),
+        ),
+      ),
+    );
+  }
+}

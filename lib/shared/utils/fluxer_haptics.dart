@@ -1,0 +1,182 @@
+import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
+
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:gaimon/gaimon.dart';
+
+/// Shared haptic feedback
+// ignore: avoid_classes_with_only_static_members
+abstract final class FluxerHaptics {
+  static const String _sendAhapAsset = 'assets/haptics/message_send.ahap';
+  static const String _purrAhapAsset = 'assets/haptics/neko_purr.ahap';
+
+  static final Map<String, String> _ahapCache = <String, String>{};
+  static final Map<String, Future<String>> _ahapLoads =
+      <String, Future<String>>{};
+  static final FluxerHapticPurrGate _purrGate = FluxerHapticPurrGate();
+  static bool enabled = true;
+
+  static bool get supportsExpressive => Platform.isIOS || Platform.isAndroid;
+
+  static void selection() => _run(Gaimon.selection);
+
+  static void light() => _run(Gaimon.light);
+
+  static void medium() => _run(Gaimon.medium);
+
+  static void soft() {
+    _run(() {
+      if (supportsExpressive) {
+        Gaimon.soft();
+        return;
+      }
+      Gaimon.light();
+    });
+  }
+
+  static void rigid() {
+    _run(() {
+      if (supportsExpressive) {
+        Gaimon.rigid();
+        return;
+      }
+      Gaimon.heavy();
+    });
+  }
+
+  static void success() {
+    _run(() {
+      if (supportsExpressive) {
+        Gaimon.success();
+        return;
+      }
+      Gaimon.medium();
+    });
+  }
+
+  static void warning() {
+    _run(() {
+      if (supportsExpressive) {
+        Gaimon.warning();
+        return;
+      }
+      Gaimon.medium();
+    });
+  }
+
+  static void send() {
+    _playAhap(_sendAhapAsset, onUnavailable: Gaimon.soft);
+  }
+
+  static Future<void> warmSend() => _warmAhap(_sendAhapAsset);
+
+  static void purr() {
+    if (!_purrGate.tryAcquire()) {
+      return;
+    }
+    _playAhap(_purrAhapAsset);
+  }
+
+  static Future<void> warmPurr() => _warmAhap(_purrAhapAsset);
+
+  static void pattern(String ahapJson) {
+    if (!enabled || !supportsExpressive) {
+      return;
+    }
+    Gaimon.patternFromData(ahapJson);
+  }
+
+  static void stop() {
+    if (!enabled || !supportsExpressive) {
+      return;
+    }
+    Gaimon.stop();
+  }
+
+  static void _run(void Function() action) {
+    if (!enabled) {
+      return;
+    }
+    action();
+  }
+
+  static void _playAhap(String asset, {void Function()? onUnavailable}) {
+    if (!enabled) {
+      return;
+    }
+    if (!supportsExpressive) {
+      onUnavailable?.call();
+      return;
+    }
+    final String? cached = _ahapCache[asset];
+    if (cached != null) {
+      try {
+        Gaimon.patternFromData(cached);
+      } on Object {
+        onUnavailable?.call();
+      }
+      return;
+    }
+    unawaited(_playAhapAsync(asset, onUnavailable: onUnavailable));
+  }
+
+  static Future<void> _playAhapAsync(
+    String asset, {
+    void Function()? onUnavailable,
+  }) async {
+    try {
+      final String data = await _loadAhap(asset);
+      Gaimon.patternFromData(data);
+    } on Object {
+      onUnavailable?.call();
+    }
+  }
+
+  static Future<void> _warmAhap(String asset) {
+    if (!enabled || !supportsExpressive) {
+      return Future<void>.value();
+    }
+    return _loadAhap(asset);
+  }
+
+  static Future<String> _loadAhap(String asset) {
+    final String? cached = _ahapCache[asset];
+    if (cached != null) {
+      return Future<String>.value(cached);
+    }
+    return _ahapLoads[asset] ??= rootBundle.loadString(asset).then((
+      String data,
+    ) {
+      _ahapCache[asset] = data;
+      return data;
+    });
+  }
+}
+
+class FluxerHapticPurrGate {
+  FluxerHapticPurrGate({
+    DateTime Function()? now,
+    this.minInterval = const Duration(seconds: 8),
+    this.window = const Duration(seconds: 45),
+    this.maxInWindow = 3,
+  }) : _now = now ?? DateTime.now;
+
+  final DateTime Function() _now;
+  final Duration minInterval;
+  final Duration window;
+  final int maxInWindow;
+  final List<DateTime> _plays = <DateTime>[];
+
+  bool tryAcquire() {
+    final DateTime now = _now();
+    _plays.removeWhere((DateTime t) => now.difference(t) >= window);
+    if (_plays.length >= maxInWindow) {
+      return false;
+    }
+    if (_plays.isNotEmpty && now.difference(_plays.last) < minInterval) {
+      return false;
+    }
+    _plays.add(now);
+    return true;
+  }
+}

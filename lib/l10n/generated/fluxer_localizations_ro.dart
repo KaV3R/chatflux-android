@@ -1,0 +1,16448 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'fluxer_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Romanian Moldavian Moldovan (`ro`).
+class FluxerLocalizationsRo extends FluxerLocalizations {
+  FluxerLocalizationsRo([String locale = 'ro']) : super(locale);
+
+  @override
+  String get reconnectingTitle => 'Am dat-o în bară!';
+
+  @override
+  String get chatJumpToPresent => 'Salt la prezent';
+
+  @override
+  String get chatViewingOlderMessages => 'Vizualizezi mesaje mai vechi';
+
+  @override
+  String get chatNewMessagesBarJumpToFirstUnread =>
+      'Salt la primul mesaj necitit';
+
+  @override
+  String get chatNewMessagesBarMarkAsRead => 'Marchează ca citit';
+
+  @override
+  String get chatNewMessagesBarMarkRead => 'Marchează ca citit';
+
+  @override
+  String chatNewMessagesBarNewMessagesSinceEstimated(
+    int unreadCount,
+    String compactTime,
+  ) {
+    final intl.NumberFormat unreadCountNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String unreadCountString = unreadCountNumberFormat.format(
+      unreadCount,
+    );
+
+    return '$unreadCountString+ mesaje noi de la $compactTime';
+  }
+
+  @override
+  String chatNewMessagesBarNewMessagesSince(
+    int unreadCount,
+    String compactTime,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      unreadCount,
+      locale: localeName,
+      other: '$unreadCount de mesaje noi',
+      few: '$unreadCount mesaje noi',
+      one: '$unreadCount mesaj nou',
+    );
+    return '$_temp0 de la $compactTime';
+  }
+
+  @override
+  String chatNewMessagesBarNewSinceEstimated(
+    int unreadCount,
+    String shortTime,
+  ) {
+    final intl.NumberFormat unreadCountNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String unreadCountString = unreadCountNumberFormat.format(
+      unreadCount,
+    );
+
+    return '$unreadCountString+ mesaje noi de la $shortTime';
+  }
+
+  @override
+  String chatNewMessagesBarNewSince(int unreadCount, String shortTime) {
+    String _temp0 = intl.Intl.pluralLogic(
+      unreadCount,
+      locale: localeName,
+      other: '$unreadCount de mesaje noi',
+      few: '$unreadCount mesaje noi',
+      one: '$unreadCount mesaj nou',
+    );
+    return '$_temp0 de la $shortTime';
+  }
+
+  @override
+  String get reconnectingBody =>
+      'Ceva nu este în regulă cu instanța.\nAr trebui să se rezolve într-o secundă!';
+
+  @override
+  String get gatewayReconnectingToast => 'Se reconectează…';
+
+  @override
+  String get gatewayReconnectTryAgain => 'Încearcă din nou';
+
+  @override
+  String get gatewayConnectedToast => 'Conectat';
+
+  @override
+  String get sessionExpiredToast =>
+      'Sesiunea ta a expirat. Te rugăm să te autentifici din nou.';
+
+  @override
+  String splashStartupFailed(String error) {
+    return 'Eroare la pornire: $error';
+  }
+
+  @override
+  String get retry => 'Reîncearcă';
+
+  @override
+  String get splashConnectionLost => 'Conexiune pierdută';
+
+  @override
+  String get splashViewOnStatusPage => 'Vezi pe pagina de stare';
+
+  @override
+  String get splashConnectionIssuesPrompt => 'Probleme de conexiune?';
+
+  @override
+  String get splashStatusPageLink => 'Pagină de stare';
+
+  @override
+  String get splashReadIncident => 'Citește incidentul';
+
+  @override
+  String get splashIncidentHistory => 'Istoric incidente';
+
+  @override
+  String get nagbarLearnMore => 'Află mai multe';
+
+  @override
+  String nagbarMaintenanceScheduled(String localizedTime, String duration) {
+    return 'Mentenanță programată pentru $localizedTime. Durata estimată: $duration.';
+  }
+
+  @override
+  String nagbarMaintenanceInProgress(String duration) {
+    return 'Mentenanța este în curs. Durata estimată: $duration.';
+  }
+
+  @override
+  String get nagbarMaintenanceComplete => 'Mentenanța s-a încheiat.';
+
+  @override
+  String nagbarUnclaimedAccountMessage(String displayName) {
+    return 'Salut, $displayName, revendică-ți contul pentru a nu pierde accesul.';
+  }
+
+  @override
+  String nagbarEmailVerificationMessage(String displayName) {
+    return 'Salut, $displayName, te rugăm să-ți verifici adresa de e-mail.';
+  }
+
+  @override
+  String get nagbarOpenSettings => 'Deschide setările';
+
+  @override
+  String get systemPermissionSettingsTitle => 'Activare permisiune';
+
+  @override
+  String get systemPermissionSettingsOpenSettings => 'Deschide setările';
+
+  @override
+  String systemPermissionMicrophoneMessage(String productName) {
+    return '$productName nu are acces la microfonul tău. Îl poți activa în setările de confidențialitate ale dispozitivului.';
+  }
+
+  @override
+  String systemPermissionCameraMessage(String productName) {
+    return '$productName nu are acces la camera ta. Poți activa accesul în setările de confidențialitate ale dispozitivului.';
+  }
+
+  @override
+  String systemPermissionPhotosMessage(String productName) {
+    return '$productName nu are acces la biblioteca foto. Poți activa accesul în setările de confidențialitate ale dispozitivului.';
+  }
+
+  @override
+  String systemPermissionNotificationsMessage(String productName) {
+    return '$productName nu are permisiunea de a trimite notificări. O poți activa în setările dispozitivului tău.';
+  }
+
+  @override
+  String nagbarPremiumGracePeriod(String productName, String graceDate) {
+    return 'Abonamentul tău nu a putut fi reînnoit, dar încă ai acces la beneficiile $productName până pe $graceDate. Acționează acum sau vei pierde toate beneficiile.';
+  }
+
+  @override
+  String nagbarPremiumExpired(String productName) {
+    return 'Abonamentul tău $productName a expirat. Reînnoiește acum pentru a păstra beneficiile.';
+  }
+
+  @override
+  String get nagbarManageSubscription => 'Gestionează abonamentul';
+
+  @override
+  String nagbarPremiumOnboardingDefault(
+    String productFullName,
+    String productName,
+  ) {
+    return 'Bine ai venit pe $productFullName. Explorează beneficiile $productName și gestionează-ți abonamentul.';
+  }
+
+  @override
+  String nagbarViewPremiumFeatures(String productName) {
+    return 'Vezi funcționalitățile $productName';
+  }
+
+  @override
+  String get nagbarGiftInventoryOne =>
+      'Ai un nou cod cadou care te așteaptă în inventarul de cadouri.';
+
+  @override
+  String nagbarGiftInventoryMany(int count) {
+    return 'Ai $count coduri cadou noi care te așteaptă în inventarul de cadouri.';
+  }
+
+  @override
+  String get nagbarViewGiftInventory => 'Vezi inventarul de cadouri';
+
+  @override
+  String get nagbarVisionaryMfa =>
+      'Activează autentificarea în doi pași pentru a-ți proteja contul Visionary.';
+
+  @override
+  String get nagbarEnableMfa => 'Activează autentificarea în doi pași';
+
+  @override
+  String get nagbarTermsAcceptance =>
+      'Am actualizat termenii. Te rugăm să îi revizuiești și să îi accepți pentru a continua.';
+
+  @override
+  String get nagbarReviewTerms => 'Revizuiește termenii';
+
+  @override
+  String nagbarGuildMembershipCta(String communityName) {
+    return 'Alătură-te $communityName pentru a discuta cu echipa și a fi la curent cu noutățile.';
+  }
+
+  @override
+  String nagbarJoinCommunity(String communityName) {
+    return 'Alătură-te $communityName';
+  }
+
+  @override
+  String get nagbarPushNotification =>
+      'Activează notificările ca să nu ratezi mesaje și mențiuni.';
+
+  @override
+  String get nagbarEnableNotifications => 'Activează notificările';
+
+  @override
+  String get welcomeBack => 'Bine ai revenit';
+
+  @override
+  String get email => 'E-mail';
+
+  @override
+  String get emailInvalid => 'Te rugăm să introduci o adresă de email validă.';
+
+  @override
+  String get password => 'Parolă';
+
+  @override
+  String get forgotPassword => 'Ai uitat parola?';
+
+  @override
+  String get logIn => 'Autentificare';
+
+  @override
+  String get logInWithPasskey => 'Autentificare cu o cheie de acces';
+
+  @override
+  String continueWithSso(String provider) {
+    return 'Continuă cu $provider';
+  }
+
+  @override
+  String get organizationSsoProvider =>
+      'Conectează-te cu furnizorul de autentificare unică al organizației tale.';
+
+  @override
+  String get failedToStartSso => 'Nu s-a putut iniția autentificarea SSO';
+
+  @override
+  String get ssoCancelled => 'Autentificarea SSO a fost anulată';
+
+  @override
+  String preferSso(String provider) {
+    return 'Preferi să folosești SSO? Continuă cu $provider.';
+  }
+
+  @override
+  String get needAccountPrompt => 'Ai nevoie de un cont? ';
+
+  @override
+  String get register => 'Înregistrare';
+
+  @override
+  String get orDivider => 'SAU';
+
+  @override
+  String get cancel => 'Anulează';
+
+  @override
+  String get ipAuthCheckEmail => 'Verifică-ți e-mailul';
+
+  @override
+  String ipAuthDescription(String email) {
+    return 'Am trimis un link pe email pentru a autoriza această autentificare. Deschide-ți inboxul la $email.';
+  }
+
+  @override
+  String get ipAuthConnectionLost => 'Conexiune pierdută';
+
+  @override
+  String get ipAuthConnectionLostDescription =>
+      'Am pierdut conexiunea în timp ce așteptam autorizarea. Te rugăm să încerci din nou.';
+
+  @override
+  String get ipAuthLinkExpired => 'Linkul de conectare a expirat';
+
+  @override
+  String get ipAuthLinkExpiredDescription =>
+      'Acest link de autorizare a expirat. Te rugăm să te autentifici din nou.';
+
+  @override
+  String get ipAuthResendEmail => 'Retrimite e-mailul';
+
+  @override
+  String get ipAuthResent => 'Retrimis';
+
+  @override
+  String ipAuthResendCountdown(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get back => 'Înapoi';
+
+  @override
+  String get next => 'Înainte';
+
+  @override
+  String get create => 'Creează';
+
+  @override
+  String get mfaTitle => 'Autentificare în doi pași';
+
+  @override
+  String get mfaChooseMethod => 'Alege o metodă de verificare';
+
+  @override
+  String get mfaMethodTotp => 'Aplicație de autentificare';
+
+  @override
+  String get mfaMethodWebauthn => 'Cheie de securitate / cheie de acces';
+
+  @override
+  String get mfaTotpDescription =>
+      'Introdu codul de 6 cifre din aplicația de autentificare sau unul dintre codurile de rezervă.';
+
+  @override
+  String get mfaCodeLabel => 'Cod';
+
+  @override
+  String get mfaTryAnotherMethod => 'Încearcă altă metodă';
+
+  @override
+  String get mfaUseSecurityKey =>
+      'Încearcă în schimb o cheie de securitate / cheie de acces';
+
+  @override
+  String get accountSelectorTitle => 'Alege un cont';
+
+  @override
+  String get accountSelectorDescription =>
+      'Selectează un cont pentru a continua sau adaugă altul.';
+
+  @override
+  String get accountAdd => 'Adaugă un cont';
+
+  @override
+  String get accountRemoveDescription =>
+      'Aceasta va elimina sesiunea salvată pentru acest cont.';
+
+  @override
+  String accountSignOutTitle(String identifier) {
+    return 'Te deconectezi de la $identifier?';
+  }
+
+  @override
+  String get accountExpired => 'Expirat';
+
+  @override
+  String accountSessionExpired(String identifier) {
+    return 'Sesiunea a expirat pentru $identifier. Te rugăm să te autentifici din nou.';
+  }
+
+  @override
+  String get accountManageTitle => 'Gestionează conturile';
+
+  @override
+  String get accountSwitchFailed =>
+      'Nu s-a putut schimba contul. Încearcă din nou.';
+
+  @override
+  String get profileTabMenuSwitchAccounts => 'Comută între conturi';
+
+  @override
+  String get statusChangeSheetTitle => 'Setează starea';
+
+  @override
+  String get statusOnlineStatusSection => 'Status online';
+
+  @override
+  String get statusOnline => 'Conectat';
+
+  @override
+  String get statusIdle => 'Inactiv';
+
+  @override
+  String get statusDnd => 'Nu deranjați';
+
+  @override
+  String get statusInvisible => 'Invizibil';
+
+  @override
+  String get statusOffline => 'Deconectat';
+
+  @override
+  String get statusUntilIChangeIt => 'Până o modific eu';
+
+  @override
+  String get statusDontClear => 'Nu șterge';
+
+  @override
+  String get statusFor10Seconds => 'Pentru 10 secunde';
+
+  @override
+  String get statusClearAfter10Seconds => '10 secunde';
+
+  @override
+  String get statusClearAfter15Minutes => '15 minute';
+
+  @override
+  String get statusClearAfter30Minutes => '30 de minute';
+
+  @override
+  String get statusClearAfter1Hour => '1 oră';
+
+  @override
+  String get statusClearAfter3Hours => '3 ore';
+
+  @override
+  String get statusClearAfter4Hours => '4 ore';
+
+  @override
+  String get statusClearAfter8Hours => '8 ore';
+
+  @override
+  String get statusClearAfter24Hours => '24 de ore';
+
+  @override
+  String get statusClearAfter3Days => '3 zile';
+
+  @override
+  String get statusDndDescription => 'Nu vei primi notificări pe desktop';
+
+  @override
+  String get statusInvisibleDescription => 'Vei apărea offline';
+
+  @override
+  String get customStatusSetTitle => 'Setează o stare personalizată';
+
+  @override
+  String get customStatusCurrentHint => 'Stare personalizată';
+
+  @override
+  String get customStatusClear => 'Șterge starea personalizată';
+
+  @override
+  String get customStatusPlaceholder => 'Ce se întâmplă?';
+
+  @override
+  String get customStatusChooseEmoji => 'Alege un emoji';
+
+  @override
+  String get customStatusClearAfter => 'Șterge după';
+
+  @override
+  String get customStatusSave => 'Salvează';
+
+  @override
+  String get accountActive => 'Cont activ';
+
+  @override
+  String get signOut => 'Deconectare';
+
+  @override
+  String get suspendedPermanentTitle => 'Cont suspendat permanent';
+
+  @override
+  String get suspendedTemporaryTitle => 'Cont suspendat';
+
+  @override
+  String get suspendedPermanentDescription =>
+      'Contul tău a fost suspendat permanent pentru încălcarea Termenilor și Condițiilor noastre.';
+
+  @override
+  String get suspendedTemporaryDescription =>
+      'Contul tău a fost suspendat temporar. Vei putea accesa contul după ce perioada de suspendare se încheie.';
+
+  @override
+  String get suspendedIssuedAt => 'Efectuat';
+
+  @override
+  String get suspendedEndsAt => 'Sfârșit';
+
+  @override
+  String get suspendedDuration => 'Durată';
+
+  @override
+  String get suspendedPermanent => 'Permanent';
+
+  @override
+  String get suspendedReason => 'Motiv';
+
+  @override
+  String get suspendedAppealDeadline => 'Termen limită pentru apel';
+
+  @override
+  String suspendedDeletionWarning(String date) {
+    return 'Contul tău este programat pentru ștergere pe $date.';
+  }
+
+  @override
+  String get suspendedRecheck => 'Caută actualizări';
+
+  @override
+  String suspendedRecheckCooldown(int seconds) {
+    return 'Verifică din nou în ${seconds}s';
+  }
+
+  @override
+  String get suspendedBackToLogin => 'Înapoi la autentificare';
+
+  @override
+  String get suspendedAppealTitle => 'Apel';
+
+  @override
+  String get suspendedAppealHint =>
+      'Explică de ce suspendarea ta ar trebui reanalizată (minimum 50 de caractere)...';
+
+  @override
+  String get suspendedAppealSubmit => 'Trimite apel';
+
+  @override
+  String get suspendedAppealPending => 'În așteptarea revizuirii';
+
+  @override
+  String get suspendedAppealAccepted => 'Apel acceptat';
+
+  @override
+  String get suspendedAppealRejected => 'Apel respins';
+
+  @override
+  String get suspendedAppealAcceptedDescription =>
+      'Apelul tău a fost acceptat și contul tău a fost reactivat.';
+
+  @override
+  String get suspendedSignIn => 'Autentifică-te în contul tău';
+
+  @override
+  String get forgotPasswordTitle => 'Ai uitat parola?';
+
+  @override
+  String get forgotPasswordDescription =>
+      'Introdu adresa ta de e-mail și îți vom trimite un link pentru a-ți reseta parola.';
+
+  @override
+  String get forgotPasswordSubmit => 'Trimite link de resetare';
+
+  @override
+  String get forgotPasswordSentTitle => 'Verifică-ți e-mailul';
+
+  @override
+  String get forgotPasswordSentDescription =>
+      'Am trimis instrucțiuni de resetare a parolei la adresa ta de e-mail. Verifică inboxul și urmează linkul pentru a-ți reseta parola.';
+
+  @override
+  String get forgotPasswordBackToLogin => 'Înapoi la autentificare';
+
+  @override
+  String get resetPasswordTitle => 'Setează o parolă nouă';
+
+  @override
+  String get resetPasswordDescription =>
+      'Introdu noua parolă mai jos pentru a finaliza procesul de resetare.';
+
+  @override
+  String get resetPasswordNewPassword => 'Parolă nouă';
+
+  @override
+  String get resetPasswordConfirm => 'Confirmă parola nouă';
+
+  @override
+  String get resetPasswordSubmit => 'Resetare parolă';
+
+  @override
+  String get resetPasswordMismatch => 'Parolele nu se potrivesc.';
+
+  @override
+  String get recoverAccountTitle => 'Recuperează-ți contul';
+
+  @override
+  String get recoverAccountDescription =>
+      'Introdu numele de utilizator și cheia de recuperare din kitul tău de recuperare, apoi alege o parolă nouă.';
+
+  @override
+  String get recoverAccountNoKit =>
+      'Nu ai un kit de recuperare? Cere administratorului acestei instanțe un link pentru resetarea parolei.';
+
+  @override
+  String get recoveryKitTitle => 'Kitul tău de recuperare';
+
+  @override
+  String get recoveryKitCreatedDescription =>
+      'Dacă uiți parola, acest kit este singura modalitate de a reveni în contul tău. Păstrează-l într-un loc sigur, cum ar fi un manager de parole sau o copie tipărită.';
+
+  @override
+  String get recoveryKitReplacedDescription =>
+      'Vechiul tău kit de recuperare nu mai funcționează. Păstrează-l pe acesta nou undeva în siguranță.';
+
+  @override
+  String get recoveryKitRecoveredDescription =>
+      'Parola ta a fost resetată. Vechiul tău kit de recuperare nu mai funcționează. Păstrează-l pe acesta nou undeva în siguranță.';
+
+  @override
+  String get recoveryKitWarning =>
+      'Oricine deține această cheie îți poate reseta parola. Nu o distribui niciodată.';
+
+  @override
+  String get recoveryKitKeyLabel => 'Cheie de recuperare';
+
+  @override
+  String recoveryKitDocumentTitle(String productName) {
+    return 'Kit de recuperare $productName';
+  }
+
+  @override
+  String get recoveryKitDocumentIntro =>
+      'Păstrează această pagină într-un loc sigur. Dacă uiți parola, o poți folosi pentru a-ți recupera accesul la cont. Oricine deține această cheie de recuperare îți poate reseta parola, așa că nu o împărtăși niciodată.';
+
+  @override
+  String get recoveryKitInstanceLabel => 'Instanță';
+
+  @override
+  String get recoveryKitCreatedAtLabel => 'Creată';
+
+  @override
+  String get recoveryKitQrCaption =>
+      'Scanează pentru a deschide pagina de recuperare cu detaliile tale completate.';
+
+  @override
+  String get recoveryKitStepsTitle => 'Cum să-ți recuperezi contul';
+
+  @override
+  String recoveryKitStepOpen(String recoverUrl) {
+    return 'Mergi la $recoverUrl sau scanează codul QR.';
+  }
+
+  @override
+  String get recoveryKitStepEnter =>
+      'Introdu numele de utilizator și această cheie de recuperare.';
+
+  @override
+  String get recoveryKitStepPassword =>
+      'Alege o parolă nouă. Primești un kit de recuperare nou, iar acesta nu va mai funcționa.';
+
+  @override
+  String get recoveryKitBackupCodesTitle =>
+      'Coduri de rezervă pentru autentificare în doi pași';
+
+  @override
+  String get recoveryKitBackupCodesNote =>
+      'Fiecare cod funcționează o singură dată în locul aplicației tale de autentificare.';
+
+  @override
+  String get recoveryKitBackupCodesFailed =>
+      'Nu am putut încărca codurile de rezervă.';
+
+  @override
+  String get recoveryKitIncludeBackupCodes =>
+      'Include codurile mele de rezervă pentru autentificarea în doi pași în imaginea salvată';
+
+  @override
+  String get recoveryKitCopy => 'Copiază';
+
+  @override
+  String get recoveryKitCopied => 'Cheia de recuperare a fost copiată';
+
+  @override
+  String get recoveryKitSaveImage => 'Salvează imaginea';
+
+  @override
+  String get recoveryKitSaved => 'Kitul de recuperare a fost salvat';
+
+  @override
+  String get recoveryKitSavedToPhotos =>
+      'Kitul de recuperare a fost salvat în Fotografii';
+
+  @override
+  String get recoveryKitSaveFailed =>
+      'Kitul de recuperare nu a putut fi salvat. Încearcă din nou sau copiază cheia.';
+
+  @override
+  String get recoveryKitAcknowledge =>
+      'Mi-am salvat kitul de recuperare într-un loc sigur';
+
+  @override
+  String get recoveryKitCreateFailed =>
+      'Nu am putut crea kitul de recuperare. Îl poți crea mai târziu în setările contului tău.';
+
+  @override
+  String get recoveryKitSectionTitle => 'Kit de recuperare';
+
+  @override
+  String get recoveryKitSectionDescription =>
+      'Îți permite să-ți resetezi parola dacă o uiți.';
+
+  @override
+  String get recoveryKitNone => 'Nu ai încă un kit de recuperare';
+
+  @override
+  String recoveryKitCreatedRelative(String time) {
+    return 'Creat $time';
+  }
+
+  @override
+  String get recoveryKitCreate => 'Creează kit de recuperare';
+
+  @override
+  String get recoveryKitCreateNew => 'Creează un kit nou';
+
+  @override
+  String get recoveryKitReplaceTitle => 'Creezi un nou kit de recuperare?';
+
+  @override
+  String get recoveryKitReplaceDescription =>
+      'Kitul tău actual nu va mai funcționa imediat ce cel nou va fi creat.';
+
+  @override
+  String get recoveryKitReminderTitle => 'Salvează un kit de recuperare';
+
+  @override
+  String get recoveryKitReminderBody =>
+      'Contul tău nu are o adresă de e-mail. Dacă uiți parola, un kit de recuperare este singura modalitate de a reveni. Durează doar un minut.';
+
+  @override
+  String get registerUsernameSignInHint =>
+      'Te autentifici cu acest nume de utilizator. Alege unul pe care ți-l vei aminti.';
+
+  @override
+  String get registerUsernameTaken =>
+      'Acest nume de utilizator este deja ocupat';
+
+  @override
+  String get registerUsernameAvailable =>
+      'Acest nume de utilizator este disponibil';
+
+  @override
+  String get claimAccountUsernameDescription =>
+      'Revendică-ți contul alegând un nume de utilizator și o parolă. Te vei conecta cu ele, așa că alege unele pe care ți le vei aminti.';
+
+  @override
+  String get unclaimedAccountDescriptionUsername =>
+      'Contul tău nu a fost încă revendicat. Fără un nume de utilizator și o parolă, nu vei putea să te conectezi de pe alte dispozitive și ai putea pierde accesul la contul tău. Revendică-ți acum contul pentru a-l securiza.';
+
+  @override
+  String get addFriendUsernameOnlyHint => 'Nume de utilizator';
+
+  @override
+  String get registerTitle => 'Creează un cont';
+
+  @override
+  String get registerDisplayName => 'Nume afișat (opțional)';
+
+  @override
+  String get registerDisplayNameHint => 'Cum vrei să ți se spună?';
+
+  @override
+  String get registerUsername => 'Nume de utilizator (opțional)';
+
+  @override
+  String get registerUsernameHint =>
+      'Lasă necompletat pentru un nume de utilizator aleatoriu';
+
+  @override
+  String get registerUsernameTagHint =>
+      'Se va adăuga automat o etichetă de 4 cifre pentru a asigura unicitatea';
+
+  @override
+  String get registerDateOfBirth => 'Data nașterii';
+
+  @override
+  String get registerMonth => 'Lună';
+
+  @override
+  String get registerDay => 'Zi';
+
+  @override
+  String get registerYear => 'An';
+
+  @override
+  String get registerConsentPrefix => 'Sunt de acord cu ';
+
+  @override
+  String get registerConsentTerms => 'Termeni și condiții';
+
+  @override
+  String get registerConsentAnd => ' și ';
+
+  @override
+  String get registerConsentPrivacy => 'Politica de confidențialitate';
+
+  @override
+  String get registerConfirmPassword => 'Confirmă parola';
+
+  @override
+  String get registerSubmit => 'Creează cont';
+
+  @override
+  String get registerHaveAccount => 'Ai deja un cont? ';
+
+  @override
+  String get registerPendingApproval =>
+      'Solicitarea ta de cont așteaptă aprobare. Te poți conecta după ce un administrator o aprobă.';
+
+  @override
+  String get registerClosed =>
+      'Înregistrarea este închisă momentan. Folosește un link de înregistrare de la un administrator pentru a crea un cont.';
+
+  @override
+  String get passkeyNoCredentials =>
+      'Nu au fost găsite chei de acces pentru această aplicație. Conectați-vă în schimb cu e-mail și parolă.';
+
+  @override
+  String get passkeyDeviceNotSupported =>
+      'Cheile de acces nu sunt acceptate pe acest dispozitiv.';
+
+  @override
+  String get passkeyDomainNotAssociated =>
+      'Cheile de acces nu sunt configurate pentru această aplicație. Conectați-vă în schimb cu e-mail și parolă.';
+
+  @override
+  String get passkeyTimeout =>
+      'Autentificarea cu cheia de acces a expirat. Te rugăm să încerci din nou.';
+
+  @override
+  String get passkeyFailed =>
+      'Autentificarea cu cheia de acces a eșuat. Te rugăm să încerci din nou.';
+
+  @override
+  String get errorUnableToCreateAccount =>
+      'Nu am putut crea contul. Te rugăm să încerci din nou.';
+
+  @override
+  String get errorUnableToSignIn =>
+      'Nu te putem conecta acum. Te rugăm să încerci din nou.';
+
+  @override
+  String get errorServiceUnavailable =>
+      'Instanța aceasta este indisponibilă temporar. Încearcă din nou peste o clipă.';
+
+  @override
+  String get errorInvalidEmailOrPassword => 'Email sau parolă invalidă.';
+
+  @override
+  String get errorInvalidUsernameOrPassword =>
+      'Nume de utilizator sau parolă nevalide.';
+
+  @override
+  String get errorUnableToSendResetLink =>
+      'Nu am putut trimite linkul de resetare. Te rugăm să încerci din nou.';
+
+  @override
+  String get errorUnableToResetPassword =>
+      'Nu am putut reseta parola. Te rugăm să încerci din nou.';
+
+  @override
+  String get embedInviteJoin => 'Alătură-te comunității';
+
+  @override
+  String get embedInviteGoTo => 'Mergi la comunitate';
+
+  @override
+  String embedInviteOnline(String count) {
+    return '$count online';
+  }
+
+  @override
+  String embedInviteMembers(String count) {
+    return '$count membri';
+  }
+
+  @override
+  String get embedInviteUnknownTitle => 'Invitație necunoscută';
+
+  @override
+  String get embedInviteUnknownSubtitle => 'Încearcă să ceri o nouă invitație.';
+
+  @override
+  String get embedInviteUnavailable => 'Invitație indisponibilă';
+
+  @override
+  String get embedInviteJoinGroup => 'Alătură-te grupului';
+
+  @override
+  String get embedInviteAlreadyJoined => 'Te-ai alăturat deja';
+
+  @override
+  String get embedInviteDisabled => 'Invitații dezactivate';
+
+  @override
+  String get embedInvitePaused =>
+      'Invitațiile sunt întrerupte pentru această comunitate.';
+
+  @override
+  String embedInvitePausedRaid(String productName) {
+    return '$productName a detectat un potențial raid, așa că utilizatorii noi nu se pot alătura momentan.';
+  }
+
+  @override
+  String get inviteAcceptInvitesPausedTryAgain =>
+      'Această comunitate a întrerupt invitațiile. Poți încerca din nou mai târziu.';
+
+  @override
+  String inviteAcceptRaidInvitesPaused(String productName) {
+    return '$productName a detectat un potențial raid în această comunitate. Invitațiile sunt întrerupte, așa că utilizatorii noi nu se pot alătura momentan.';
+  }
+
+  @override
+  String get inviteAcceptTitle => 'Ai fost invitat să te alături';
+
+  @override
+  String get inviteAcceptJoinButton => 'Alătură-te comunității';
+
+  @override
+  String get inviteAcceptGoToButton => 'Mergi la comunitate';
+
+  @override
+  String get inviteAcceptInvitesPaused => 'Invitații întrerupte';
+
+  @override
+  String get inviteAcceptNotFoundTitle => 'Invitație invalidă';
+
+  @override
+  String get inviteAcceptNotFoundDescription =>
+      'Este posibil ca această invitație să fi expirat sau să fie invalidă.';
+
+  @override
+  String get invalidDeepLinkTitle => 'Linkul nu a putut fi deschis';
+
+  @override
+  String get invalidDeepLinkDescription =>
+      'Acest link ar putea fi greșit, disponibil doar pe web sau s-ar putea să nu ai acces. Verifică linkul și încearcă din nou.';
+
+  @override
+  String get invalidDeepLinkGoHomeButton => 'Mergi la pagina principală';
+
+  @override
+  String get inviteAcceptJoinGroupButton => 'Alătură-te grupului';
+
+  @override
+  String inviteAcceptGroupDmDescription(String inviterName) {
+    return 'Ai fost invitat(ă) să te alături la un mesaj privat de grup de către $inviterName';
+  }
+
+  @override
+  String get inviteAcceptSomeone => 'cineva';
+
+  @override
+  String get mentionUnknownChannel => 'canal-necunoscut';
+
+  @override
+  String get channelAccessDeniedTitle => 'Acces la canal refuzat';
+
+  @override
+  String get channelAccessDeniedDescription =>
+      'Nu ai acces la canalul unde a fost trimis acest mesaj.';
+
+  @override
+  String get messageJumpLinkNoAccess => 'Fără acces';
+
+  @override
+  String get okay => 'OK';
+
+  @override
+  String get embedThemeTitle => 'Temă partajată';
+
+  @override
+  String get embedThemeWebOnly =>
+      'Poți importa teme doar pe web sau pe desktop.';
+
+  @override
+  String get embedThemeImport => 'Importă temă';
+
+  @override
+  String embedGiftVisionaryLifetime(String productName) {
+    return 'Vizionar (pe viață $productName)';
+  }
+
+  @override
+  String embedGiftDurationDays(int count, String productName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zile de $productName',
+      one: '1 zi de $productName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String embedGiftDurationWeeks(int count, String productName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count săptămâni de $productName',
+      one: '1 săptămână de $productName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String embedGiftDurationMonths(int count, String productName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count luni de $productName',
+      one: '1 lună de $productName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String embedGiftDurationYears(int count, String productName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ani de $productName',
+      one: '1 an de $productName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String embedGiftFrom(String creatorTag) {
+    return 'De la $creatorTag';
+  }
+
+  @override
+  String get embedGiftClaimHelp => 'Dă clic pentru a-ți revendica cadoul!';
+
+  @override
+  String get embedGiftAlreadyRedeemed => 'Deja valorificat';
+
+  @override
+  String get embedGiftClaimAccountHelp =>
+      'Revendică-ți contul pentru a valorifica acest cadou.';
+
+  @override
+  String get embedGiftClaim => 'Revendică cadoul';
+
+  @override
+  String get embedGiftClaimed => 'Cadou revendicat';
+
+  @override
+  String get embedGiftClaimAccount => 'Revendică contul pentru a-l valorifica';
+
+  @override
+  String get embedGiftUnknownTitle => 'Cadou necunoscut';
+
+  @override
+  String get embedGiftUnknownSubtitle =>
+      'Acest cod cadou este nevalid sau a fost deja revendicat.';
+
+  @override
+  String get embedGiftUnavailable => 'Cadou indisponibil';
+
+  @override
+  String giftAcceptClaimSubscription(String productName) {
+    return 'Revendică-ți cadoul pentru a-ți activa abonamentul la $productName!';
+  }
+
+  @override
+  String get giftAcceptAlreadyClaimed => 'Acest cadou a fost deja revendicat.';
+
+  @override
+  String get giftAcceptMaybeLater => 'Poate mai târziu';
+
+  @override
+  String get giftRedeemedToast => 'Cadou valorificat!';
+
+  @override
+  String get giftRedeemInvalidTitle => 'Cod cadou nevalid';
+
+  @override
+  String get giftRedeemInvalidMessage =>
+      'Acest cod este nevalid sau a fost deja utilizat.';
+
+  @override
+  String get giftRedeemAlreadyRedeemedTitle => 'Cadoul a fost deja valorificat';
+
+  @override
+  String get giftRedeemAlreadyRedeemedMessage =>
+      'Acest cod a fost deja valorificat.';
+
+  @override
+  String get giftRedeemNotFoundTitle => 'Cadoul nu a fost găsit';
+
+  @override
+  String get giftRedeemNotFoundMessage => 'Acest cod nu există.';
+
+  @override
+  String get giftRedeemFailedTitle => 'Nu s-a putut răscumpăra cadoul';
+
+  @override
+  String get giftRedeemFailedMessage =>
+      'Nu s-a putut revendica acest cadou. Încearcă din nou.';
+
+  @override
+  String get giftVisionaryCannotRedeemTitle => 'Nu poți revendica acest cadou';
+
+  @override
+  String get giftVisionaryCannotRedeemMessage =>
+      'Conturile Visionary nu pot revendica cadouri Plutonium. Copiază linkul pentru a-l trimite unui prieten.';
+
+  @override
+  String get giftCopyLink => 'Copiază linkul cadoului';
+
+  @override
+  String get privacySettings => 'Setări de confidențialitate';
+
+  @override
+  String get privacyDirectMessages => 'Mesaje directe';
+
+  @override
+  String get privacyDirectMessagesDescription =>
+      'Permite mesaje directe de la alți membri din această comunitate';
+
+  @override
+  String get privacyBotDirectMessages => 'Mesaje directe de la boți';
+
+  @override
+  String get privacyBotDirectMessagesDescription =>
+      'Permite roboților din această comunitate să-ți trimită mesaje directe';
+
+  @override
+  String get privacyMutualDmsDisabled =>
+      'Administratorii comunității au dezactivat primirea mesajelor directe doar de la membrii comuni în această comunitate.';
+
+  @override
+  String get communityDebug => 'Depanare comunitate';
+
+  @override
+  String get copiedToClipboard => 'Copiat în clipboard';
+
+  @override
+  String get notificationSettings => 'Setări notificări';
+
+  @override
+  String notificationMuteGuild(String guildName) {
+    return 'Pune $guildName pe silențios';
+  }
+
+  @override
+  String get notificationMuteDescription =>
+      'Dezactivarea sunetului unei comunități împiedică apariția indicatorilor de necitit și a notificărilor, cu excepția cazului în care ești menționat';
+
+  @override
+  String get notificationCommunitySettings => 'Setări notificări comunitate';
+
+  @override
+  String get notificationAllMessages => 'Toate mesajele';
+
+  @override
+  String get notificationOnlyMentions => 'Doar mențiunile';
+
+  @override
+  String get notificationNothing => 'Nimic';
+
+  @override
+  String get notificationSuppressEveryone => 'Suprimă @everyone și @here';
+
+  @override
+  String get notificationSuppressRoles => 'Suprimă toate mențiunile de rol';
+
+  @override
+  String get notificationMobilePush => 'Notificări push pe mobil';
+
+  @override
+  String get notificationOverrides => 'Suprascrieri notificări';
+
+  @override
+  String get notificationSelectChannel => 'Selectează un canal sau o categorie';
+
+  @override
+  String get notificationOnlyAtMentions => 'Doar @mențiuni';
+
+  @override
+  String get notificationMuteChannel => 'Pune canalul pe silențios';
+
+  @override
+  String get notificationUnmuteChannel => 'Scoate canalul de pe silențios';
+
+  @override
+  String get notificationUseCategoryDefault =>
+      'Folosește setările implicite ale categoriei';
+
+  @override
+  String get notificationUseCommunityDefault => 'Folosește implicit comunitar';
+
+  @override
+  String get notificationNoCategory => 'Fără categorie';
+
+  @override
+  String get dmMarkAsRead => 'Marchează ca citit';
+
+  @override
+  String get dmMuteConversation => 'Pune DM-ul pe silențios';
+
+  @override
+  String get dmUnmuteConversation => 'Scoate DM-ul de pe silențios';
+
+  @override
+  String get dmPinDm => 'Fixează DM-ul';
+
+  @override
+  String get dmUnpinDm => 'Anulează fixarea DM-ului';
+
+  @override
+  String get dmAlwaysShowInSidebar => 'Afișează mereu în bara laterală';
+
+  @override
+  String get dmRemoveFromAlwaysShown => 'Eliminare din Afișare permanentă';
+
+  @override
+  String get dmCloseDm => 'Închide DM-ul';
+
+  @override
+  String get dmCloseDmConfirmTitle => 'Închide DM-ul';
+
+  @override
+  String dmCloseDmConfirmDescription(String username) {
+    return 'Ești sigur că vrei să închizi conversația privată cu $username? O poți redeschide oricând.';
+  }
+
+  @override
+  String get dmDeleteMyMessagesTitle =>
+      'Ștergi mesajele tale din această conversație?';
+
+  @override
+  String get dmDeleteMyMessagesDescription =>
+      'Aceasta va șterge definitiv toate mesajele pe care le-ai trimis vreodată în această conversație. Această acțiune nu poate fi anulată.';
+
+  @override
+  String get dmCopyChannelId => 'Copiază ID-ul canalului';
+
+  @override
+  String get dmChannelIdCopied => 'ID canal copiat';
+
+  @override
+  String get dmCopyUserId => 'Copiază ID-ul utilizatorului';
+
+  @override
+  String get dmUserIdCopied => 'ID utilizator copiat';
+
+  @override
+  String get dmViewProfile => 'Vezi profilul';
+
+  @override
+  String get dmVoiceCall => 'Inițiază apel vocal';
+
+  @override
+  String get incomingVoiceCallTitle => 'Apel vocal primit';
+
+  @override
+  String get incomingVoiceCallAccept => 'Acceptă';
+
+  @override
+  String get incomingVoiceCallDecline => 'Refuză';
+
+  @override
+  String get incomingVoiceCallLabel => 'Apel primit';
+
+  @override
+  String get incomingVoiceCallIgnore => 'Ignoră';
+
+  @override
+  String get directVoiceCallNotEligible =>
+      'Apelul nu poate fi inițiat acum. Încearcă din nou peste o clipă.';
+
+  @override
+  String get voiceJoinCallFailed =>
+      'Nu am putut să mă conectez la acest apel. Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get voiceJoinIncomingCallFailed =>
+      'Nu am putut să te alături la acest apel. Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get incomingVoiceRingingUpdateFailed =>
+      'Nu am putut actualiza acest apel pe server. Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get dmAddNote => 'Adaugă notă';
+
+  @override
+  String get dmEditGroup => 'Editează grupul';
+
+  @override
+  String get dmInviteToCommunity => 'Invită în comunitate';
+
+  @override
+  String get dmBlock => 'Blochează';
+
+  @override
+  String get dmLeaveGroup => 'Părăsește grupul';
+
+  @override
+  String dmInviteSentFor(String communityName) {
+    return 'Invitație trimisă pentru $communityName';
+  }
+
+  @override
+  String get dmInviteSendFailed =>
+      'Nu s-a putut trimite invitația. Încearcă din nou.';
+
+  @override
+  String dmGroupMemberCount(int count) {
+    return '$count membri';
+  }
+
+  @override
+  String get dmMuteFor15Min => 'Pentru 15 minute';
+
+  @override
+  String get dmMuteFor30Min => 'Pentru 30 de minute';
+
+  @override
+  String get dmMuteFor1Hour => 'Pentru 1 oră';
+
+  @override
+  String get dmMuteFor3Hours => 'Pentru 3 ore';
+
+  @override
+  String get dmMuteFor4Hours => 'Pentru 4 ore';
+
+  @override
+  String get dmMuteFor8Hours => 'Pentru 8 ore';
+
+  @override
+  String get dmMuteFor24Hours => 'Pentru 24 de ore';
+
+  @override
+  String get dmMuteFor3Days => 'Pentru 3 zile';
+
+  @override
+  String get dmMuteForever => 'Până le reactivez eu';
+
+  @override
+  String get dmPinGroupDm => 'Fixează DM-ul de grup';
+
+  @override
+  String get dmUnpinGroupDm => 'Anulează fixarea DM-ului de grup';
+
+  @override
+  String get dmUnnamedGroup => 'Grup fără nume';
+
+  @override
+  String dmOwnersGroup(String resolvedName) {
+    return 'Grupul lui $resolvedName';
+  }
+
+  @override
+  String get dmFavoriteDm => 'Adaugă DM-ul la favorite';
+
+  @override
+  String get dmUnfavoriteDm => 'Elimină DM-ul din favorite';
+
+  @override
+  String get dmFavoriteGroupDm => 'Adaugă DM-ul de grup la favorite';
+
+  @override
+  String get dmUnfavoriteGroupDm => 'Elimină DM-ul de grup din favorite';
+
+  @override
+  String get dmChangeFriendNickname => 'Schimbă pseudonimul prietenului';
+
+  @override
+  String get dmRemoveFriend => 'Elimină prietenul';
+
+  @override
+  String get dmAddFriend => 'Adaugă prieten';
+
+  @override
+  String get dmAcceptFriendRequest => 'Acceptă cererea de prietenie';
+
+  @override
+  String get dmIgnoreFriendRequest => 'Ignoră cererea de prietenie';
+
+  @override
+  String get dmFriendRequestSent => 'Cerere de prietenie trimisă';
+
+  @override
+  String get dmUnblock => 'Deblochează';
+
+  @override
+  String get dmDebugUser => 'Depanare utilizator';
+
+  @override
+  String get dmDebugChannel => 'Depanare canal';
+
+  @override
+  String get dmDebugCategory => 'Depanează categoria';
+
+  @override
+  String get dmPinned => 'DM fixat';
+
+  @override
+  String get dmUnpinned => 'Fixarea DM-ului a fost anulată';
+
+  @override
+  String get dmMuted => 'Mesaj privat dezactivat';
+
+  @override
+  String get dmUnmuted => 'DM deblocat';
+
+  @override
+  String get dmRemoveFriendConfirmTitle => 'Elimină prietenul';
+
+  @override
+  String dmRemoveFriendConfirmDescription(String username) {
+    return 'Ești sigur că vrei să-l elimini pe $username din lista de prieteni?';
+  }
+
+  @override
+  String get dmBlockConfirmTitle => 'Blochează utilizatorul';
+
+  @override
+  String dmBlockConfirmDescription(String username) {
+    return 'Ești sigur că vrei să blochezi $username? Nu te vor mai putea contacta sau trimite cereri de prietenie.';
+  }
+
+  @override
+  String get dmFriendRequestSentToast => 'Cerere de prietenie trimisă';
+
+  @override
+  String get dmAddFriends => 'Adaugă prieteni';
+
+  @override
+  String get addFriendSheetTitle => 'Adaugă prieten';
+
+  @override
+  String get addFriendUsernameHint => 'Nume de utilizator#0000';
+
+  @override
+  String get addFriendUsernameLabel => 'Numele de utilizator al prietenului';
+
+  @override
+  String get addFriendSendRequest => 'Trimite cererea';
+
+  @override
+  String get addFriendNoUserFound =>
+      'Nu s-a găsit niciun utilizator cu acest nume de utilizator.';
+
+  @override
+  String get addFriendInvalidUsername =>
+      'Introdu un nume de utilizator valid (NumeUtilizator#0000).';
+
+  @override
+  String get addFriendOutgoingSuccess => 'Cerere de prietenie trimisă';
+
+  @override
+  String get addFriendClaimTitle => 'Revendică-ți contul';
+
+  @override
+  String get addFriendClaimDescription =>
+      'Revendică-ți contul pentru a trimite cereri de prietenie.';
+
+  @override
+  String get addFriendVerifyTitle => 'Verifică-ți adresa de e-mail';
+
+  @override
+  String get addFriendVerifyDescription =>
+      'Trebuie să-ți verifici adresa de e-mail înainte de a putea trimite cereri de prietenie.';
+
+  @override
+  String get addFriendVerifyEmail => 'Verifică adresa de e-mail';
+
+  @override
+  String addFriendIncomingRequests(int count) {
+    return 'Solicitări de prietenie primite ($count)';
+  }
+
+  @override
+  String addFriendOutgoingRequests(int count) {
+    return 'Solicitări de prietenie trimise ($count)';
+  }
+
+  @override
+  String get addFriendIncomingStatus => 'Cerere de prietenie primită';
+
+  @override
+  String get addFriendOutgoingStatus => 'Cerere de prietenie trimisă';
+
+  @override
+  String get addFriendViewProfile => 'Vezi profilul';
+
+  @override
+  String get addFriendAccept => 'Acceptă';
+
+  @override
+  String get addFriendIgnore => 'Ignoră';
+
+  @override
+  String get addFriendAcceptTitle => 'Acceptă cererea de prietenie';
+
+  @override
+  String get addFriendIgnoreTitle => 'Ignoră cererea de prietenie';
+
+  @override
+  String addFriendAcceptConfirmDescription(String userName) {
+    return 'Accepți cererea de prietenie de la $userName?';
+  }
+
+  @override
+  String addFriendIgnoreConfirmDescription(String displayName) {
+    return 'Ignori cererea de prietenie de la $displayName?';
+  }
+
+  @override
+  String get addFriendCancelRequest => 'Anulează cererea';
+
+  @override
+  String get addFriendCancelRequestFailed =>
+      'Nu s-a putut anula cererea de prietenie. Încearcă din nou.';
+
+  @override
+  String get addFriendNotAcceptingRequests =>
+      'Nu acceptă cereri de prietenie momentan.';
+
+  @override
+  String get addFriendUnblockFirst =>
+      'Deblochează mai întâi utilizatorul pentru a-i trimite o cerere de prietenie.';
+
+  @override
+  String get addFriendCannotSendToSelf =>
+      'Nu îți poți trimite o cerere de prietenie.';
+
+  @override
+  String get addFriendAlreadyFriends =>
+      'Ești deja prieten cu acest utilizator.';
+
+  @override
+  String get addFriendClaimToSend =>
+      'Finalizează înregistrarea pentru a trimite cereri de prietenie.';
+
+  @override
+  String get addFriendVerifyToSend =>
+      'Verifică-ți adresa de e-mail înainte de a trimite cereri de prietenie.';
+
+  @override
+  String get addFriendFriendsListFull =>
+      'Lista ta de prieteni sau a lor este plină. Elimină pe cineva și încearcă din nou.';
+
+  @override
+  String get addFriendSendFailedTitle =>
+      'Nu s-a putut trimite cererea de prietenie';
+
+  @override
+  String get addFriendSendFailedMessage =>
+      'Nu s-a putut trimite cererea de prietenie. Încearcă din nou.';
+
+  @override
+  String get userTagBot => 'BOT';
+
+  @override
+  String get userTagSystem => 'Sistem';
+
+  @override
+  String get userTagOp => 'OP';
+
+  @override
+  String get emojiSearchPlaceholder => 'Găsește emoji-ul visurilor tale';
+
+  @override
+  String get emojiSearchEmpty => 'Niciun emoji nu corespunde căutării tale';
+
+  @override
+  String get emojiAutocompleteDefaultLabel => 'Emoji implicit';
+
+  @override
+  String emojiInfoDefaultDescription(String productName) {
+    return 'Acesta este un emoji implicit pe $productName.';
+  }
+
+  @override
+  String get emojiInfoCustomGuildDescription =>
+      'Acest emoji provine din această comunitate. Îl poți folosi oriunde.';
+
+  @override
+  String get emojiInfoCustomUnknownDescription =>
+      'Acesta este un emoji personalizat dintr-o comunitate.';
+
+  @override
+  String get emojiInfoCustomInviteRequiredDescription =>
+      'Acesta este un emoji personalizat dintr-o comunitate. Roagă autorul să te invite să folosești acest emoji.';
+
+  @override
+  String get emojiInfoFromHeader => 'Acest emoji provine din';
+
+  @override
+  String get emojiInfoDiscoverableCommunity =>
+      'Listată în secțiunea „Explorează”';
+
+  @override
+  String get emojiInfoPrivateCommunity => 'Comunitate privată';
+
+  @override
+  String get emojiInfoVerifiedCommunity => 'Comunitate verificată';
+
+  @override
+  String get emojiInfoAddToFavorites => 'Adaugă la favorite';
+
+  @override
+  String get emojiInfoRemoveFromFavorites => 'Elimină din favorite';
+
+  @override
+  String get emojiFrequentlyUsed => 'Folosite frecvent';
+
+  @override
+  String get emojiTabGifs => 'GIF-uri';
+
+  @override
+  String get emojiTabMedia => 'Media';
+
+  @override
+  String get emojiTabStickers => 'Stickere';
+
+  @override
+  String get emojiTabEmojis => 'Emoji';
+
+  @override
+  String get gifPickerSearch => 'Caută GIF-uri';
+
+  @override
+  String get gifPickerSearchKlipy => 'Caută în Klipy';
+
+  @override
+  String get gifPickerSearchTenor => 'Caută pe Tenor';
+
+  @override
+  String get gifPickerFavorites => 'Favorite';
+
+  @override
+  String get gifPickerFavoritesEmptyTitle => 'Încă nu ai GIF-uri favorite';
+
+  @override
+  String get gifPickerFavoritesEmptyDescription =>
+      'Salvează un GIF pentru a-l vedea aici.';
+
+  @override
+  String get gifPickerTrending => 'GIF-uri populare';
+
+  @override
+  String get gifPickerNoResultsTitle => 'Niciun rezultat';
+
+  @override
+  String get gifPickerNoResultsDescription => 'Încearcă alt termen de căutare';
+
+  @override
+  String get gifPickerLoadFailedTitle => 'Nu s-au putut încărca GIF-urile';
+
+  @override
+  String get gifPickerLoadFailedBody =>
+      'Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get emojiCategoryPeople => 'Persoane';
+
+  @override
+  String get emojiCategoryNature => 'Natură';
+
+  @override
+  String get emojiCategoryFood => 'Mâncare și băutură';
+
+  @override
+  String get emojiCategoryActivity => 'Activități';
+
+  @override
+  String get emojiCategoryTravel => 'Călătorii și locuri';
+
+  @override
+  String get emojiCategoryObjects => 'Obiecte';
+
+  @override
+  String get emojiCategorySymbols => 'Simboluri';
+
+  @override
+  String get emojiCategoryFlags => 'Steaguri';
+
+  @override
+  String emojiPlutoniumUpsellText(String emojiCount, String communityCount) {
+    return 'Deblochează $emojiCount din $communityCount cu Plutonium.';
+  }
+
+  @override
+  String get emojiPlutoniumUpsellDismiss => 'Nu mai afișa asta';
+
+  @override
+  String emojiPlutoniumUpsellCustomEmoji(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count emoji personalizate',
+      one: '1 emoji personalizat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String emojiPlutoniumUpsellCommunity(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comunități',
+      one: '1 comunitate',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get externalLinkWarningTitle => 'Avertisment pentru linkuri externe';
+
+  @override
+  String externalLinkWarningLeaving(String productName) {
+    return 'Ești pe cale să părăsești $productName';
+  }
+
+  @override
+  String get externalLinkWarningDescription =>
+      'Linkurile externe pot fi periculoase. Te rugăm să fii atent.';
+
+  @override
+  String get externalLinkWarningDestinationUrl => 'Adresa URL de destinație:';
+
+  @override
+  String get externalLinksSectionTitle => 'Linkuri externe';
+
+  @override
+  String get externalLinksSectionDescription =>
+      'Configure cum sunt gestionate avertismentele pentru linkurile externe.';
+
+  @override
+  String get externalLinkWarningTrustPrefix => 'Încredere permanentă ';
+
+  @override
+  String get externalLinkWarningTrustSuffix =>
+      ' — omite acest avertisment data viitoare';
+
+  @override
+  String get externalLinkVisitSite => 'Accesează site-ul';
+
+  @override
+  String get externalLinkTrustAllLabel =>
+      'Acordă încredere tuturor linkurilor externe';
+
+  @override
+  String get externalLinkStripTrackingLabel =>
+      'Elimină parametrii de urmărire din URL-uri';
+
+  @override
+  String get externalLinkStripTrackingDescription =>
+      'Elimină automat parametrii de urmărire (precum utm_source, fbclid, gclid) din URL-urile mesajelor pe care le trimiți. Curăță linkul înainte ca acesta să ajungă la altcineva.';
+
+  @override
+  String get externalLinkTrustAllConfirmTitle =>
+      'Ai încredere în toate linkurile externe?';
+
+  @override
+  String get externalLinkTrustAllConfirmDescription =>
+      'Aceasta va acorda încredere tuturor linkurilor externe și va omite avertismentul pentru fiecare domeniu. Domeniile tale de încredere existente vor fi înlocuite. Această opțiune este mai puțin sigură.';
+
+  @override
+  String get externalLinkTrustAllConfirmAction => 'Acordă încredere tuturor';
+
+  @override
+  String get externalLinkStopTrustingAllTitle =>
+      'Nu mai ai încredere în toate linkurile?';
+
+  @override
+  String get externalLinkStopTrustingAllDescription =>
+      'Avertismentele pentru linkurile externe vor fi afișate din nou. Va trebui să adaugi individual domeniile de încredere.';
+
+  @override
+  String get externalLinkStopTrustingAllAction =>
+      'Dezactivează încrederea totală';
+
+  @override
+  String get externalLinkTrustedAllDescription =>
+      'Toate linkurile externe sunt de încredere. Nu se vor afișa avertismente.';
+
+  @override
+  String externalLinkTrustedDomainsDescription(int count) {
+    return 'Ai $count domeniu(i) de încredere. Adaugă mai multe bifând căsuța atunci când vizitezi linkuri externe.';
+  }
+
+  @override
+  String get externalLinkTrustAllDisabledDescription =>
+      'Când este activată, nu vor fi afișate avertismente pentru linkurile externe. Acest lucru este mai puțin sigur.';
+
+  @override
+  String get imageFileTooLarge =>
+      'Fișierul imagine este prea mare. Alege un fișier mai mic de 10 MB.';
+
+  @override
+  String get animatedAvatarsRequirePlutonium =>
+      'Avatarurile animate necesită Plutonium';
+
+  @override
+  String get animatedBannersRequirePlutonium =>
+      'Banner-ele animate necesită Plutonium';
+
+  @override
+  String get animatedAvifNotSupported => 'AVIF animat nu este acceptat';
+
+  @override
+  String get animatedAvifNotSupportedBody =>
+      'Decuparea și rotirea fișierelor AVIF animate nu este încă acceptată. Dacă vei continua, fișierul va fi încărcat în forma sa originală.';
+
+  @override
+  String get uploadAsIs => 'Încarcă ca atare';
+
+  @override
+  String get croppingAnimatedNotSupported =>
+      'Decuparea imaginilor animate nu este încă acceptată. Se va folosi încărcarea originală.';
+
+  @override
+  String get cropAvatar => 'Decupează avatarul';
+
+  @override
+  String get cropBanner => 'Decupează bannerul';
+
+  @override
+  String get skip => 'Omitere';
+
+  @override
+  String get crop => 'Decupează';
+
+  @override
+  String get cropTouchHint =>
+      'Atinge pentru a mări, trage pentru a repoziționa';
+
+  @override
+  String get cropMouseHint =>
+      'Trage de colțuri pentru a redimensiona, trage în interior pentru a muta';
+
+  @override
+  String get changeYourFluxerTag => 'Schimbă-ți numele de utilizator';
+
+  @override
+  String get fluxerTagDescriptionBase =>
+      'Numele de utilizator pot conține doar litere (a-z, A-Z), cifre (0-9) și liniuțe de subliniere. Numele de utilizator nu țin cont de majuscule/minuscule.';
+
+  @override
+  String get fluxerTagDescriptionVisionary =>
+      'Numele de utilizator pot conține doar litere (a-z, A-Z), numere (0-9) și underscore (_). Numele de utilizator nu fac distincție între majuscule și minuscule. Poți alege orice etichetă disponibilă de 4 cifre de la #0000 la #9999.';
+
+  @override
+  String get fluxerTagDescriptionPremium =>
+      'Numele de utilizator pot conține doar litere (a-z, A-Z), numere (0-9) și underscore (_). Numele de utilizator nu fac distincție între majuscule și minuscule. Poți alege orice etichetă disponibilă de 4 cifre de la #0001 la #9999.';
+
+  @override
+  String validationLengthRange(int min, int max) {
+    return 'Între $min și $max caractere';
+  }
+
+  @override
+  String get validationAllowedChars =>
+      'Doar litere (a-z, A-Z), cifre (0-9) și liniuțe de subliniere (_)';
+
+  @override
+  String get fluxerTagAlreadyTaken => 'Nume de utilizator deja folosit';
+
+  @override
+  String fluxerTagAlreadyTakenBody(String username, String discriminator) {
+    return 'Numele de utilizator $username#$discriminator este deja ocupat. Continuarea va genera automat un nou discriminator.';
+  }
+
+  @override
+  String get customTagIsTemporary => 'Etichetă personalizată este temporară';
+
+  @override
+  String customTagTemporaryBodyWithDate(String date) {
+    return 'Eticheta personalizată de 4 cifre este disponibilă doar cât timp abonamentul tău Plutonium este activ. Când abonamentul tău expiră pe $date, eticheta ta va reveni la un număr atribuit aleatoriu, după o perioadă de grație de 3 zile.';
+  }
+
+  @override
+  String get customTagTemporaryBody =>
+      'Eticheta ta personalizată de 4 cifre este disponibilă doar cât timp abonamentul tău Plutonium este activ. Când abonamentul tău expiră, eticheta ta va reveni la un număr atribuit aleatoriu după o perioadă de grație de 3 zile.';
+
+  @override
+  String get iUnderstandContinue => 'Am înțeles, continuă';
+
+  @override
+  String get premiumWarningPendingDiscriminator =>
+      'Dacă salvezi acest nume de utilizator, eticheta ta personalizată de 4 cifre va reveni la un număr aleatoriu când abonamentul tău Plutonium se va încheia. Dacă abonamentul tău nu se reînnoiește, vei avea o perioadă de grație de 3 zile înainte ca eticheta să se schimbe.';
+
+  @override
+  String premiumWarningActiveDiscriminator(String discriminator) {
+    return 'Eticheta ta personalizată de 4 cifre (#$discriminator) este activă cât timp abonamentul tău Plutonium este activ. Dacă abonamentul tău se încheie sau nu se reînnoiește după o perioadă de grație de 3 zile, eticheta ta va reveni la un număr aleatoriu.';
+  }
+
+  @override
+  String get premiumUpsellCustomizeTag =>
+      'Personalizează-ți eticheta de 4 cifre sau păstreaz-o când îți schimbi numele de utilizator';
+
+  @override
+  String get fluxerTagUpdated => 'Nume de utilizator actualizat';
+
+  @override
+  String get fluxerTagUpdateFailed =>
+      'Nu s-a putut actualiza numele de utilizator. Te rugăm să încerci din nou.';
+
+  @override
+  String get continueAction => 'Continuă';
+
+  @override
+  String get profileCustomizationTitle => 'Personalizare profil';
+
+  @override
+  String get profileCustomizationDescription =>
+      'Editează-ți aspectul profilului și vezi o previzualizare live';
+
+  @override
+  String get usernameLabel => 'Nume de utilizator';
+
+  @override
+  String get claimAccountToChangeFluxerTag =>
+      'Revendică-ți contul pentru a-ți schimba numele de utilizator';
+
+  @override
+  String get changeFluxerTag => 'Schimbă numele de utilizator';
+
+  @override
+  String customizeTagWithPlutoniumTooltip(String discriminator) {
+    return 'Personalizează-ți eticheta cu 4 cifre (#$discriminator) după bunul plac cu Plutonium';
+  }
+
+  @override
+  String get changeUsernameAndTagHint =>
+      'Schimbă-ți numele de utilizator și eticheta de 4 cifre';
+
+  @override
+  String customTagSubscriptionWarning(String discriminator) {
+    return 'Eticheta ta personalizată (#$discriminator) este legată de abonamentul tău Plutonium și va reveni la o etichetă aleatorie dacă expiră.';
+  }
+
+  @override
+  String get displayNameLabel => 'Nume afișat';
+
+  @override
+  String get pronounsLabel => 'Pronume';
+
+  @override
+  String get avatarLabel => 'Avatar';
+
+  @override
+  String get changeAvatar => 'Schimbă avatarul';
+
+  @override
+  String get removeAvatar => 'Elimină avatarul';
+
+  @override
+  String get avatarDescription =>
+      'PNG, JPEG, WebP, GIF. Max 10 MB. Recomandat: 512×512px';
+
+  @override
+  String get bannerLabel => 'Banner';
+
+  @override
+  String get changeBanner => 'Schimbă bannerul';
+
+  @override
+  String get removeBanner => 'Elimină bannerul';
+
+  @override
+  String get bannerDescription =>
+      'PNG, JPEG, WebP, GIF. Maxim 10 MB. Minim: 960×540px (16:9)';
+
+  @override
+  String get accentColorLabel => 'Culoare accent';
+
+  @override
+  String get accentColorDescription =>
+      'Personalizează culoarea chenarului și a bannerului din profilul tău';
+
+  @override
+  String get aboutMeLabel => 'Despre mine';
+
+  @override
+  String get aboutMeHelperText => 'Poți folosi linkuri, emoji și Markdown.';
+
+  @override
+  String get emojiPickerTitle => 'Emoji';
+
+  @override
+  String get profileBadgesSettingsTitle => 'Badges';
+
+  @override
+  String get profileBadgesSettingsDescription =>
+      'Choose which badges other people see on your profile.';
+
+  @override
+  String get profileBadgesSettingsEmpty => 'You don\'t have any badges yet.';
+
+  @override
+  String get profileBadgesSettingsLoadFailed =>
+      'Your badges couldn\'t be loaded.';
+
+  @override
+  String profileBadgesShowOnProfile(String badgeLabel) {
+    return 'Show $badgeLabel on your profile';
+  }
+
+  @override
+  String get profileBadgesVisionaryNumberNote =>
+      'Shown only when your Visionary badge is visible and not masked.';
+
+  @override
+  String get plutoniumBadgePrivacyTitle =>
+      'Confidențialitate insignă Plutonium';
+
+  @override
+  String get plutoniumBadgePrivacyDescription =>
+      'Controlează cum este afișată insigna ta Plutonium altora';
+
+  @override
+  String get hidePlutoniumBadgeLabel => 'Ascunde complet insigna Plutonium';
+
+  @override
+  String get hidePlutoniumBadgeDescription =>
+      'Ascunde complet insigna ta Plutonium de alți utilizatori';
+
+  @override
+  String get hidePlutoniumPurchaseDate => 'Ascunde data achiziției Plutonium';
+
+  @override
+  String hidePlutoniumPurchaseDateWithDate(String date) {
+    return 'Ascunde data achiziției Plutonium ($date)';
+  }
+
+  @override
+  String get hidePurchaseDateDescription =>
+      'Elimină data primei achiziții de Plutonium de pe ecusonul tău';
+
+  @override
+  String get maskVisionaryAsSubscription => 'Maschează Visionary ca abonament';
+
+  @override
+  String get maskVisionaryDescription =>
+      'Afișează-ți abonamentul Visionary ca un abonament obișnuit';
+
+  @override
+  String get hideVisionaryIdBadge => 'Ascunde insigna cu ID-ul Visionary';
+
+  @override
+  String hideVisionaryIdBadgeWithSequence(int sequence) {
+    return 'Ascunde insigna ID Visionary (#$sequence)';
+  }
+
+  @override
+  String get hideVisionaryIdDescription => 'Elimină-ți insigna ID vizionar';
+
+  @override
+  String get operatorPassName => 'Operator Pass';
+
+  @override
+  String operatorPassSince(String since) {
+    return 'Operator Pass since $since';
+  }
+
+  @override
+  String get operatorPassShowBadgeOnProfile => 'Show badge on my profile';
+
+  @override
+  String operatorPassHideDate(String operatorPassName) {
+    return 'Hide when you got your $operatorPassName';
+  }
+
+  @override
+  String get operatorPassHideCount => 'Hide how many Operator Passes you have';
+
+  @override
+  String get operatorPassWallTitle => 'Operators\' wall';
+
+  @override
+  String get operatorPassWallHowItWorks => 'How the wall works';
+
+  @override
+  String get operatorPassWallNotListed => 'Not listed.';
+
+  @override
+  String get operatorPassWallOnTheWall => 'On the wall';
+
+  @override
+  String get operatorPassWallInReview => 'In review';
+
+  @override
+  String operatorPassWallReviewBy(String date) {
+    return 'by $date';
+  }
+
+  @override
+  String get operatorPassWallLive => 'Live';
+
+  @override
+  String operatorPassWallDeclined(String name, String reason) {
+    return 'Declined: $name. $reason.';
+  }
+
+  @override
+  String operatorPassWallTeamNote(String note) {
+    return 'Team note: $note';
+  }
+
+  @override
+  String get operatorPassWallHidden => 'Hidden by our team for now.';
+
+  @override
+  String get operatorPassWallHiddenWhy => 'Why?';
+
+  @override
+  String get operatorPassWallRemoved =>
+      'Off the wall while your benefits are removed.';
+
+  @override
+  String get operatorPassTermsLink => 'Operator Pass terms';
+
+  @override
+  String get operatorPassWallSendChanges => 'Send profile changes to the wall';
+
+  @override
+  String get operatorPassWallReleaseList =>
+      'Add my name to the yearly Operators list';
+
+  @override
+  String get operatorPassWallReleaseListHint =>
+      'Once a year, we publish a list of Operators in the notes of a Fluxer release and in its source code. Your wall name is only on it if you turn this on.';
+
+  @override
+  String get operatorPassWallSave => 'Save';
+
+  @override
+  String get operatorPassWallSaved => 'Saved.';
+
+  @override
+  String get operatorPassWallSaveFailed => 'Couldn\'t save. Try again.';
+
+  @override
+  String get operatorPassWallNameSettingsLabel => 'Name on the wall';
+
+  @override
+  String get operatorPassWallNameHint =>
+      'We check new names before they go live.';
+
+  @override
+  String get operatorPassWallDontListMe => 'Don\'t list me';
+
+  @override
+  String get operatorPassWallNameRequired =>
+      'Enter a name, or check Don\'t list me.';
+
+  @override
+  String get operatorPassWallNameTooLong => 'Use 32 characters or fewer.';
+
+  @override
+  String get operatorPassWallDeclineGuidelines =>
+      'Breaks the community guidelines';
+
+  @override
+  String get operatorPassWallDeclineImpersonation =>
+      'Pretends to be someone else';
+
+  @override
+  String get operatorPassWallDeclineRights =>
+      'Uses a name or image without the rights to it';
+
+  @override
+  String get operatorPassWallDeclineAge => 'Not suitable for younger users';
+
+  @override
+  String get avatarDescriptionNonPremium =>
+      'JPEG, PNG, WebP. Maxim 10 MB. Recomandat: 512×512 px. Avatarele animate (GIF) necesită Plutonium.';
+
+  @override
+  String get bannerPlutoniumUpsell =>
+      'Personalizează-ți profilul cu o imagine statică sau animată pentru banner, ca să iasă în evidență.';
+
+  @override
+  String get getPlutonium => 'Obține Plutonium';
+
+  @override
+  String get plutoniumNotAvailableTitle => 'Plutonium';
+
+  @override
+  String get plutoniumNotAvailableBody =>
+      'Achizițiile în aplicație nu sunt încă disponibile pe această platformă. Rămâi pe fază — în curând!';
+
+  @override
+  String get profilePreviewLabel => 'Previzualizare';
+
+  @override
+  String get profilePreviewMessage => 'Trimite mesaj';
+
+  @override
+  String profilePreviewMemberSince(String productName) {
+    return 'Membru $productName din';
+  }
+
+  @override
+  String get unclaimedAccountTitle => 'Cont nerevendicat';
+
+  @override
+  String get unclaimedAccountDescription =>
+      'Contul tău nu a fost încă revendicat. Fără o adresă de e-mail și o parolă, ai putea pierde accesul. Revendică-ți contul acum pentru a-l securiza.';
+
+  @override
+  String get claimAccount => 'Revendică contul';
+
+  @override
+  String get profileTypeLabel => 'Tip profil';
+
+  @override
+  String get profileTypeGlobal => 'Profil global';
+
+  @override
+  String get profileTypeGuildDescription =>
+      'Îți editezi profilul pentru această comunitate. Va fi vizibil doar în această comunitate și va avea prioritate față de profilul tău global.';
+
+  @override
+  String get communityNicknameLabel => 'Pseudonim în comunitate';
+
+  @override
+  String get perGuildPremiumUpsellText =>
+      'Personalizarea avatarului, bannerului, culorii de accent și a biografiei pentru comunități individuale necesită Plutonium. Porecla și pronumele comunității sunt gratuite pentru toată lumea.';
+
+  @override
+  String get avatarModeInherit => 'Folosește profilul global';
+
+  @override
+  String get avatarModeCustom => 'Folosește o imagine personalizată';
+
+  @override
+  String get avatarModeUnset => 'Nu afișa';
+
+  @override
+  String get profileSavedToast => 'Profil actualizat';
+
+  @override
+  String get sudoTitle => 'Verifică-ți identitatea';
+
+  @override
+  String get sudoDescription =>
+      'Această acțiune necesită verificare pentru a continua.';
+
+  @override
+  String get sudoAuthenticatorCode => 'Cod de autentificare';
+
+  @override
+  String get sudoMethodPassword => 'Parolă';
+
+  @override
+  String get sudoMethodTotp => 'Autentificator';
+
+  @override
+  String get sudoVerificationFailed =>
+      'Verificarea a eșuat. Te rugăm să încerci din nou.';
+
+  @override
+  String get securityAccountTitle => 'Cont';
+
+  @override
+  String get securityAccountDescription =>
+      'Gestionează-ți e-mailul, parola și setările contului';
+
+  @override
+  String get securitySectionTitle => 'Securitate';
+
+  @override
+  String get securitySectionDescription =>
+      'Protejează-ți contul cu autentificare în doi pași și chei de acces';
+
+  @override
+  String get securityLoginEmailSectionTitle => 'Setări e-mail';
+
+  @override
+  String securityLoginEmailSectionDescription(String productName) {
+    return 'Gestionează adresa de e-mail pe care o folosești pentru a te conecta la $productName';
+  }
+
+  @override
+  String get securityLoginEmailAddressLabel => 'Adresă de e-mail';
+
+  @override
+  String get securityLoginNoEmailSet => 'Nicio adresă de e-mail setată';
+
+  @override
+  String get securityLoginChangeEmail => 'Schimbă adresa de e-mail';
+
+  @override
+  String get securityLoginAddEmail => 'Adaugă e-mail';
+
+  @override
+  String get securityLoginReveal => 'Arată';
+
+  @override
+  String get securityLoginHide => 'Ascunde';
+
+  @override
+  String get securityLoginPasswordSectionTitle => 'Parolă';
+
+  @override
+  String get securityLoginPasswordSectionDescription =>
+      'Schimbă-ți parola pentru a-ți securiza contul';
+
+  @override
+  String get securityLoginCurrentPasswordLabel => 'Parola curentă';
+
+  @override
+  String securityLoginPasswordLastChanged(String date) {
+    return 'Ultima modificare: $date';
+  }
+
+  @override
+  String get securityLoginPasswordNeverChanged =>
+      'Ultima modificare: Niciodată';
+
+  @override
+  String get securityLoginNoPasswordSet => 'Nicio parolă setată';
+
+  @override
+  String get securityLoginChangePassword => 'Schimbă parola';
+
+  @override
+  String get securityLoginSetPassword => 'Setează parola';
+
+  @override
+  String get passwordChangeTitle => 'Schimbă parola';
+
+  @override
+  String get passwordChangeIntroDescription =>
+      'Vom trimite un cod de verificare la adresa ta de e-mail pentru a-ți confirma identitatea înainte de a schimba parola.';
+
+  @override
+  String get passwordChangeStart => 'Începe';
+
+  @override
+  String get passwordChangeVerifyTitle => 'Verifică-ți adresa de e-mail';
+
+  @override
+  String get passwordChangeVerifyDescription =>
+      'Introdu codul de verificare trimis pe adresa ta de e-mail.';
+
+  @override
+  String get passwordChangeVerificationCode => 'Cod de verificare';
+
+  @override
+  String get passwordChangeVerify => 'Verifică';
+
+  @override
+  String get passwordChangeNewPasswordTitle => 'Setează o parolă nouă';
+
+  @override
+  String get passwordChangeNewPasswordDescription =>
+      'Introdu parola nouă mai jos.';
+
+  @override
+  String get passwordChangeNewPassword => 'Parolă nouă';
+
+  @override
+  String get passwordChangeConfirmPassword => 'Confirmă parola nouă';
+
+  @override
+  String get passwordChangeSubmit => 'Schimbă parola';
+
+  @override
+  String get passwordChangeSuccess => 'Parola a fost schimbată';
+
+  @override
+  String get passwordChangePasswordsDoNotMatch => 'Parolele nu corespund';
+
+  @override
+  String get passwordChangeInvalidCode => 'Cod nevalid sau expirat';
+
+  @override
+  String get emailChangeTitle => 'Schimbă adresa de e-mail';
+
+  @override
+  String get emailChangeIntroDescription =>
+      'Vom trimite coduri de verificare pentru a vă confirma identitatea înainte de a vă schimba adresa de e-mail.';
+
+  @override
+  String get emailChangeStart => 'Începe';
+
+  @override
+  String get emailChangeVerifyOriginalTitle => 'Verifică emailul curent';
+
+  @override
+  String get emailChangeVerifyOriginalDescription =>
+      'Introdu codul de verificare trimis la adresa ta de email curentă.';
+
+  @override
+  String get emailChangeNewEmailTitle => 'Introdu o adresă de e-mail nouă';
+
+  @override
+  String get emailChangeNewEmailDescription =>
+      'Introdu noua adresă de e-mail pe care dorești să o folosești.';
+
+  @override
+  String get emailChangeNewEmailLabel => 'E-mail nou';
+
+  @override
+  String get emailChangeNewEmailSubmit => 'Trimite codul de verificare';
+
+  @override
+  String get emailChangeVerifyNewTitle => 'Verifică noul e-mail';
+
+  @override
+  String get emailChangeVerifyNewDescription =>
+      'Introdu codul de verificare trimis la noua adresă de e-mail.';
+
+  @override
+  String get emailChangeSuccess => 'E-mail modificat';
+
+  @override
+  String get emailChangeInvalidCode => 'Cod nevalid sau expirat';
+
+  @override
+  String get resend => 'Retrimite';
+
+  @override
+  String resendCountdown(int seconds) {
+    return 'Retrimite (${seconds}s)';
+  }
+
+  @override
+  String get verificationCode => 'Cod de verificare';
+
+  @override
+  String get verify => 'Verifică';
+
+  @override
+  String get enable => 'Activează';
+
+  @override
+  String get disable => 'Dezactivează';
+
+  @override
+  String get delete => 'Șterge';
+
+  @override
+  String get save => 'Salvează';
+
+  @override
+  String get securityTfaSectionTitle => 'Autentificare în doi pași';
+
+  @override
+  String get securityTfaSectionDescription =>
+      'Adaugă un nivel suplimentar de securitate pentru contul tău';
+
+  @override
+  String get securityTfaAuthenticatorApp => 'Aplicație de autentificare';
+
+  @override
+  String get securityTfaAuthenticatorEnabled =>
+      'Autentificarea în doi pași este activată';
+
+  @override
+  String get securityTfaAuthenticatorDisabled =>
+      'Folosește o aplicație de autentificare pentru a genera coduri pentru autentificarea în doi pași';
+
+  @override
+  String get securityTfaBackupCodes => 'Coduri de rezervă';
+
+  @override
+  String get securityTfaBackupCodesDescription =>
+      'Vizualizează și gestionează codurile de rezervă pentru recuperarea contului';
+
+  @override
+  String get securityTfaViewCodes => 'Vezi codurile';
+
+  @override
+  String get securityPasskeysSectionTitle => 'Chei de acces';
+
+  @override
+  String get securityPasskeysSectionDescription =>
+      'Folosește cheile de acces pentru conectare fără parolă și autentificare în doi pași';
+
+  @override
+  String get securityPasskeysRegistered => 'Chei de acces înregistrate';
+
+  @override
+  String get securityPasskeysNone => 'Nu sunt înregistrate chei de acces';
+
+  @override
+  String securityPasskeysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'chei de acces',
+      one: 'cheie de acces',
+    );
+    return '$count $_temp0 înregistrate (max. 10)';
+  }
+
+  @override
+  String get securityPasskeysAdd => 'Adaugă o cheie de acces';
+
+  @override
+  String securityPasskeysAdded(String date) {
+    return 'Adăugat: $date';
+  }
+
+  @override
+  String securityPasskeysLastUsed(String date) {
+    return 'Ultima utilizare: $date';
+  }
+
+  @override
+  String get securityPasskeysRename => 'Redenumește';
+
+  @override
+  String get securityPasskeysDeleteTitle => 'Șterge cheia de acces';
+
+  @override
+  String securityPasskeysDeleteDescription(String name) {
+    return 'Ești sigur că vrei să ștergi cheia de acces „$name”?';
+  }
+
+  @override
+  String get securityPasskeyNameTitle => 'Denumește cheia de acces';
+
+  @override
+  String get securityPasskeyNameLabel => 'Numele cheii de acces';
+
+  @override
+  String get securityPasskeyNameHint =>
+      'de ex.: YubiKey, iPhone, computer de serviciu';
+
+  @override
+  String get securityClaimTitle => 'Funcții de securitate';
+
+  @override
+  String get securityClaimDescription =>
+      'Revendică-ți contul pentru a accesa funcții de securitate precum autentificarea în doi pași și cheile de acces.';
+
+  @override
+  String get securityVerifyEmailRequired =>
+      'Trebuie să îți verifici adresa de e-mail înainte de a putea configura autentificarea în doi pași sau cheile de acces.';
+
+  @override
+  String get totpEnableTitle => 'Configurare aplicație de autentificare';
+
+  @override
+  String get totpEnableDescription =>
+      'Scanează codul QR cu aplicația ta de autentificare pentru a genera coduri pentru autentificare în doi pași.';
+
+  @override
+  String get totpEnableCodeLabel => 'Cod';
+
+  @override
+  String get totpEnableCodeHint =>
+      'Introdu codul de 6 cifre din aplicația de autentificare';
+
+  @override
+  String get totpEnableSuccess =>
+      'Autentificarea cu doi factori a fost activată';
+
+  @override
+  String get totpDisableTitle => 'Elimină aplicația de autentificare';
+
+  @override
+  String get totpDisableDescription =>
+      'Introdu codul de 6 cifre din aplicația de autentificare pentru a dezactiva autentificarea în doi pași.';
+
+  @override
+  String get totpDisableSuccess =>
+      'Autentificarea în doi pași a fost dezactivată';
+
+  @override
+  String get backupCodesTitle => 'Coduri de rezervă';
+
+  @override
+  String get backupCodesWarning =>
+      'Dacă pierzi accesul la aplicația de autentificare și nu ai aceste coduri, vei fi blocat permanent din contul tău. Descarcă-le sau copiază-le acum și păstrează-le într-un loc sigur.';
+
+  @override
+  String get backupCodesCopy => 'Copiază';
+
+  @override
+  String get backupCodesCopied =>
+      'Codurile de rezervă au fost copiate în clipboard';
+
+  @override
+  String get backupCodesAcknowledge =>
+      'Am descărcat sau copiat codurile de rezervă și le-am stocat într-un loc sigur.';
+
+  @override
+  String get backupCodesDone => 'Gata';
+
+  @override
+  String get dangerZoneSectionTitle => 'Zonă de risc';
+
+  @override
+  String get dangerZoneSectionDescription =>
+      'Acțiuni ireversibile și distructive';
+
+  @override
+  String get dangerZoneDisableTitle => 'Dezactivează contul';
+
+  @override
+  String get dangerZoneDisableDescription =>
+      'Dezactivează-ți temporar contul. Îl poți reactiva mai târziu, conectându-te din nou.';
+
+  @override
+  String get dangerZoneDisableConfirmDescription =>
+      'Dezactivarea contului te va deconecta din toate sesiunile. Îți poți reactiva contul oricând, reconectându-te.';
+
+  @override
+  String get dangerZoneDeleteTitle => 'Șterge contul';
+
+  @override
+  String get dangerZoneDeleteDescription =>
+      'Șterge definitiv contul și toate datele asociate. Această acțiune nu poate fi anulată.';
+
+  @override
+  String get dangerZoneDeleteCannotDeleteAccount => 'Nu se poate șterge contul';
+
+  @override
+  String get dangerZoneDeleteOwnsCommunities =>
+      'Nu poți șterge contul cât timp deții comunități. Transferă mai întâi proprietatea următoarelor comunități:';
+
+  @override
+  String dangerZoneDeleteAndXMore(int count) {
+    return 'și încă $count';
+  }
+
+  @override
+  String dangerZoneDeleteTransferInstructions(String settingsPath) {
+    return 'Pentru a transfera proprietatea, accesează $settingsPath și folosește opțiunea de transferare a proprietății.';
+  }
+
+  @override
+  String get dangerZoneDeleteConfirmDescription =>
+      'Sigur dorești să-ți ștergi contul? Această acțiune va programa contul tău pentru ștergere permanentă.';
+
+  @override
+  String get dangerZoneDeleteBullet1 =>
+      'Poți anula procesul de ștergere în decurs de 14 zile';
+
+  @override
+  String get dangerZoneDeleteBullet2 =>
+      'După 14 zile, contul tău va fi șters definitiv';
+
+  @override
+  String get dangerZoneDeleteBullet3 =>
+      'După procesarea ștergerii, nu vei mai putea recupera accesul la contul tău';
+
+  @override
+  String get dangerZoneDeleteBullet4 =>
+      'Nu vei putea șterge mesajele trimise după ce îți ștergi contul';
+
+  @override
+  String get dangerZoneDeleteDisclaimer =>
+      'Dacă dorești să-ți exporti datele sau să-ți ștergi mesajele mai întâi, te rugăm să vizitezi secțiunea Panoul de confidențialitate din Setările utilizatorului înainte de a continua.';
+
+  @override
+  String get claimAccountTitle => 'Revendică-ți contul';
+
+  @override
+  String get claimAccountDescription =>
+      'Revendică-ți contul adăugând o adresă de e-mail și o parolă. Îți vom trimite un cod de verificare pentru a-ți confirma e-mailul înainte de finalizare.';
+
+  @override
+  String get claimAccountEmailLabel => 'E-mail';
+
+  @override
+  String get claimAccountPasswordLabel => 'Parolă';
+
+  @override
+  String get claimAccountSendCode => 'Trimite codul';
+
+  @override
+  String get claimAccountVerifyDescription =>
+      'Introdu codul pe care l-am trimis pe e-mail pentru a-l verifica. Parola ta va fi setată după confirmarea codului.';
+
+  @override
+  String get claimAccountSuccess => 'Cont revendicat cu succes';
+
+  @override
+  String get importantInformation => 'Informații importante:';
+
+  @override
+  String get genericError => 'A apărut o eroare';
+
+  @override
+  String get networkErrorMessage =>
+      'A apărut o eroare. Te rugăm să încerci din nou.';
+
+  @override
+  String get invalidCode => 'Cod invalid';
+
+  @override
+  String relativeTimeYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count ani',
+      one: 'acum 1 an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count luni',
+      one: 'acum 1 lună',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count zile',
+      one: 'acum 1 zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count ore',
+      one: 'acum 1 oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count minute',
+      one: 'acum 1 minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count săptămâni',
+      one: 'acum 1 săptămână',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count minute',
+      one: 'peste 1 minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count ore',
+      one: 'peste o oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count zile',
+      one: 'peste o zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count săptămâni',
+      one: 'peste o săptămână',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count luni',
+      one: 'peste o lună',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeInYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'peste $count ani',
+      one: 'peste 1 an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get relativeTimeJustNow => 'chiar acum';
+
+  @override
+  String get authorizedAppsTitle => 'Aplicații autorizate';
+
+  @override
+  String authorizedAppsDescription(String productName) {
+    return 'Aceste aplicații au primit acces la contul tău $productName.';
+  }
+
+  @override
+  String get authorizedAppsEmptyTitle => 'Nicio aplicație autorizată';
+
+  @override
+  String get authorizedAppsEmptyDescription =>
+      'Nu ai autorizat nicio aplicație să-ți acceseze contul.';
+
+  @override
+  String get authorizedAppsLoadError =>
+      'Nu s-au putut încărca aplicațiile autorizate';
+
+  @override
+  String authorizedAppsAuthorizedOn(String date) {
+    return 'Autorizat pe $date';
+  }
+
+  @override
+  String get authorizedAppsPermissionsGranted => 'Permisiuni acordate';
+
+  @override
+  String get authorizedAppsRevoke => 'Revocă';
+
+  @override
+  String get authorizedAppsRevokeTitle => 'Revocare acces aplicație';
+
+  @override
+  String authorizedAppsRevokeDescription(String appName) {
+    return 'Ești sigur că vrei să revoce accesul pentru $appName? Această aplicație nu va mai avea acces la contul tău.';
+  }
+
+  @override
+  String get authorizedAppsScopeIdentify =>
+      'Accesează-ți informațiile de bază ale profilului (nume de utilizator, avatar etc.)';
+
+  @override
+  String get authorizedAppsScopeEmail => 'Vezi-ți adresa de e-mail';
+
+  @override
+  String get authorizedAppsScopeGuilds =>
+      'Vezi comunitățile din care faci parte';
+
+  @override
+  String get authorizedAppsScopeConnections => 'Vezi conturile conectate';
+
+  @override
+  String get authorizedAppsScopeBot =>
+      'Adaugă un bot într-o comunitate cu permisiunile solicitate';
+
+  @override
+  String get authorizedAppsScopeAdmin =>
+      'Accesează punctele finale administrative';
+
+  @override
+  String get applicationsTitle => 'Aplicații';
+
+  @override
+  String get applicationsCreate => 'Creează aplicație';
+
+  @override
+  String get applicationsCreateSubmit => 'Creează';
+
+  @override
+  String get applicationsCreateClaimTooltip =>
+      'Revendică-ți contul pentru a crea aplicații.';
+
+  @override
+  String applicationsDocsLink(String domain) {
+    return 'Citește documentația ($domain)';
+  }
+
+  @override
+  String get applicationsLoadError => 'Nu se pot încărca aplicațiile';
+
+  @override
+  String get applicationsLoadErrorDescription =>
+      'Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get applicationsEmptyTitle => 'Încă nicio aplicație';
+
+  @override
+  String applicationsEmptyDescription(String apiName) {
+    return 'Creează prima ta aplicație pentru a începe cu $apiName.';
+  }
+
+  @override
+  String applicationsCreated(String date) {
+    return 'Creat la $date';
+  }
+
+  @override
+  String get applicationsName => 'Numele aplicației';
+
+  @override
+  String get applicationsNameHint => 'Aplicația mea';
+
+  @override
+  String get applicationsNameRequired => 'Numele aplicației este obligatoriu';
+
+  @override
+  String get applicationsBackToList => 'Înapoi la listă';
+
+  @override
+  String get applicationsDetailLoadError =>
+      'Nu s-a putut încărca această aplicație';
+
+  @override
+  String get applicationsDetailLoadErrorDescription =>
+      'Încearcă din nou sau revino la lista de aplicații.';
+
+  @override
+  String get applicationsId => 'ID aplicație';
+
+  @override
+  String get applicationsCopyId => 'Copiază ID-ul';
+
+  @override
+  String get applicationsSecretsTitle => 'Secrete și tokenuri';
+
+  @override
+  String get applicationsSecretsDescription =>
+      'Păstrează-le în siguranță. Regenerarea va întrerupe integrările existente.';
+
+  @override
+  String get applicationsClientSecret => 'Secret client';
+
+  @override
+  String get applicationsBotToken => 'Token bot';
+
+  @override
+  String get applicationsRegenerate => 'Regenerează';
+
+  @override
+  String get applicationsRegenerateClientSecretTitle =>
+      'Regenerezi secretul clientului?';
+
+  @override
+  String get applicationsRegenerateBotTokenTitle =>
+      'Regenerezi tokenul botului?';
+
+  @override
+  String get applicationsRegenerateClientSecretDescription =>
+      'Regenerarea va invalida secretul curent. Actualizează orice cod care folosește valoarea veche.';
+
+  @override
+  String get applicationsRegenerateBotTokenDescription =>
+      'Regenerarea va invalida tokenul curent. Actualizează orice cod care folosește valoarea veche.';
+
+  @override
+  String get applicationsClientSecretRegenerated =>
+      'Secretul clientului a fost regenerat. Actualizează orice cod care folosește vechiul secret.';
+
+  @override
+  String get applicationsBotTokenRegenerated =>
+      'Tokenul botului a fost regenerat. Actualizează orice cod care folosește vechiul token.';
+
+  @override
+  String get applicationsRegenerateFailed => 'Nu s-a putut regenera secretul';
+
+  @override
+  String get applicationsInfoTitle => 'Informații despre aplicație';
+
+  @override
+  String get applicationsInfoDescription =>
+      'Setări de bază și URI-uri de redirecționare permise.';
+
+  @override
+  String get applicationsPublicBot => 'Bot public';
+
+  @override
+  String get applicationsPublicBotDescription =>
+      'Permite oricui să invite acest bot în comunitățile sale.';
+
+  @override
+  String get applicationsRequireCodeGrant =>
+      'Necesită acordarea codului OAuth2';
+
+  @override
+  String get applicationsRequireCodeGrantDescription =>
+      'Necesită un URI de redirecționare și un cod de autorizare la invitarea acestui bot.';
+
+  @override
+  String get applicationsRedirectUris => 'URI-uri de redirecționare';
+
+  @override
+  String get applicationsAddRedirect => 'Adaugă redirecționare';
+
+  @override
+  String get applicationsDeleteRedirect => 'Șterge URI-ul de redirecționare';
+
+  @override
+  String get applicationsBotProfileTitle => 'Profil bot';
+
+  @override
+  String get applicationsBotProfileDescription =>
+      'Avatar, tag și detalii complexe de profil pentru botul tău.';
+
+  @override
+  String get applicationsBotAvatar => 'Avatar bot';
+
+  @override
+  String get applicationsUsernameRequired =>
+      'Numele de utilizator este obligatoriu';
+
+  @override
+  String get applicationsUsernameTooLong =>
+      'Numele de utilizator trebuie să aibă maximum 32 de caractere';
+
+  @override
+  String get applicationsUsernameInvalid =>
+      'Numele de utilizator poate conține doar litere, cifre și liniuțe de subliniere';
+
+  @override
+  String get applicationsBotUsername => 'Nume de utilizator bot';
+
+  @override
+  String get applicationsDiscriminator => 'Discriminator';
+
+  @override
+  String get applicationsBotBio => 'Biografie bot';
+
+  @override
+  String get applicationsBotBioHint =>
+      'Un bot util care face lucruri uimitoare!';
+
+  @override
+  String get applicationsNoBotBanner => 'Fără banner de bot';
+
+  @override
+  String get applicationsFriendlyBot => 'Bot prietenos';
+
+  @override
+  String get applicationsFriendlyBotDescription =>
+      'Permite utilizatorilor să trimită cereri de prietenie acestui bot, pentru aprobare manuală.';
+
+  @override
+  String get applicationsManualFriendApproval =>
+      'Necesită aprobare manuală a cererii de prietenie';
+
+  @override
+  String get applicationsManualFriendApprovalDescription =>
+      'Cererile de prietenie către acest bot necesită aprobare manuală.';
+
+  @override
+  String get applicationsOauthBuilderTitle => 'Constructor de URL-uri OAuth2';
+
+  @override
+  String get applicationsOauthBuilderDescription =>
+      'Creează un URL de autorizare cu scopuri și permisiuni.';
+
+  @override
+  String get applicationsScopes => 'Domenii';
+
+  @override
+  String get applicationsRedirectUri => 'URI de redirecționare';
+
+  @override
+  String get applicationsSelectRedirectUri =>
+      'Selectează un URI de redirecționare';
+
+  @override
+  String get applicationsRedirectRequiredCodeGrant =>
+      'URI-ul de redirecționare este obligatoriu, deoarece acest bot necesită acordarea codului OAuth2.';
+
+  @override
+  String get applicationsRedirectRequiredScopes =>
+      'URI-ul de redirecționare este necesar atunci când nu se utilizează doar domeniul bot.';
+
+  @override
+  String get applicationsBotPermissions => 'Permisiuni bot';
+
+  @override
+  String get applicationsAuthorizeUrl => 'URL de autorizare';
+
+  @override
+  String get applicationsAuthorizeUrlPlaceholder =>
+      'Selectează domeniile (și URI-ul de redirecționare, dacă este necesar)';
+
+  @override
+  String get applicationsCopyAuthorizeUrl => 'Copiază URL-ul de autorizare';
+
+  @override
+  String get applicationsCopiedUrl => 'URL copiat în clipboard';
+
+  @override
+  String get applicationsDangerTitle => 'Zonă de risc';
+
+  @override
+  String get applicationsDangerSubtitle =>
+      'Această acțiune nu poate fi anulată. Eliminarea aplicației șterge și botul acesteia.';
+
+  @override
+  String get applicationsDangerHelper =>
+      'Odată ștearsă, aplicația și credențialele ei sunt eliminate definitiv.';
+
+  @override
+  String get applicationsDelete => 'Șterge aplicația';
+
+  @override
+  String applicationsDeleteConfirmDescription(String name) {
+    return 'Sigur vrei să ștergi $name? Această acțiune nu poate fi anulată. Toate datele asociate, inclusiv utilizatorul bot, vor fi șterse definitiv.';
+  }
+
+  @override
+  String get applicationsDeleteFailed => 'Nu s-a putut șterge aplicația';
+
+  @override
+  String get applicationsUpdated => 'Aplicație actualizată cu succes';
+
+  @override
+  String get applicationsNoChanges => 'Nicio modificare de salvat';
+
+  @override
+  String get applicationsSearchBots => 'Aplicații și boți';
+
+  @override
+  String get applicationsSearchBotsDescription =>
+      'Creează și gestionează aplicații și boți pentru contul tău';
+
+  @override
+  String get applicationsSearchInfoDescription =>
+      'Editează elementele de bază ale aplicației și URI-urile de redirecționare';
+
+  @override
+  String get applicationsSearchBotProfileDescription =>
+      'Editează avatarul, tagul, biografia, bannerul și comportamentul cererilor de prietenie ale botului';
+
+  @override
+  String get applicationsSearchOauthDescription =>
+      'Construiește un URL de autorizare cu domenii, redirecționări și permisiuni bot';
+
+  @override
+  String get applicationsSearchSecretsDescription =>
+      'Vezi și regenerează secretele clientului și tokenurile botului';
+
+  @override
+  String get applicationsSearchBotsKeyword => 'Boți';
+
+  @override
+  String get applicationsSearchDocumentation => 'Documentație';
+
+  @override
+  String get blockedUsersTitle => 'Utilizatori blocați';
+
+  @override
+  String get blockedUsersDescription =>
+      'Utilizatorii blocați nu-ți pot trimite cereri de prietenie sau mesaje directe.';
+
+  @override
+  String get blockedUsersEmptyTitle => 'Niciun utilizator blocat';
+
+  @override
+  String get blockedUsersEmptyDescription => 'Nu ai blocat încă pe nimeni.';
+
+  @override
+  String get blockedUsersLoadError =>
+      'Nu s-au putut încărca utilizatorii blocați';
+
+  @override
+  String get blockedUsersUnblock => 'Deblochează';
+
+  @override
+  String get blockedUsersUnblockTitle => 'Deblochează utilizatorul';
+
+  @override
+  String blockedUsersUnblockDescription(String username) {
+    return 'Ești sigur că vrei să deblochezi $username?';
+  }
+
+  @override
+  String get blockedUsersCopyTag => 'Copiază numele de utilizator';
+
+  @override
+  String get blockedUsersCopyId => 'Copiază ID-ul utilizatorului';
+
+  @override
+  String get userProfileLoadError => 'Nu am putut încărca profilul';
+
+  @override
+  String get userProfileLoading => 'Se încarcă profilul';
+
+  @override
+  String get userProfileRetry => 'Reîncercați';
+
+  @override
+  String get userProfileMessage => 'Trimite mesaj';
+
+  @override
+  String get userProfileVoiceCall => 'Apel vocal';
+
+  @override
+  String get userProfileVideoCall => 'Apel video';
+
+  @override
+  String get userProfileEditProfile => 'Editează profilul';
+
+  @override
+  String userProfileStaffBadgeTooltip(String productName) {
+    return 'Echipa $productName';
+  }
+
+  @override
+  String userProfileCtpBadgeTooltip(String productName) {
+    return 'Echipa Comunității $productName';
+  }
+
+  @override
+  String userProfilePartnerBadgeTooltip(String productName) {
+    return 'Partener $productName';
+  }
+
+  @override
+  String userProfileBugHunterBadgeTooltip(String productName) {
+    return 'Vânător de buguri $productName';
+  }
+
+  @override
+  String userProfilePremiumSubscriberSinceTooltip(
+    String premiumProductFullName,
+    String date,
+  ) {
+    return 'Abonat la $premiumProductFullName din $date';
+  }
+
+  @override
+  String userProfileVisionaryBadgeTooltip(String productName) {
+    return 'Vizionar $productName';
+  }
+
+  @override
+  String userProfileVisionaryBadgeSinceTooltip(
+    String productName,
+    String date,
+  ) {
+    return '$productName Vizionar din $date';
+  }
+
+  @override
+  String userProfileVisionaryIdTooltip(int sequence) {
+    return 'ID vizionar #$sequence';
+  }
+
+  @override
+  String userProfileMutualFriends(int count) {
+    return 'Prieteni comuni ($count)';
+  }
+
+  @override
+  String userProfileMutualCommunities(int count) {
+    return 'Comunități comune ($count)';
+  }
+
+  @override
+  String get userProfileMutualFriendsTitle => 'Prieteni comuni';
+
+  @override
+  String get userProfileMutualCommunitiesTitle => 'Comunități comune';
+
+  @override
+  String get userProfileNoMutualFriends => 'Nu s-au găsit prieteni comuni.';
+
+  @override
+  String get userProfileNoMutualCommunities =>
+      'Nu s-au găsit comunități comune.';
+
+  @override
+  String userProfileMutualCommunityNickname(String nickname) {
+    return 'Poreclă: $nickname';
+  }
+
+  @override
+  String get userProfileOpenBlockedDmTitle => 'Deschide DM-ul';
+
+  @override
+  String userProfileOpenBlockedDmDescription(String username) {
+    return 'L-ai blocat pe $username. Nu vei putea trimite mesaje decât dacă îl deblochezi.';
+  }
+
+  @override
+  String get blockedUserComposerBarrierAction => 'Deblochează';
+
+  @override
+  String get userProfileOpenDm => 'Deschide DM-ul';
+
+  @override
+  String get userProfileNoteTitle => 'Notă';
+
+  @override
+  String get userProfileNoteVisibility => '(vizibil doar pentru tine)';
+
+  @override
+  String get userProfileNoteSave => 'Salvează';
+
+  @override
+  String get userProfileNoteDelete => 'Șterge';
+
+  @override
+  String get userProfileMemberSince => 'Membru din';
+
+  @override
+  String get userProfileAboutMe => 'Despre mine';
+
+  @override
+  String get userProfileRoles => 'Roluri';
+
+  @override
+  String get memberRoleAdd => 'Adaugă rol';
+
+  @override
+  String memberRoleRemove(String roleName) {
+    return 'Elimină rolul $roleName';
+  }
+
+  @override
+  String get userProfileNoRolesInCommunity =>
+      'Acest utilizator nu are roluri în această comunitate.';
+
+  @override
+  String memberRolesNoRolesYet(String rolesSettingsPath) {
+    return 'Încă nu există roluri. Adaugă roluri în $rolesSettingsPath';
+  }
+
+  @override
+  String get memberRolesNoRolesAvailable => 'Niciun rol disponibil';
+
+  @override
+  String memberRolesNoRolesAvailableDescription(String rolesSettingsPath) {
+    return 'În acest moment, nu există roluri de atribuit în această comunitate, dar poți crea un rol nou în $rolesSettingsPath.';
+  }
+
+  @override
+  String get guildSettingsTitle => 'Setări comunitate';
+
+  @override
+  String get guildSettingsRolesTab => 'Roluri';
+
+  @override
+  String get memberRolesConfirmOk => 'OK';
+
+  @override
+  String get userProfileLocalTime => 'Ora locală';
+
+  @override
+  String get profileLocalTimeSettingsTitle => 'Ora locală a profilului';
+
+  @override
+  String profileLocalTimeSettingsSummary(String productName) {
+    return 'Stabilește-ți fusul orar o singură dată, astfel încât $productName să poată menține actualizat decalajul UTC atunci când ora de vară se schimbă. Alți utilizatori pot vedea doar decalajul tău UTC, nu și identificatorul exact al fusului orar.';
+  }
+
+  @override
+  String get profileLocalTimeEditButton => 'Editează ora locală a profilului';
+
+  @override
+  String get profileLocalTimeTimezoneLabel => 'Fus orar';
+
+  @override
+  String profileLocalTimeTimezoneHelp(String productName) {
+    return 'Alege fusul orar pe care $productName îl folosește pentru a calcula decalajul tău UTC pentru ora locală din profil.';
+  }
+
+  @override
+  String get profileLocalTimeSearchTimezones => 'Caută fusuri orare';
+
+  @override
+  String get profileLocalTimeNotSet => 'Nesetat';
+
+  @override
+  String profileLocalTimePrivacyNote(
+    String timezoneIdentifierExample,
+    String productName,
+  ) {
+    return 'Când alegi să partajezi ora locală din profil, ceilalți utilizatori vor vedea doar decalajul tău UTC actual. Nu vor vedea identificatorul exact al fusului orar, cum ar fi $timezoneIdentifierExample. $productName stochează acest identificator doar pentru ca decalajul să se poată actualiza automat atunci când se schimbă ora de vară.';
+  }
+
+  @override
+  String get profileLocalTimePrivacyEveryone => 'Toată lumea';
+
+  @override
+  String get profileLocalTimePrivacyEveryoneDesc =>
+      'Permite oricui îți poate vedea profilul complet să-ți vadă ora locală';
+
+  @override
+  String get profileLocalTimePrivacyFriends => 'Prieteni';
+
+  @override
+  String get profileLocalTimePrivacyFriendsDesc =>
+      'Permite-le prietenilor să vadă ora ta locală';
+
+  @override
+  String get profileLocalTimePrivacyCommunityMembers => 'Membrii comunității';
+
+  @override
+  String get profileLocalTimePrivacyCommunityMembersDesc =>
+      'Permite membrilor din comunitățile în care te afli să vadă ora ta locală';
+
+  @override
+  String get userProfileSameTimeAsYou => 'Același fus orar ca al tău';
+
+  @override
+  String userProfileTimeAheadOfYou(String duration) {
+    return 'cu $duration înaintea ta';
+  }
+
+  @override
+  String userProfileTimeBehindYou(String duration) {
+    return 'cu $duration în urma ta';
+  }
+
+  @override
+  String userProfileTimezoneDurationHoursMinutes(int hours, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours ore',
+      one: '1 oră',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minute',
+      one: '1 minut',
+    );
+    return '$_temp0 $_temp1';
+  }
+
+  @override
+  String userProfileTimezoneDurationHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours ore',
+      one: '1 oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String userProfileTimezoneDurationMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minute',
+      one: '1 minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get userProfileCopyUsername => 'Copiază numele de utilizator';
+
+  @override
+  String get userProfileCopyUserId => 'Copiază ID-ul utilizatorului';
+
+  @override
+  String get userProfileViewMainProfile => 'Vizualizați profilul principal';
+
+  @override
+  String get userProfileViewCommunityProfile => 'Vezi profilul comunității';
+
+  @override
+  String get userProfileBlockUser => 'Blochează utilizatorul';
+
+  @override
+  String get userProfileUnblockUser => 'Deblochează utilizatorul';
+
+  @override
+  String get userProfileRemoveFriend => 'Elimină prietenul';
+
+  @override
+  String get userProfileBlockConfirmTitle => 'Blochează utilizatorul';
+
+  @override
+  String userProfileBlockConfirmDescription(String username) {
+    return 'Ești sigur că vrei să blochezi $username?';
+  }
+
+  @override
+  String get userProfileUnblockConfirmTitle => 'Deblochează utilizatorul';
+
+  @override
+  String userProfileUnblockConfirmDescription(String username) {
+    return 'Ești sigur că vrei să deblochezi $username?';
+  }
+
+  @override
+  String get userProfileRemoveFriendConfirmTitle => 'Elimină prietenul';
+
+  @override
+  String userProfileRemoveFriendConfirmDescription(String username) {
+    return 'Ești sigur că vrei să-l/s-o elimini pe $username din lista de prieteni?';
+  }
+
+  @override
+  String get userProfileFailedSaveNote => 'Nu am reușit să salvez nota';
+
+  @override
+  String get userProfileChangeNickname => 'Schimbă pseudonimul';
+
+  @override
+  String get userProfileKick => 'Elimină';
+
+  @override
+  String get userProfileBan => 'Banează';
+
+  @override
+  String get userProfileTimeout => 'Aplică timeout';
+
+  @override
+  String get userProfileRemoveTimeout => 'Elimină timeoutul';
+
+  @override
+  String get userProfileTransferOwnership => 'Transferă proprietatea';
+
+  @override
+  String get userProfileReportMessage => 'Raportează mesajul';
+
+  @override
+  String get userProfileReportUserProfile => 'Raportează profilul';
+
+  @override
+  String userProfileKickConfirmTitle(String username) {
+    return 'Elimină-l pe $username?';
+  }
+
+  @override
+  String userProfileKickConfirmDescription(String username) {
+    return 'Ești sigur că vrei să-l dai afară pe $username? Se poate alătura din nou cu o invitație nouă.';
+  }
+
+  @override
+  String get userProfileRemoveTimeoutConfirmTitle => 'Elimini temporizarea?';
+
+  @override
+  String userProfileRemoveTimeoutConfirmDescription(String username) {
+    return 'Eliminarea temporizării îi va permite lui $username să trimită din nou mesaje, să reacționeze și să se alăture canalelor vocale.';
+  }
+
+  @override
+  String get userProfileTransferConfirmTitle => 'Transferi proprietatea?';
+
+  @override
+  String userProfileTransferConfirmDescription(String username) {
+    return 'Transferiți proprietatea acestei comunități către $username? Acest lucru este ireversibil și veți pierde toate privilegiile de proprietar.';
+  }
+
+  @override
+  String userProfileBanSheetTitle(String username) {
+    return 'Interzice $username';
+  }
+
+  @override
+  String get userProfileBanDurationLabel => 'Durată interdicție';
+
+  @override
+  String get userProfileBanCustomSecondsLabel =>
+      'Durată personalizată (secunde)';
+
+  @override
+  String userProfileBanCustomSecondsHelper(int min, int max) {
+    return 'Orice valoare de la $min la $max secunde';
+  }
+
+  @override
+  String get userProfileBanDeleteHistoryLabel => 'Șterge istoricul mesajelor';
+
+  @override
+  String get userProfileBanDeleteNone => 'Nu șterge nimic';
+
+  @override
+  String get userProfileBanDelete24h => 'Ultimele 24 de ore';
+
+  @override
+  String get userProfileBanDelete7d => 'Ultimele 7 zile';
+
+  @override
+  String get userProfileBanReasonLabel => 'Motiv (opțional)';
+
+  @override
+  String get userProfileBanReasonHint => 'Introdu un motiv pentru interdicție';
+
+  @override
+  String get userProfileBanSubmit => 'Banează membrul';
+
+  @override
+  String userProfileTimeoutSheetTitle(String username) {
+    return 'Excludere temporară $username';
+  }
+
+  @override
+  String get userProfileTimeoutDurationLabel => 'Durata timeoutului';
+
+  @override
+  String get userProfileTimeoutSubmit => 'Elimină membru din comunitate';
+
+  @override
+  String get userProfileNicknameLabel => 'Pseudonim';
+
+  @override
+  String get userProfileNicknameHint => 'Introdu un pseudonim';
+
+  @override
+  String get userProfileNicknameSave => 'Salvează';
+
+  @override
+  String userProfileKickSuccess(String username) {
+    return 'L-ai eliminat pe $username';
+  }
+
+  @override
+  String userProfileBanSuccess(String username) {
+    return 'L-ai banat pe $username';
+  }
+
+  @override
+  String userProfileTimeoutSuccess(String username) {
+    return 'L-ai eliminat temporar pe $username';
+  }
+
+  @override
+  String userProfileRemoveTimeoutSuccess(String username) {
+    return 'Ați eliminat temporizarea pentru $username';
+  }
+
+  @override
+  String get userProfileNicknameSuccess => 'Pseudonim actualizat';
+
+  @override
+  String get userProfileTransferSuccess => 'Proprietate transferată';
+
+  @override
+  String get durationPermanent => 'Permanent';
+
+  @override
+  String get duration60Seconds => '60 de secunde';
+
+  @override
+  String get duration5Minutes => '5 minute';
+
+  @override
+  String get duration10Minutes => '10 minute';
+
+  @override
+  String get duration1Hour => '1 oră';
+
+  @override
+  String get duration12Hours => '12 ore';
+
+  @override
+  String get duration1Day => '1 zi';
+
+  @override
+  String get duration3Days => '3 zile';
+
+  @override
+  String get duration5Days => '5 zile';
+
+  @override
+  String get duration1Week => '1 săptămână';
+
+  @override
+  String get duration2Weeks => '2 săptămâni';
+
+  @override
+  String get duration1Month => '1 lună';
+
+  @override
+  String get durationCustom => 'Personalizat…';
+
+  @override
+  String typingIndicatorOne(String name) {
+    return '$name scrie...';
+  }
+
+  @override
+  String typingIndicatorTwo(String name1, String name2) {
+    return '$name1 și $name2 scriu...';
+  }
+
+  @override
+  String typingIndicatorThree(String name1, String name2, String name3) {
+    return '$name1, $name2 și $name3 scriu...';
+  }
+
+  @override
+  String get typingIndicatorMultiple => 'Mai multe persoane scriu...';
+
+  @override
+  String get typingIndicatorHandful =>
+      'Câțiva luptători de tastatură se adună...';
+
+  @override
+  String get typingIndicatorSymphony => 'Se tastează...';
+
+  @override
+  String get typingIndicatorFiesta => 'E o nebunie de tastat aici';
+
+  @override
+  String get typingIndicatorApocalypse => 'Uau, e o apocalipsă a tastatului';
+
+  @override
+  String systemJoinGladYoureHere(String username) {
+    return 'Ne bucurăm că ești aici, $username!';
+  }
+
+  @override
+  String systemJoinWelcomeMakeYourselfAtHome(String username) {
+    return 'Bun venit, $username! Fă-te comod.';
+  }
+
+  @override
+  String systemJoinHelloNiceToHaveYouHere(String username) {
+    return 'Salut, $username! Ne bucurăm să te avem alături.';
+  }
+
+  @override
+  String systemJoinHelloJumpInWheneverYoureReady(String username) {
+    return 'Salut, $username! Intră în conversație oricând ești gata.';
+  }
+
+  @override
+  String systemJoinHeyGreatToSeeYouHere(String username) {
+    return 'Salut, $username, mă bucur să te văd aici!';
+  }
+
+  @override
+  String systemJoinHeyThereHopeYouEnjoyYourStay(String username) {
+    return 'Salut, $username! Sperăm să te simți bine aici.';
+  }
+
+  @override
+  String systemJoinHeyWelcomeAboard(String username) {
+    return 'Salut, $username, bine ai venit!';
+  }
+
+  @override
+  String systemJoinGladYouMadeIt(String username) {
+    return 'Ne bucurăm că ai ajuns, $username!';
+  }
+
+  @override
+  String systemJoinWelcomeIn(String username) {
+    return 'Bine ai venit, $username!';
+  }
+
+  @override
+  String systemJoinWelcome(String username) {
+    return 'Bun venit, $username!';
+  }
+
+  @override
+  String systemJoinWelcomeWereGladYoureHere(String username) {
+    return 'Bun venit, $username! Ne bucurăm că ești alături de noi.';
+  }
+
+  @override
+  String systemJoinWelcomeHopeYouEnjoyYourTimeHere(String username) {
+    return 'Bun venit, $username! Sperăm să te simți bine aici.';
+  }
+
+  @override
+  String systemJoinWelcomeYourNextConversationStartsHere(String username) {
+    return 'Bun venit, $username! Următoarea ta conversație începe aici.';
+  }
+
+  @override
+  String systemJoinWelcomeWereHappyToHaveYouHere(String username) {
+    return 'Bun venit, $username. Ne bucurăm să te avem alături.';
+  }
+
+  @override
+  String systemJoinGreatToSeeYouWelcomeIn(String username) {
+    return 'Ne bucurăm să te vedem, $username! Bine ai venit.';
+  }
+
+  @override
+  String systemJoinYoureHereGoodToHaveYouWithUs(String username) {
+    return 'Ești aici, $username! Ne bucurăm că ești alături de noi.';
+  }
+
+  @override
+  String systemJoinYouveArrivedLetsGetStarted(String username) {
+    return 'Ai ajuns, $username! Să începem.';
+  }
+
+  @override
+  String get relativeTimeShortNow => 'acum';
+
+  @override
+  String relativeTimeShortMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min',
+      one: '1 min',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeShortHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '${count}h',
+      one: '1h',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeShortDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '${count}z',
+      one: '1 zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeShortMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count luni',
+      one: '1 lună',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeShortYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ani',
+      one: '1 an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkedDevicesTitle => 'Dispozitivele mele';
+
+  @override
+  String get linkedDevicesDescription =>
+      'Vezi toate dispozitivele conectate la contul tău. Revocare sesiunile pe care nu le recunoști.';
+
+  @override
+  String get linkedDevicesCurrentDevice => 'Dispozitiv curent';
+
+  @override
+  String get linkedDevicesOtherDevices => 'Alte dispozitive';
+
+  @override
+  String get linkedDevicesEnterSelection => 'Intră în modul de selecție';
+
+  @override
+  String get linkedDevicesExitSelection => 'Ieși din modul de selecție';
+
+  @override
+  String get linkedDevicesSelectAll => 'Selectează tot';
+
+  @override
+  String get linkedDevicesClearSelection => 'Anulează selecția';
+
+  @override
+  String get linkedDevicesRevokeTooltip => 'Revocă dispozitivul';
+
+  @override
+  String get linkedDevicesSignOutAll =>
+      'Deconectează-te de pe toate celelalte dispozitive';
+
+  @override
+  String linkedDevicesSignOutN(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deconectează $count dispozitive',
+      one: 'Deconectează 1 dispozitiv',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String linkedDevicesSignOutSheetTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deconectează $count dispozitive',
+      one: 'Deconectează 1 dispozitiv',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkedDevicesSignOutAllSheetTitle =>
+      'Deconectează-te de pe toate celelalte dispozitive';
+
+  @override
+  String linkedDevicesSignOutSheetDescription(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Aceasta va deconecta dispozitivele selectate din contul tău. Va trebui să te conectezi din nou pe acele dispozitive.',
+      one:
+          'Aceasta va deconecta dispozitivul selectat din contul tău. Va trebui să te conectezi din nou pe acel dispozitiv.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkedDevicesSignOutAllSheetDescription =>
+      'Aceasta va deconecta dispozitivele selectate din contul tău. Va trebui să te autentifici din nou pe acele dispozitive.';
+
+  @override
+  String get linkedDevicesSignOutConfirm => 'Continuă';
+
+  @override
+  String get linkedDevicesLogoutDisclaimer =>
+      'Va trebui să vă autentificați din nou pe toate dispozitivele pe care ați fost deconectat';
+
+  @override
+  String get linkedDevicesLoadErrorTitle => 'Eroare de rețea';
+
+  @override
+  String get linkedDevicesLoadErrorDescription =>
+      'Întâmpinăm probleme la conectarea la continuumul spațiu-timp. Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String linkedDevicesRevokeSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dispozitive revocate',
+      one: 'Dispozitiv revocat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkedDevicesRevokeError =>
+      'Nu am putut să te deconectezi. Încearcă din nou.';
+
+  @override
+  String get linkedDevicesUnknownOs => 'Sistem de operare necunoscut';
+
+  @override
+  String get linkedDevicesUnknownPlatform => 'Platform necunoscută';
+
+  @override
+  String get linkedDevicesViewDetails => 'Vezi detalii';
+
+  @override
+  String get linkedDevicesDetailsTitle => 'Detalii dispozitiv';
+
+  @override
+  String get linkedDevicesDetailsDevice => 'Dispozitiv';
+
+  @override
+  String get linkedDevicesDetailsClient => 'Client';
+
+  @override
+  String get linkedDevicesDetailsLocation => 'Locație';
+
+  @override
+  String get linkedDevicesDetailsIp => 'Adresa IP';
+
+  @override
+  String get linkedDevicesDetailsLastUsed => 'Ultima utilizare';
+
+  @override
+  String get linkedDevicesCurrentSession => 'Sesiunea curentă';
+
+  @override
+  String get linkedDevicesUnknown => 'Necunoscut';
+
+  @override
+  String slowmodeLabel(String duration) {
+    return '$duration mod lent';
+  }
+
+  @override
+  String get slowmodeTooltipActive =>
+      'Ești în modul lent. Te rugăm să aștepți înainte de a trimite alt mesaj.';
+
+  @override
+  String get slowmodeTooltipImmune => 'Modul lent este activat, dar ești imun.';
+
+  @override
+  String get slowmodeStatusEnabled => 'Modul lent este activat';
+
+  @override
+  String slowmodeStatusActive(String remaining) {
+    return 'Modul lent este activ ($remaining)';
+  }
+
+  @override
+  String slowmodeTooltipSetImmune(String durationLabel) {
+    return 'Modul lent este setat la $durationLabel, dar ești exceptat.';
+  }
+
+  @override
+  String slowmodeTooltipSetWait(String durationLabel) {
+    return 'Modul lent este setat la $durationLabel. Așteaptă înainte de a trimite un alt mesaj.';
+  }
+
+  @override
+  String slowmodeTooltipSetChannel(String durationLabel) {
+    return 'Modul lent este setat la $durationLabel pentru acest canal.';
+  }
+
+  @override
+  String get channelNoSendPermissionHint =>
+      'Nu poți trimite mesaje pe acest canal.';
+
+  @override
+  String systemDmComposerBarrier(String productName) {
+    return 'Anunțuri de sistem de la personalul $productName. Nu poți răspunde aici.';
+  }
+
+  @override
+  String get channelComposerBarrierGuildSendDisabled =>
+      'Mesageria este întreruptă temporar în această comunitate.';
+
+  @override
+  String get channelComposerBarrierTimedOut =>
+      'Ești în timeout. Mesajele, reacțiile și vocea sunt suspendate până la expirarea timeoutului.';
+
+  @override
+  String get channelComposerBarrierUnclaimedAccount =>
+      'Trebuie să-ți revendici contul pentru a trimite mesaje în această comunitate.';
+
+  @override
+  String get channelComposerBarrierUnverifiedEmail =>
+      'Trebuie să-ți verifici adresa de e-mail pentru a trimite mesaje în această comunitate.';
+
+  @override
+  String get channelComposerBarrierAccountTooNew =>
+      'Contul tău este prea nou pentru a trimite mesaje în această comunitate.';
+
+  @override
+  String get channelComposerBarrierNotMemberLongEnough =>
+      'Nu ești membru al acestei comunități de suficient timp pentru a trimite mesaje.';
+
+  @override
+  String get channelComposerBarrierVerifyEmail => 'Verifică adresa de e-mail';
+
+  @override
+  String get accountLimitedNotice =>
+      'Trimiterea de mesaje este în pauză pentru contul tău. Uită-te în e-mail: te așteaptă un pas rapid ca să poți continua.';
+
+  @override
+  String get messagingPausedTextDidNotGoThrough => 'SMS-ul meu nu a ajuns';
+
+  @override
+  String messagingPausedHelpBody(String supportEmail) {
+    return 'Scrie la $supportEmail și cineva din echipă îți va verifica contul. Poți și să răspunzi la e-mailul pe care ți l-am trimis.';
+  }
+
+  @override
+  String get messagingPausedHelpCountryLabel => 'Țara în care te afli';
+
+  @override
+  String get messagingPausedHelpCopyDetails => 'Copiază detaliile';
+
+  @override
+  String get messagingPausedHelpEmailSupport => 'Scrie echipei de suport';
+
+  @override
+  String messagingPausedHelpAccountIdLine(String accountId) {
+    return 'ID cont: $accountId';
+  }
+
+  @override
+  String messagingPausedHelpUsernameLine(String username) {
+    return 'Nume de utilizator: $username';
+  }
+
+  @override
+  String messagingPausedHelpAccountCreatedLine(String createdAt) {
+    return 'Cont creat: $createdAt';
+  }
+
+  @override
+  String messagingPausedHelpCountryLine(String country) {
+    return 'Țară: $country';
+  }
+
+  @override
+  String get chatAttachmentPayloadTooLarge =>
+      'Fișierele sunt prea mari pentru a fi trimise împreună';
+
+  @override
+  String get chatAttachmentDropToUpload =>
+      'Eliberează fișierele pentru a le încărca';
+
+  @override
+  String get chatAttachmentDropToSend =>
+      'Eliberează fișierele pentru a le trimite acum';
+
+  @override
+  String get voiceMessageTitle => 'Mesaj vocal';
+
+  @override
+  String get voiceMessageHoldHint =>
+      'Ține apăsat pentru a înregistra. Trage spre coș pentru a șterge, glisează în sus pentru a bloca sau eliberează pentru a trimite.';
+
+  @override
+  String get voiceMessageDiscard => 'Renunță la mesajul vocal';
+
+  @override
+  String get voiceMessageSend => 'Trimite mesaj vocal';
+
+  @override
+  String get voiceMessageMicPermissionDenied =>
+      'Nu se poate începe înregistrarea. Permite accesul la microfon.';
+
+  @override
+  String get voiceMessageMicInUse =>
+      'Părăsește apelul vocal pentru a înregistra un mesaj vocal.';
+
+  @override
+  String get voiceMessageRecordingFailed =>
+      'Înregistrarea a eșuat. Încearcă din nou.';
+
+  @override
+  String get voiceMessageSendFailed =>
+      'Nu s-a putut trimite mesajul vocal. Încearcă din nou.';
+
+  @override
+  String get voiceMessagePlay => 'Redă';
+
+  @override
+  String get voiceMessagePause => 'Pauză';
+
+  @override
+  String get voiceMessageSeekForward => 'Derulează înainte';
+
+  @override
+  String get voiceMessageSeekBackward => 'Derulează înapoi';
+
+  @override
+  String get chatAttachmentEditTitle => 'Editează atașamentul';
+
+  @override
+  String get chatAttachmentFilenameLabel => 'Nume fișier';
+
+  @override
+  String get chatAttachmentDescriptionLabel => 'Descriere';
+
+  @override
+  String get chatAttachmentDescriptionHint => 'Text alternativ opțional';
+
+  @override
+  String get chatAttachmentSpoilerLabel => 'Marchează ca spoiler';
+
+  @override
+  String get chatAttachmentRemove => 'Elimină atașamentul';
+
+  @override
+  String get chatAttachmentDownload => 'Descarcă';
+
+  @override
+  String get chatAttachmentDownloadedToast => 'Salvat în fotografii';
+
+  @override
+  String get chatAttachmentDownloadFailedToast =>
+      'Nu s-a putut descărca atașamentul';
+
+  @override
+  String get chatAttachmentExpiredTooltip => 'Atașament expirat';
+
+  @override
+  String chatTextualPreviewExpandLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extinde ($count rânduri)',
+      one: 'Extinde ($count rând)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatTextualPreviewCollapseLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Restrânge ($count rânduri)',
+      one: 'Restrânge ($count rând)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatTextualPreviewExpandRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extinde ($count rânduri)',
+      one: 'Extinde ($count rând)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatTextualPreviewCollapseRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Restrânge ($count rânduri)',
+      one: 'Restrânge ($count rând)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatTextualPreviewRemainingLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '... ($count linii rămase)',
+      one: '... ($count linie rămasă)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatTextualPreviewRemainingRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '... ($count rânduri rămase)',
+      one: '... ($count rând rămas)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chatTextualPreviewViewWholeFile => 'Vezi fișierul complet';
+
+  @override
+  String get chatTextualPreviewChangeLanguage => 'Schimbă limba';
+
+  @override
+  String get chatTextualPreviewSearchLanguage => 'Caută limbă…';
+
+  @override
+  String get chatTextualPreviewSyntaxHighlighting => 'Evidențierea sintaxei';
+
+  @override
+  String get chatTextualPreviewNoLanguagesFound => 'Nu s-au găsit rezultate';
+
+  @override
+  String get chatTextualPreviewMoreOptions => 'Mai multe opțiuni';
+
+  @override
+  String get chatTextualPreviewWrapText => 'Încadrează textul';
+
+  @override
+  String chatTextualPreviewSizeError(int previewLimitKb) {
+    return 'Fișierul este prea mare pentru previzualizare (limită $previewLimitKb KB).';
+  }
+
+  @override
+  String get chatTextualPreviewLoadError =>
+      'Nu se poate încărca previzualizarea.';
+
+  @override
+  String get chatTextualPreviewLanguagePlaintext => 'Text simplu';
+
+  @override
+  String get chatTextualPreviewCopy => 'Copiază';
+
+  @override
+  String get chatAttachmentSourceGallery => 'Galerie';
+
+  @override
+  String get chatAttachmentSourceCamera => 'Cameră';
+
+  @override
+  String get chatAttachmentSourceBrowse => 'Răsfoiește fișiere';
+
+  @override
+  String get chatAttachmentSpoiler => 'Spoiler';
+
+  @override
+  String get chatMediaSpoilerOverlayLabel => 'SPOILER';
+
+  @override
+  String get chatMediaSpoilerRevealLabel => 'Dezvăluie spoilerul';
+
+  @override
+  String get matureMediaRevealButton => 'Arată';
+
+  @override
+  String get matureMediaRevealHint => 'Dă clic pentru a afișa';
+
+  @override
+  String get matureContentTitle => 'Conținut matur';
+
+  @override
+  String get matureCommunityTitle => 'Comunitate pentru adulți';
+
+  @override
+  String get matureCategoryTitle => 'Categorie pentru adulți';
+
+  @override
+  String get matureChannelTitle => 'Canal pentru adulți';
+
+  @override
+  String get communityContentWarningTitle => 'Avertisment conținut comunitate';
+
+  @override
+  String get categoryContentWarningTitle => 'Avertisment conținut categorie';
+
+  @override
+  String get channelContentWarningTitle => 'Avertisment conținut canal';
+
+  @override
+  String get defaultContentWarningBody => 'Acest conținut este sensibil.';
+
+  @override
+  String get matureCommunityBody =>
+      'Această comunitate este marcată pentru conținut matur și poate conține materiale care ar putea fi nepotrivite pentru unii utilizatori.';
+
+  @override
+  String get matureCategoryBody =>
+      'Această categorie este marcată pentru conținut matur și poate conține materiale care ar putea fi nepotrivite pentru unii utilizatori.';
+
+  @override
+  String get matureChannelBody =>
+      'Acest canal este marcat pentru conținut matur și poate conține materiale care ar putea fi nepotrivite pentru unii utilizatori.';
+
+  @override
+  String get matureVoiceChannelBody =>
+      'Acest canal vocal este marcat ca având conținut matur și poate conține materiale nepotrivite pentru unii utilizatori.';
+
+  @override
+  String get matureLinkChannelBody =>
+      'Acest canal de linkuri este marcat ca având conținut matur și poate deschide materiale care ar putea fi nepotrivite pentru unii utilizatori.';
+
+  @override
+  String get matureCommunityUnavailableBody =>
+      'Această comunitate pentru adulți nu este disponibilă pentru contul tău.';
+
+  @override
+  String get matureCategoryUnavailableBody =>
+      'Această categorie pentru adulți nu este disponibilă pentru contul tău.';
+
+  @override
+  String get matureChannelUnavailableBody =>
+      'Acest canal pentru adulți nu este disponibil pentru contul tău.';
+
+  @override
+  String get matureContentProceedButton => 'Continuă';
+
+  @override
+  String get matureContentUnderstandButton => 'Am înțeles';
+
+  @override
+  String get matureContentOpenLinkButton => 'Deschide linkul';
+
+  @override
+  String get sensitiveContentFriendDmLabel => 'Mesaje directe de la prieteni';
+
+  @override
+  String get sensitiveContentNonFriendDmLabel => 'Mesaje directe de la alții';
+
+  @override
+  String get sensitiveContentGuildLabel => 'Mesaje în canalele comunității';
+
+  @override
+  String get sensitiveContentFilterShow => 'Afișare';
+
+  @override
+  String get sensitiveContentFilterBlur => 'Estompare';
+
+  @override
+  String get sensitiveContentFilterBlock => 'Blochează';
+
+  @override
+  String get sensitiveContentResetButton => 'Resetare';
+
+  @override
+  String get sensitiveContentSaveButton => 'Salvează';
+
+  @override
+  String chatUploadingAttachmentsSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fișiere',
+      one: '1 fișier',
+    );
+    return 'Se încarcă $_temp0';
+  }
+
+  @override
+  String chatAttachmentExpiresOn(String date) {
+    return 'Expiră la $date';
+  }
+
+  @override
+  String chatAttachmentExpiresBetween(String start, String end) {
+    return 'Expiră între $start și $end';
+  }
+
+  @override
+  String get connectionsTitle => 'Conexiuni';
+
+  @override
+  String connectionsDescription(String productName) {
+    return 'Conectează conturi și domenii externe la profilul tău $productName. Conexiunile verificate vor fi afișate pe profilul tău pentru ca alții să le vadă.';
+  }
+
+  @override
+  String get connectionsEmptyTitle => 'Încă nicio conexiune';
+
+  @override
+  String get connectionsEmptyDescriptionBluesky =>
+      'Conectează-ți contul Bluesky sau verifică proprietatea domeniului pentru a le afișa pe profilul tău.';
+
+  @override
+  String get connectionsEmptyDescriptionDomainOnly =>
+      'Verifică proprietatea domeniului pentru a-l afișa pe profilul tău.';
+
+  @override
+  String get connectionsAddBluesky => 'Bluesky';
+
+  @override
+  String get connectionsAddDomain => 'Domeniu';
+
+  @override
+  String get connectionsAddBlueskyAriaLabel => 'Adaugă conexiune Bluesky';
+
+  @override
+  String get connectionsAddDomainAriaLabel => 'Adaugă conexiune domeniu';
+
+  @override
+  String get connectionEdit => 'Editează';
+
+  @override
+  String get connectionRemove => 'Elimină';
+
+  @override
+  String get connectionVerifiedLabel => 'Această conexiune a fost verificată.';
+
+  @override
+  String get connectionUnverifiedLabel =>
+      'Această conexiune nu a fost verificată.';
+
+  @override
+  String get connectionAddTitle => 'Adaugă o conexiune';
+
+  @override
+  String get connectionTypeLabel => 'Tip de conexiune';
+
+  @override
+  String get connectionHandleLabel => 'Nume de utilizator';
+
+  @override
+  String get connectionDomainLabel => 'Domeniu';
+
+  @override
+  String get connectionHandlePlaceholder => 'utilizator.bsky.social';
+
+  @override
+  String get connectionDomainPlaceholder => 'exemplu.ro';
+
+  @override
+  String get connectionAlreadyExists => 'Ai deja această conexiune.';
+
+  @override
+  String get connectionConnectBluesky => 'Conectează-te cu Bluesky';
+
+  @override
+  String get connectionContinue => 'Continuă';
+
+  @override
+  String get connectionVerifyTitle => 'Verifică conexiunea';
+
+  @override
+  String get connectionVerifyInstructions =>
+      'Folosește înregistrarea de mai jos pentru a dovedi proprietatea asupra domeniului.';
+
+  @override
+  String get connectionDnsRecordTitle => 'Înregistrare DNS TXT';
+
+  @override
+  String get connectionDnsHostLabel => 'Gazdă';
+
+  @override
+  String get connectionDnsValueLabel => 'Valoare';
+
+  @override
+  String get connectionCopyHost => 'Copiază gazda';
+
+  @override
+  String get connectionCopyValue => 'Copiază valoarea';
+
+  @override
+  String get connectionCopied => 'Copiat!';
+
+  @override
+  String get connectionTokenFileTitle => 'Publică fișierul token';
+
+  @override
+  String get connectionTokenFileDescription =>
+      'Descarcă **fluxer-verification** și plasează-l în folderul **.well-known** pentru a valida domeniul.';
+
+  @override
+  String get connectionTokenFileDownload => 'Descarcă fluxer-verification';
+
+  @override
+  String connectionTokenFileMeta(String dnsUrl) {
+    return 'Fișierul conține tokenul de verificare pe care îl vom prelua de la **$dnsUrl**.';
+  }
+
+  @override
+  String get connectionSaveTokenDialogTitle => 'Salvează fluxer-verificare';
+
+  @override
+  String get connectionVerifyButton => 'Verifică';
+
+  @override
+  String get connectionBack => 'Înapoi';
+
+  @override
+  String get connectionEditTitle => 'Editează conexiunea';
+
+  @override
+  String get connectionEditDescription =>
+      'Alege cine poate vedea această conexiune pe profilul tău.';
+
+  @override
+  String get connectionVisibilityEveryone => 'Toată lumea';
+
+  @override
+  String get connectionVisibilityEveryoneDesc =>
+      'Permite oricui să vadă această conexiune pe profilul tău';
+
+  @override
+  String get connectionVisibilityFriends => 'Prieteni';
+
+  @override
+  String get connectionVisibilityFriendsDesc =>
+      'Permite-le prietenilor să vadă această conexiune';
+
+  @override
+  String get connectionVisibilityCommunityMembers => 'Membrii comunității';
+
+  @override
+  String get connectionVisibilityCommunityMembersDesc =>
+      'Permite membrilor din comunitățile în care te afli să vadă această conexiune';
+
+  @override
+  String get connectionRemoveTitle => 'Elimină conexiunea';
+
+  @override
+  String get connectionRemoveDescription =>
+      'Ești sigur că vrei să elimini această conexiune? Această acțiune nu poate fi anulată.';
+
+  @override
+  String get connectionRemoveConfirm => 'Elimină';
+
+  @override
+  String get connectionsLoadError => 'Nu s-au putut încărca conexiunile';
+
+  @override
+  String get connectionsReorderError => 'Nu s-a putut actualiza ordinea';
+
+  @override
+  String get connectionInitiateFailed =>
+      'Nu am putut începe verificarea. Încearcă din nou.';
+
+  @override
+  String get connectionVerifyFailed =>
+      'Nu am putut verifica. Verifică înregistrarea DNS și încearcă din nou.';
+
+  @override
+  String get connectionBlueskyAuthorizeFailed =>
+      'Nu am putut începe autorizarea Bluesky.';
+
+  @override
+  String get connectionUpdateFailed => 'Nu s-a putut actualiza conexiunea';
+
+  @override
+  String get connectionRemoveFailed => 'Nu am putut elimina conexiunea';
+
+  @override
+  String get connectionTokenSavedToast => 'Fluxer-verification salvat';
+
+  @override
+  String get connectionTokenSaveFailedToast => 'Nu am putut salva fișierul';
+
+  @override
+  String get connectionEnterHandle => 'Introdu un nume de utilizator Bluesky.';
+
+  @override
+  String get connectionEnterDomain => 'Introdu un domeniu.';
+
+  @override
+  String get lookAndFeelThemeSectionTitle => 'Temă';
+
+  @override
+  String get lookAndFeelThemeSectionDescription =>
+      'Alege între aspectul întunecat, cărbune sau luminos.';
+
+  @override
+  String get lookAndFeelHdrSectionTitle => 'Gamă dinamică înaltă';
+
+  @override
+  String get lookAndFeelHdrSectionDescription =>
+      'Controlează cum sunt afișate imaginile HDR pe monitoarele compatibile HDR.';
+
+  @override
+  String get lookAndFeelHdrFullName => 'Gamă dinamică completă';
+
+  @override
+  String get lookAndFeelHdrFullDescription =>
+      'Afișează imaginile HDR la luminozitate și gamă cromatică complete.';
+
+  @override
+  String get lookAndFeelHdrStandardName => 'Gamă standard';
+
+  @override
+  String get lookAndFeelHdrStandardDescription =>
+      'Mapează imaginile HDR la un interval standard, reducând luminozitatea maximă.';
+
+  @override
+  String get lookAndFeelHdrDisplayModeLabel => 'Mod de afișare HDR';
+
+  @override
+  String get lookAndFeelThemeDark => 'Temă întunecată';
+
+  @override
+  String get lookAndFeelThemeDarkLegacy => 'Temă întunecată (veche)';
+
+  @override
+  String get lookAndFeelThemeCoal => 'Temă cărbune';
+
+  @override
+  String get lookAndFeelThemeLight => 'Temă luminoasă';
+
+  @override
+  String get lookAndFeelThemeSystem => 'Temă de sistem';
+
+  @override
+  String get lookAndFeelSyncThemeAcrossDevicesLabel =>
+      'Sincronizează tema pe toate dispozitivele';
+
+  @override
+  String get lookAndFeelSyncThemeAcrossDevicesDescription =>
+      'Când este activată, modificările temei se vor sincroniza pe toate dispozitivele tale. Când este dezactivată, acest dispozitiv va folosi propria setare de temă.';
+
+  @override
+  String get lookAndFeelSyncThemeAcrossDevicesSystemDescription =>
+      'Tema sistemului dezactivează automat sincronizarea pentru a urmări preferința sistemului tău pe acest dispozitiv.';
+
+  @override
+  String get lookAndFeelThemeSyncFailed =>
+      'Nu am putut sincroniza tema în contul tău. Te rugăm să încerci din nou.';
+
+  @override
+  String get lookAndFeelThemeColorsTitle => 'Culorile temei';
+
+  @override
+  String get lookAndFeelThemeColorsConfigureDescription =>
+      'Personalizează culorile individuale ale temei pe acest dispozitiv.';
+
+  @override
+  String lookAndFeelThemeColorsEditingMode(String mode) {
+    return 'Editezi $mode';
+  }
+
+  @override
+  String get lookAndFeelThemeColorsSyncSectionTitle =>
+      'Sincronizare cu Theme Studio';
+
+  @override
+  String get lookAndFeelThemeColorsSyncFromStudioLabel =>
+      'Folosește culorile din Theme Studio';
+
+  @override
+  String get lookAndFeelThemeColorsSyncFromStudioDescription =>
+      'Când este activată, modificările de culoare din Theme Studio de pe desktop se aplică pe acest dispozitiv. Când este dezactivată, acest dispozitiv își păstrează propriile culori.';
+
+  @override
+  String get lookAndFeelThemeColorsSyncToStudioLabel =>
+      'Trimite modificările de culoare către Theme Studio';
+
+  @override
+  String get lookAndFeelThemeColorsSyncToStudioDescription =>
+      'Când este activată, culorile pe care le modifici aici se sincronizează cu Theme Studio pe celelalte dispozitive ale tale. Când este dezactivată, Theme Studio de pe desktop își păstrează propriile culori.';
+
+  @override
+  String get lookAndFeelThemeColorsSyncFromStudioOffBanner =>
+      'Modificările de culoare din Theme Studio de pe desktop nu se vor aplica pe acest dispozitiv.';
+
+  @override
+  String get lookAndFeelThemeColorsEssentialSectionTitle => 'Culori esențiale';
+
+  @override
+  String get lookAndFeelThemeColorsChatBackgroundWallpaperNote =>
+      'Dacă ai setat un fundal pentru chat, nu vei vedea această culoare.';
+
+  @override
+  String lookAndFeelThemeColorsResetForMode(String mode) {
+    return 'Resetează toate culorile pentru $mode';
+  }
+
+  @override
+  String get lookAndFeelThemeColorsResetConfirmTitle =>
+      'Resetezi culorile temei?';
+
+  @override
+  String lookAndFeelThemeColorsResetConfirmBody(String mode) {
+    return 'Această acțiune elimină culorile personalizate pentru $mode de pe acest dispozitiv.';
+  }
+
+  @override
+  String get lookAndFeelThemeColorsGroupBrandButtons => 'Brand și butoane';
+
+  @override
+  String get lookAndFeelThemeColorsGroupChatSurfaces => 'Chat și mesaje';
+
+  @override
+  String get lookAndFeelThemeColorsGroupSidebars => 'Bare laterale și navigare';
+
+  @override
+  String get lookAndFeelThemeColorsGroupText => 'Text';
+
+  @override
+  String get lookAndFeelThemeColorsGroupHeaders => 'Antete';
+
+  @override
+  String get lookAndFeelThemeColorsGroupStatus => 'Stare';
+
+  @override
+  String get lookAndFeelThemeColorsGroupEmbedsMarkup =>
+      'Încorporări și mențiuni';
+
+  @override
+  String get lookAndFeelThemeColorsGroupAccentsAlerts => 'Accente și alerte';
+
+  @override
+  String get lookAndFeelThemeColorsGroupControls => 'Suprafețe și controale';
+
+  @override
+  String get lookAndFeelChatFontScalingTitle => 'Scalare font chat';
+
+  @override
+  String get lookAndFeelChatFontScalingDescription =>
+      'Ajustează dimensiunea fontului în zona de chat.';
+
+  @override
+  String get lookAndFeelChatFontSizeLabel => 'Dimensiune font chat';
+
+  @override
+  String get lookAndFeelAppZoomTitle => 'Nivel de zoom al aplicației';
+
+  @override
+  String get lookAndFeelAppZoomDescription =>
+      'Ajustează nivelul de zoom al aplicației.';
+
+  @override
+  String get lookAndFeelChatWallpaperTitle => 'Fundal chat';
+
+  @override
+  String get lookAndFeelChatWallpaperDescription =>
+      'Alege un fundal pentru conversație. Acesta va rămâne pe acest dispozitiv.';
+
+  @override
+  String get lookAndFeelChatWallpaperLocalOnlyTooltip =>
+      'Această setare rămâne pe acest dispozitiv';
+
+  @override
+  String get lookAndFeelChatWallpaperLocalOnlyToast =>
+      'Imaginea de fundal a conversației este salvată doar pe acest dispozitiv și nu se sincronizează cu alte dispozitive.';
+
+  @override
+  String get lookAndFeelChatWallpaperDefaultLabel => 'Implicit';
+
+  @override
+  String get lookAndFeelChatWallpaperCustomLabel => 'Imagine personalizată';
+
+  @override
+  String get lookAndFeelChatWallpaperStarfieldLabel => 'Câmp stelar';
+
+  @override
+  String lookAndFeelChatWallpaperColorLabel(String id) {
+    return 'Culoare $id';
+  }
+
+  @override
+  String lookAndFeelChatWallpaperGradientLabel(String id) {
+    return 'Gradient $id';
+  }
+
+  @override
+  String get lookAndFeelChatWallpaperDimLabel => 'Estompare fundal';
+
+  @override
+  String get lookAndFeelChatWallpaperPickFailed =>
+      'Nu am putut seta acea imagine ca fundal.';
+
+  @override
+  String get lookAndFeelMessagesSectionTitle => 'Mesaje';
+
+  @override
+  String get lookAndFeelMessagesSectionDescription =>
+      'Alege cum sunt afișate mesajele în canalele de chat.';
+
+  @override
+  String get lookAndFeelMessageGroupSpacingLabel =>
+      'Spațiu între grupurile de mesaje';
+
+  @override
+  String lookAndFeelMessageGroupSpacingValue(int spacing) {
+    return '${spacing}px';
+  }
+
+  @override
+  String get lookAndFeelMessageDisplayModeLabel => 'Mod de afișare a mesajelor';
+
+  @override
+  String get lookAndFeelMessageDisplayComfyName => 'Confortabil';
+
+  @override
+  String get lookAndFeelMessageDisplayComfyDescription =>
+      'Aspect spațios, cu o separare vizuală clară între mesaje.';
+
+  @override
+  String get lookAndFeelMessageDisplayDenseName => 'Dens';
+
+  @override
+  String get lookAndFeelMessageDisplayDenseDescription =>
+      'Maximizează mesajele vizibile cu spațiere minimă.';
+
+  @override
+  String get lookAndFeelHideUserAvatarsLabel =>
+      'Ascunde avatarele utilizatorilor';
+
+  @override
+  String get lookAndFeelInterfaceTitle => 'Interfață';
+
+  @override
+  String get lookAndFeelInterfaceDescription =>
+      'Personalizează elementele și comportamentele interfeței.';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorsTitle =>
+      'Indicatori de tastare în lista de canale';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorsDescription =>
+      'Alege cum apar indicatorii de tastare în lista de canale atunci când cineva tastează într-un canal.';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorAvatarsName =>
+      'Indicator de tastare + avatare';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorAvatarsDescription =>
+      'Afișează indicatorul de tastare cu avatare de utilizator în lista de canale';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorOnlyName =>
+      'Doar indicatorul de tastare';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorOnlyDescription =>
+      'Afișează doar indicatorul de tastare, fără avatare';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorHiddenName => 'Ascuns';
+
+  @override
+  String get lookAndFeelChannelTypingIndicatorHiddenDescription =>
+      'Nu afișa indicatorii de tastare în lista de canale';
+
+  @override
+  String get lookAndFeelShowSelectedChannelTypingIndicatorLabel =>
+      'Afișează tastarea în canalul selectat';
+
+  @override
+  String get lookAndFeelShowSelectedChannelTypingIndicatorDescription =>
+      'Când este dezactivat (implicit), indicatorii de tastare nu vor apărea în canalul pe care îl vizualizezi în prezent.';
+
+  @override
+  String get lookAndFeelTypingIndicatorPreviewChannelName => 'general';
+
+  @override
+  String get lookAndFeelKeyboardHintsTitle => 'Indicații de tastatură';
+
+  @override
+  String get lookAndFeelKeyboardHintsDescription =>
+      'Controlează dacă indiciile pentru scurtăturile de la tastatură apar în sfaturile de instrumente.';
+
+  @override
+  String get lookAndFeelHideKeyboardHintsLabel =>
+      'Ascunde indiciile tastaturii în sfaturi';
+
+  @override
+  String get lookAndFeelHideKeyboardHintsDescription =>
+      'Când este activată, insignele de scurtătură sunt ascunse în ferestrele pop-up de ajutor.';
+
+  @override
+  String get lookAndFeelGuildSidebarTitle => 'Bară laterală a comunității';
+
+  @override
+  String get lookAndFeelGuildSidebarDescription =>
+      'Configurează cum afișează bara laterală a comunității mesajele directe.';
+
+  @override
+  String guildUnavailableOutageTooltip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count comunități sunt temporar indisponibile din cauza unei defecțiuni a condensatorului de flux.',
+      one:
+          '1 comunitate este temporar indisponibilă din cauza unei defecțiuni a condensatorului de flux.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communityTemporarilyUnavailable =>
+      'Comunitatea este temporar indisponibilă';
+
+  @override
+  String get guildUnavailableDescription =>
+      'Ceva nu a mers bine. Lucrăm la remedierea problemei.';
+
+  @override
+  String get guildNotFoundTitle =>
+      'Aceasta nu este comunitatea pe care o cauți.';
+
+  @override
+  String get guildNotFoundDescription =>
+      'Comunitatea pe care o cauți ar fi putut fi ștearsă sau este posibil să nu ai acces la ea.';
+
+  @override
+  String guildStaffOnlyAccessibleNagbar(
+    String communityName,
+    String productName,
+  ) {
+    return '$communityName este accesibilă momentan doar membrilor echipei $productName';
+  }
+
+  @override
+  String get guildNavbarTemporarilyUnavailable => 'indisponibil temporar';
+
+  @override
+  String get lookAndFeelCollapseDMsLabel => 'Restrânge DM-urile în dosar';
+
+  @override
+  String lookAndFeelCollapseDMsDescription(String productName) {
+    return 'Când este activată, mesajele directe necitite din bara laterală a serverului sunt restrânse într-un folder pe butonul $productName. Apăsați butonul $productName când sunteți pe pagina Mesaje directe pentru a extinde sau restrânge folderul.';
+  }
+
+  @override
+  String get lookAndFeelOpenCommunitiesToLastChannelLabel =>
+      'Deschide comunitățile la ultimul canal';
+
+  @override
+  String get lookAndFeelOpenCommunitiesToLastChannelDescription =>
+      'Când atingi o comunitate, ajungi direct la ultimul canal pe care l-ai vizualizat acolo. Glisează spre dreapta ca să vezi lista de canale.';
+
+  @override
+  String get lookAndFeelChannelListSectionTitle => 'Listă canale';
+
+  @override
+  String get lookAndFeelChannelListSectionDescription =>
+      'Controlează comportamentul indicatorului de mesaje necitite pentru canalele puse pe silențios din listele de canale.';
+
+  @override
+  String get lookAndFeelShowFadedUnreadOnMutedChannelsLabel =>
+      'Afișează indicatorul de mesaje necitite pe canalele puse pe silențios';
+
+  @override
+  String get lookAndFeelShowFadedUnreadOnMutedChannelsDescription =>
+      'Când este activat, canalele dezactivate afișează un indicator estompat pentru mesajele necitite în partea stângă. Mențiunile apar în continuare, indiferent de această setare.';
+
+  @override
+  String get lookAndFeelActiveNowSectionTitle => 'Activi acum';
+
+  @override
+  String get lookAndFeelActiveNowSectionDescription =>
+      'Controlează cum apare „Activ acum” în aplicație.';
+
+  @override
+  String get lookAndFeelShowActiveNowLabel =>
+      'Afișează „Activ acum” pe ecranul principal';
+
+  @override
+  String get lookAndFeelShowActiveNowDescription =>
+      'Afișează „Activ acum” pe ecranul principal pentru a vedea prietenii activi în apeluri vocale. Vei vedea o previzualizare, contextul canalului, cine este deja acolo și o modalitate rapidă de a te alătura.';
+
+  @override
+  String get lookAndFeelFavoritesSectionTitle => 'Favorite';
+
+  @override
+  String get lookAndFeelFavoritesSectionDescription =>
+      'Controlează vizibilitatea elementelor favorite în întreaga aplicație.';
+
+  @override
+  String get lookAndFeelEnableFavoritesLabel => 'Activează favoritele';
+
+  @override
+  String get lookAndFeelEnableFavoritesDescription =>
+      'Când este activată, poți marca canalele ca favorite și acestea vor apărea în secțiunea Favorite. Când este dezactivată, toate elementele UI legate de favorite (butoane, elemente de meniu) vor fi ascunse. Favoritele tale existente vor fi păstrate.';
+
+  @override
+  String get favoritesTitle => 'Favorite';
+
+  @override
+  String get favoritesEmptyTitle => 'Nicio favorită încă';
+
+  @override
+  String get favoritesEmptyDescription =>
+      'Marchează canalele din antetul conversației pentru a le păstra aici.';
+
+  @override
+  String get favoritesWelcomeTitle => 'Bun venit la favorite';
+
+  @override
+  String get favoritesWelcomeDescription =>
+      'Spațiul tău personal pentru acces rapid la canalele, DM-urile și grupurile tale preferate. Apasă pe steluța de lângă orice canal pentru a-l adăuga aici.';
+
+  @override
+  String get favoritesWelcomeTip =>
+      'Nu e pentru tine? O poți dezactiva oricând.';
+
+  @override
+  String get favoritesDisableButton => 'Dezactivează favoritele';
+
+  @override
+  String get favoritesAddedToast => 'Adăugat la favorite';
+
+  @override
+  String get favoritesRemovedToast => 'Eliminat din favorite';
+
+  @override
+  String get favoritesHiddenToast => 'Favoritele au fost ascunse';
+
+  @override
+  String get favoritesMute => 'Pune favoritele pe silențios';
+
+  @override
+  String get favoritesUnmute => 'Scoate favoritele de pe silențios';
+
+  @override
+  String get favoritesHeaderMenu => 'Meniu favorite';
+
+  @override
+  String get favoritesCreateCategory => 'Creează categorie';
+
+  @override
+  String get favoritesCategoryNameLabel => 'Numele categoriei';
+
+  @override
+  String get favoritesHideMutedChannels => 'Ascunde canalele puse pe silențios';
+
+  @override
+  String get favoritesShowMutedChannels =>
+      'Afișează canalele puse pe silențios';
+
+  @override
+  String get favoritesSetNickname => 'Setare poreclă';
+
+  @override
+  String get favoritesNicknameLabel => 'Pseudonim';
+
+  @override
+  String get favoritesSaveNickname => 'Salvează porecla';
+
+  @override
+  String get favoritesMoveToCategory => 'Mută în categorie';
+
+  @override
+  String get favoritesUncategorized => 'Necategorizat';
+
+  @override
+  String get favoritesOtherCategory => 'Altele';
+
+  @override
+  String get favoritesRemoveFromFavorites => 'Elimină din favorite';
+
+  @override
+  String get favoritesAddToFavorites => 'Adaugă la favorite';
+
+  @override
+  String get favoritesAddToSavedMedia => 'Adaugă la media salvată';
+
+  @override
+  String get favoritesRemoveFromSavedMedia => 'Elimină din media salvată';
+
+  @override
+  String get favoritesAddToUrlOnlyGifFavorites =>
+      'Adaugă la favoritele GIF salvate doar prin URL';
+
+  @override
+  String get favoritesRemoveFromUrlOnlyGifFavorites =>
+      'Elimină din favoritele GIF salvate doar prin URL';
+
+  @override
+  String get savedMediaAddTitle => 'Adaugă la media salvată';
+
+  @override
+  String get savedMediaFormNameLabel => 'Nume';
+
+  @override
+  String get savedMediaFormNameHint => 'Media mea grozavă';
+
+  @override
+  String get savedMediaFormAltTextLabel => 'Text alternativ';
+
+  @override
+  String get savedMediaFormAltTextHint => 'Descrie media';
+
+  @override
+  String get savedMediaFormTagsLabel => 'Etichete';
+
+  @override
+  String get savedMediaFormTagsHint => 'amuzant, reacție, muncă';
+
+  @override
+  String get savedMediaSaveError => 'Nu am putut actualiza media salvată.';
+
+  @override
+  String get savedMediaNameRequired => 'Numele este obligatoriu.';
+
+  @override
+  String get gifFavoriteFirstTimeTitle =>
+      'Cum să salvăm GIF-urile tale favorite?';
+
+  @override
+  String get gifFavoriteFirstTimeDescription =>
+      'Poți salva GIF-urile marcate ca favorite doar cu URL sau le poți încărca în media salvată. Alege opțiunea care se potrivește modului în care le folosești. O poți schimba oricând în Setări > Avansat > Media.';
+
+  @override
+  String get gifFavoriteFirstTimeUrlOnlyDetails =>
+      'Favorite doar cu URL (implicit): sincronizate pe toate dispozitivele tale, fără încărcare, nu se contorizează la spațiul de stocare media. Media originală poate dispărea dacă gazda o elimină.';
+
+  @override
+  String get gifFavoriteFirstTimeSavedMediaDetails =>
+      'Media salvate: încărcate, etichetabile, căutabile și persistente, dar se contorizează la limita de media salvată.';
+
+  @override
+  String get gifFavoriteFirstTimeHint => 'Vom întreba o singură dată.';
+
+  @override
+  String get gifFavoriteFirstTimeUseUrlOnly =>
+      'Folosește doar URL (recomandat)';
+
+  @override
+  String get gifFavoriteFirstTimeUseSavedMedia => 'Folosește media salvată';
+
+  @override
+  String get favoritesHideConfirmTitle => 'Ascunde favoritele';
+
+  @override
+  String get favoritesHideConfirmDescription =>
+      'Aceasta va ascunde toate elementele UI legate de favorite, inclusiv butoanele și elementele de meniu. Favoritele tale existente vor fi păstrate și pot fi reactivate oricând din Setări > Avansat > Aspect.';
+
+  @override
+  String get favoritesDirectMessageSubtitle => 'Mesaj direct';
+
+  @override
+  String get messagesMediaDisplayGroupTitle => 'Afișare';
+
+  @override
+  String get messagesMediaDisplayGroupDescription =>
+      'Controlează cum sunt afișate mesajele, mediile și alt conținut.';
+
+  @override
+  String get messagesMediaMediaGroupTitle => 'Media';
+
+  @override
+  String get messagesMediaMediaGroupDescription =>
+      'Personalizează preferințele pentru dimensiunea media și butoanele.';
+
+  @override
+  String get messagesMediaInputGroupTitle => 'Introducere';
+
+  @override
+  String get messagesMediaInputGroupDescription =>
+      'Personalizează setările de introducere a mesajelor.';
+
+  @override
+  String get messagesMediaSidebarGroupTitle => 'Bară laterală';
+
+  @override
+  String get messagesMediaSidebarGroupDescription =>
+      'Configurează cum este afișată bara laterală a comunității.';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsLabel =>
+      'Ascunde implicit canalele puse pe silențios';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsDescription =>
+      'Ascunde automat canalele dezactivate în bara laterală când te alături unor comunități noi';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsEnableTitle =>
+      'Ascunzi implicit canalele puse pe silențios?';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsEnableDescription =>
+      'În comunitățile noi la care te alături, canalele puse pe silențios vor fi ascunse automat. Vrei să aplici această setare și comunităților tale existente?';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsDisableTitle =>
+      'Nu mai ascunzi canalele puse pe silențios în mod implicit?';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsDisableDescription =>
+      'În comunitățile noi la care te alături, canalele puse pe silențios nu vor mai fi ascunse automat. Vrei să afișezi canalele puse pe silențios și în comunitățile tale existente?';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsApplyAllAction =>
+      'Aplică tuturor comunităților';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsShowAllAction =>
+      'Afișează în toate comunitățile';
+
+  @override
+  String get messagesMediaDefaultHideMutedChannelsNewOnlyAction =>
+      'Doar comunități noi';
+
+  @override
+  String get messagesMediaDisplaySectionTitle => 'Afișare media';
+
+  @override
+  String get messagesMediaDisplaySectionDescription =>
+      'Controlează cum sunt afișate imaginile, videoclipurile și alte fișiere media. Toate fișierele media sunt redimensionate și convertite. Fișierele extrem de mari care nu pot fi comprimate într-o previzualizare nu vor fi încorporate indiferent de aceste setări.';
+
+  @override
+  String get messagesMediaDisplayInlineEmbedLabel =>
+      'Când sunt postate ca linkuri în chat';
+
+  @override
+  String messagesMediaDisplayInlineAttachmentLabel(String productName) {
+    return 'Când este încărcat direct în $productName';
+  }
+
+  @override
+  String get messagesMediaLinkPreviewsSectionTitle => 'Previzualizări linkuri';
+
+  @override
+  String get messagesMediaLinkPreviewsSectionDescription =>
+      'Controlează cum sunt previzualizate linkurile către site-uri web în chat';
+
+  @override
+  String get messagesMediaLinkPreviewsToggleLabel =>
+      'Afișează încorporări și previzualizări pentru linkuri web';
+
+  @override
+  String get messagesMediaReactionsSectionTitle => 'Reacții';
+
+  @override
+  String get messagesMediaReactionsSectionDescription =>
+      'Configurează reacțiile emoji la mesaje';
+
+  @override
+  String get messagesMediaReactionsToggleLabel =>
+      'Afișează reacțiile emoji la mesaje';
+
+  @override
+  String get messagesMediaSpoilersSectionTitle => 'Conținut spoiler';
+
+  @override
+  String get messagesMediaSpoilersSectionDescription =>
+      'Controlează cum este afișat conținutul spoiler';
+
+  @override
+  String get messagesMediaSpoilersRadioLabel => 'Afișează conținutul spoiler';
+
+  @override
+  String get messagesMediaSpoilersOnClickName => 'La clic';
+
+  @override
+  String get messagesMediaSpoilersOnClickDescription =>
+      'Afișează conținutul spoiler la clic';
+
+  @override
+  String get messagesMediaSpoilersIfModeratorName =>
+      'În canalele pe care le moderez';
+
+  @override
+  String get messagesMediaSpoilersIfModeratorDescription =>
+      'Afișează întotdeauna conținutul spoiler în canalele unde ai permisiunea „Gestionare mesaje”';
+
+  @override
+  String get messagesMediaSpoilersAlwaysName => 'Întotdeauna';
+
+  @override
+  String get messagesMediaSpoilersAlwaysDescription =>
+      'Afișează întotdeauna conținutul spoiler';
+
+  @override
+  String get messagesMediaSizeSectionTitle => 'Preferințe dimensiune media';
+
+  @override
+  String get messagesMediaSizeSectionDescription =>
+      'Personalizează dimensiunea maximă de afișare pentru conținutul media încorporat și atașat. Dimensiunile mai mici folosesc mai puțin spațiu pe ecran, în timp ce dimensiunile mai mari arată mai multe detalii.';
+
+  @override
+  String get messagesMediaSizeEmbedLabel => 'Media din linkuri (încorporări)';
+
+  @override
+  String get messagesMediaSizeAttachmentLabel => 'Fișiere atașate încărcate';
+
+  @override
+  String get messagesMediaSizeCompactName => 'Compact (400x300)';
+
+  @override
+  String get messagesMediaSizeCompactDescription => 'Dimensiune media mai mică';
+
+  @override
+  String get messagesMediaSizeComfortableName => 'Confortabil (550x400)';
+
+  @override
+  String get messagesMediaSizeComfortableDescription =>
+      'Dimensiune media mai mare, cu mai multe detalii';
+
+  @override
+  String get messagesMediaGifsSectionTitle => 'Comportament GIF';
+
+  @override
+  String get messagesMediaGifsSectionDescription =>
+      'Controlează cum sunt inserate GIF-urile în chat';
+
+  @override
+  String get messagesMediaGifsAutoSendLabel =>
+      'Trimite automat GIF-urile când sunt selectate';
+
+  @override
+  String get messagesMediaCameraUploadsSectionTitle => 'Încărcări cameră';
+
+  @override
+  String get messagesMediaCameraUploadsSectionDescription =>
+      'Alege dacă fotografiile și videoclipurile realizate cu camera din aplicație sunt păstrate pe dispozitivul tău';
+
+  @override
+  String get messagesMediaCameraUploadsSaveToDeviceLabel =>
+      'Salvează pe dispozitiv';
+
+  @override
+  String get messagesMediaAutocompleteSectionTitle =>
+      'Autocompletare expresii (autocompletare cu două puncte)';
+
+  @override
+  String get messagesMediaAutocompleteSectionDescription =>
+      'Controlează ce apare în completarea automată a expresiilor când tastezi două puncte. Personalizează ce sugestii apar pentru a se potrivi preferințelor tale.';
+
+  @override
+  String get messagesMediaAutocompleteDefaultEmojisLabel =>
+      'Afișează emoji implicite în completarea automată a expresiilor';
+
+  @override
+  String get messagesMediaAutocompleteCustomEmojisLabel =>
+      'Afișează emoji personalizate în completarea automată a expresiilor';
+
+  @override
+  String get messagesMediaAutocompleteStickersLabel =>
+      'Afișează stickere în completarea automată a expresiilor';
+
+  @override
+  String get messagesMediaAutocompleteSavedMediaLabel =>
+      'Afișează media salvată în completarea automată a expresiilor';
+
+  @override
+  String get accessibilitySaturationTitle => 'Saturație';
+
+  @override
+  String get accessibilityVisualGroupTitle => 'Vizual';
+
+  @override
+  String get accessibilityAlwaysUnderlineLinksLabel =>
+      'Subliniază mereu linkurile';
+
+  @override
+  String get accessibilityShowAltTextOnImagesLabel =>
+      'Afișează textul alternativ pe imagini';
+
+  @override
+  String get accessibilityShowAltTextOnImagesDescription =>
+      'Afișează textul alternativ sub imagini, atunci când este disponibil.';
+
+  @override
+  String get accessibilityDimStrikethroughTextLabel =>
+      'Estompează textul tăiat';
+
+  @override
+  String get accessibilityDmMessagePreviewGroupTitle =>
+      'Previzualizări mesaje DM';
+
+  @override
+  String get accessibilityDmMessagePreviewModeLabel =>
+      'Mod de previzualizare mesaje DM';
+
+  @override
+  String get accessibilityDmMessagePreviewAllName => 'Toate mesajele';
+
+  @override
+  String get accessibilityDmMessagePreviewAllDescription =>
+      'Afișează previzualizări mesaje pentru toate conversațiile DM';
+
+  @override
+  String get accessibilityDmMessagePreviewUnreadOnlyName =>
+      'Doar DM-uri necitite';
+
+  @override
+  String get accessibilityDmMessagePreviewUnreadOnlyDescription =>
+      'Afișează previzualizările mesajelor doar pentru DM-urile cu mesaje necitite';
+
+  @override
+  String get accessibilityDmMessagePreviewNoneName => 'Niciunul';
+
+  @override
+  String get accessibilityDmMessagePreviewNoneDescription =>
+      'Nu afișa previzualizări ale mesajelor în lista de DM-uri';
+
+  @override
+  String get accessibilityScreenReaderGroupTitle => 'Cititor de ecran';
+
+  @override
+  String accessibilityScreenReaderGroupDescription(String productName) {
+    return 'Controlează cum funcționează $productName cu cititoarele de ecran.';
+  }
+
+  @override
+  String get accessibilityScreenReaderAnnounceNewMessagesLabel =>
+      'Anunță mesajele noi';
+
+  @override
+  String get accessibilityScreenReaderAnnounceNewMessagesDescription =>
+      'Permite cititoarelor de ecran să anunțe mesajele noi pe măsură ce sosesc în canalul deschis. Sunetele de notificare nu sunt afectate.';
+
+  @override
+  String get accessibilityTtsGroupTitle => 'Text în vorbire';
+
+  @override
+  String get accessibilityTtsGroupDescription =>
+      'Alege o viteză pentru textul citit cu voce tare.';
+
+  @override
+  String get accessibilityTtsSpeechPlaybackSpeedLabel =>
+      'Viteza de redare a vorbirii';
+
+  @override
+  String get accessibilityTtsPlaySampleLabel => 'Redă exemplu';
+
+  @override
+  String get accessibilityTtsSilenceSampleLabel => 'Oprește exemplul';
+
+  @override
+  String get accessibilityPreviewButtonLabel => 'Buton de previzualizare';
+
+  @override
+  String accessibilityPreviewLinksMessage(String linkPreviewExampleUrl) {
+    return 'Așa arată previzualizarea linkurilor: $linkPreviewExampleUrl';
+  }
+
+  @override
+  String get accessibilityPreviewUserName => 'Utilizator previzualizare';
+
+  @override
+  String get accessibilityKeyboardGroupTitle => 'Tastatură';
+
+  @override
+  String get accessibilityShowTextareaFocusRingLabel =>
+      'Afișează inelul de focalizare pe zona de text a conversației';
+
+  @override
+  String get accessibilityEscapeExitsKeyboardModeLabel =>
+      'Tasta Esc iese din modul tastatură';
+
+  @override
+  String get accessibilityShowContextMenuShortcutsLabel =>
+      'Afișează comenzile rapide pentru meniul contextual';
+
+  @override
+  String get accessibilityConfirmBeforeStartingCallsLabel =>
+      'Confirmă înainte de a iniția apeluri';
+
+  @override
+  String get accessibilityAnimationGroupTitle => 'Animație';
+
+  @override
+  String get accessibilityReducedMotionActiveNote =>
+      'Mișcarea redusă este activată, așa că animațiile de conținut sunt întrerupte în mod implicit. Le poți activa în continuare pe oricare dintre ele pentru a le menține în redare.';
+
+  @override
+  String get accessibilityPlayAnimatedEmojisLabel => 'Redă emoji animate';
+
+  @override
+  String get accessibilityAutoPlayGifsMobileLabel => 'Redă automat GIF-urile';
+
+  @override
+  String accessibilityAutoPlayGifsDesktopLabel(String productName) {
+    return 'Redă automat GIF-urile când $productName este în prim-plan';
+  }
+
+  @override
+  String get accessibilityPlayingDespiteReducedMotion =>
+      'Se redă în ciuda mișcării reduse.';
+
+  @override
+  String get accessibilityPausedEmojiByReducedMotion =>
+      'Întrerupt din cauza mișcării reduse. Activează pentru a menține emoji-urile animate în redare.';
+
+  @override
+  String get accessibilityPausedGifByReducedMotion =>
+      'Întrerupt din cauza mișcării reduse. Activează pentru a menține GIF-urile în redare.';
+
+  @override
+  String get accessibilityStickerAnimationsTitle => 'Animații pentru stickere';
+
+  @override
+  String get accessibilityStickerAnimationPreferenceLabel =>
+      'Preferință pentru animația stickerelor';
+
+  @override
+  String get accessibilityStickerAlwaysAnimateName => 'Animează întotdeauna';
+
+  @override
+  String get accessibilityStickerAlwaysAnimateDescription =>
+      'Stickerele vor fi întotdeauna animate';
+
+  @override
+  String get accessibilityStickerAnimateOnInteractionName =>
+      'Animează la interacțiune';
+
+  @override
+  String get accessibilityStickerAnimateOnPressDescription =>
+      'Stickerele se vor anima când le apeși';
+
+  @override
+  String get accessibilityStickerAnimateOnHoverDescription =>
+      'Stickerele se vor anima când treci cu mouse-ul peste ele sau interacționezi cu ele';
+
+  @override
+  String get accessibilityStickerNeverAnimateName => 'Nu anima niciodată';
+
+  @override
+  String get accessibilityStickerNeverAnimateDescription =>
+      'Stickerele nu se vor anima niciodată';
+
+  @override
+  String get accessibilityStickersAlwaysDespiteReducedMotion =>
+      'Se animă întotdeauna, în ciuda mișcării reduse.';
+
+  @override
+  String get accessibilityStickersReducedMotionHint =>
+      'Mișcarea redusă limitează animarea autocolantelor la interacțiune. Alegeți „Animați întotdeauna” pentru a anula.';
+
+  @override
+  String get accessibilityStickersDefaultsOnMobile =>
+      'Implicit, se animă la interacțiune pe mobil pentru a conserva bateria.';
+
+  @override
+  String get accessibilityMotionGroupTitle => 'Mișcare';
+
+  @override
+  String get accessibilitySyncReducedMotionWithSystemLabel =>
+      'Sincronizează setarea de reducere a mișcării cu sistemul';
+
+  @override
+  String get accessibilitySyncReducedMotionWithSystemDescription =>
+      'Folosește preferința de mișcare redusă a sistemului acestui dispozitiv sau personalizeaz-o mai jos.';
+
+  @override
+  String get accessibilityReducedMotionOverrideLabel => 'Reducerea mișcării';
+
+  @override
+  String get accessibilityReducedMotionOverrideSyncedDescription =>
+      'Dezactivează animațiile și tranzițiile. Controlate în prezent de setările sistemului tău.';
+
+  @override
+  String get accessibilityReducedMotionOverrideManualDescription =>
+      'Dezactivează animațiile și tranzițiile în toată aplicația.';
+
+  @override
+  String get accessibilityReducedMotionAnimationTabHint =>
+      'Emoji-urile animate, GIF-urile și stickerele rămân sub controlul tău în fila Animație.';
+
+  @override
+  String get accessibilityConfirmStartCallTitle => 'Începe apelul?';
+
+  @override
+  String get accessibilityConfirmStartCallDescription =>
+      'Ești sigur că vrei să începi acest apel?';
+
+  @override
+  String get accessibilityConfirmStartCallConfirmLabel => 'Inițiază apelul';
+
+  @override
+  String get accessibilityTtsSampleDescription =>
+      'Ascultă un exemplu de propoziție rostită cu viteza aleasă.';
+
+  @override
+  String get accessibilityTtsSampleText =>
+      'Doc, sunt din viitor. Am venit aici într-o mașină a timpului pe care ai inventat-o. Acum, am nevoie de ajutorul tău ca să mă întorc în anul 1985.';
+
+  @override
+  String get accessibilityTtsUnsupportedDescription =>
+      'Sinteza vocală nu este disponibilă pe acest dispozitiv.';
+
+  @override
+  String get accessibilityTtsPlaybackFailedDescription =>
+      'Redarea vocală a eșuat. Încearcă din nou sau verifică dacă funcționează ieșirea audio.';
+
+  @override
+  String get ttsSubstitutionUnknownUser => 'utilizator necunoscut';
+
+  @override
+  String get ttsSubstitutionUnknownRole => 'rol necunoscut';
+
+  @override
+  String get ttsSubstitutionUnknownChannel => 'canal necunoscut';
+
+  @override
+  String get ttsSubstitutionCodeBlock => 'bloc de cod';
+
+  @override
+  String get ttsSubstitutionSpoiler => 'spoiler';
+
+  @override
+  String ttsSubstitutionEmoji(String emojiName) {
+    return 'emoji $emojiName';
+  }
+
+  @override
+  String ttsSubstitutionSlashCommand(String commandName) {
+    return 'comanda slash $commandName';
+  }
+
+  @override
+  String ttsAuthorSaid(String authorName, String formatted) {
+    return '$authorName a spus: $formatted';
+  }
+
+  @override
+  String ttsReplyingToSaid(
+    String replyAuthorName,
+    String authorName,
+    String formatted,
+  ) {
+    return 'Ca răspuns la $replyAuthorName, $authorName a spus: $formatted';
+  }
+
+  @override
+  String ttsAuthorDescription(String authorName, String description) {
+    return '$authorName $description';
+  }
+
+  @override
+  String get ttsSentSticker => 'a trimis un sticker';
+
+  @override
+  String get ttsSentAttachment => 'a trimis un atașament';
+
+  @override
+  String ttsSentAttachments(int count) {
+    return 'trimis $count atașamente';
+  }
+
+  @override
+  String get ttsSentEmbed => 'a trimis un conținut încorporat';
+
+  @override
+  String messageScreenReaderAnnouncement(String author, String summary) {
+    return '$author a trimis $summary';
+  }
+
+  @override
+  String get dmListSentAnAttachment => 'A trimis un atașament';
+
+  @override
+  String systemPreviewPinnedMessage(String username) {
+    return '$username a fixat un mesaj pe acest canal.';
+  }
+
+  @override
+  String systemPreviewAddedToGroup(String username, String userName) {
+    return '$username a adăugat pe $userName în grup.';
+  }
+
+  @override
+  String systemPreviewAddedSomeoneToGroup(String username) {
+    return '$username a adăugat pe cineva în grup.';
+  }
+
+  @override
+  String systemPreviewHasLeftGroup(String username) {
+    return '$username a părăsit grupul.';
+  }
+
+  @override
+  String systemPreviewRemovedFromGroup(String username, String userName) {
+    return '$username a eliminat pe $userName din grup.';
+  }
+
+  @override
+  String systemPreviewRemovedSomeoneFromGroup(String username) {
+    return '$username a eliminat pe cineva din grup.';
+  }
+
+  @override
+  String systemPreviewChangedChannelNameTo(String username, String newName) {
+    return '$username a schimbat numele canalului în $newName.';
+  }
+
+  @override
+  String systemPreviewChangedChannelName(String username) {
+    return '$username a schimbat numele canalului.';
+  }
+
+  @override
+  String systemPreviewChangedChannelIcon(String username) {
+    return '$username a schimbat pictograma canalului.';
+  }
+
+  @override
+  String systemPreviewStartedCall(String username) {
+    return '$username a inițiat un apel.';
+  }
+
+  @override
+  String get systemCallJoinTheCall => 'Alătură-te apelului';
+
+  @override
+  String systemCallStartedThatLasted(String username, String duration) {
+    return '$username a început un apel care a durat $duration.';
+  }
+
+  @override
+  String systemCallMissedWithDuration(String username, String duration) {
+    return 'Ai ratat un apel de la $username care a durat $duration.';
+  }
+
+  @override
+  String systemCallMissed(String username) {
+    return 'Ai ratat un apel de la $username.';
+  }
+
+  @override
+  String get systemCallDurationFewSeconds => 'câteva secunde';
+
+  @override
+  String get systemCallDurationMinute => 'un minut';
+
+  @override
+  String get systemCallDurationOneYear => '1 an';
+
+  @override
+  String get systemCallDurationOneMonth => '1 lună';
+
+  @override
+  String get systemCallDurationOneWeek => '1 săptămână';
+
+  @override
+  String get systemCallDurationOneDay => '1 zi';
+
+  @override
+  String get systemCallDurationOneHour => '1 oră';
+
+  @override
+  String systemCallDurationYears(int count) {
+    return '$count ani';
+  }
+
+  @override
+  String systemCallDurationMonths(int count) {
+    return '$count luni';
+  }
+
+  @override
+  String systemCallDurationWeeks(int count) {
+    return '$count săptămâni';
+  }
+
+  @override
+  String systemCallDurationDays(int count) {
+    return '$count zile';
+  }
+
+  @override
+  String systemCallDurationHours(int count) {
+    return '$count ore';
+  }
+
+  @override
+  String systemCallDurationMinutes(int count) {
+    return '$count minute';
+  }
+
+  @override
+  String systemUnknownMessage(String productName) {
+    return 'Actualizează $productName pentru a vedea acest mesaj.';
+  }
+
+  @override
+  String get voiceConnectionConfirmTitle => 'Confirmare conexiune vocală';
+
+  @override
+  String voiceConnectionConfirmDescription(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Te-ai conectat deja la acest canal vocal de pe $count alte dispozitive. Ce dorești să faci?',
+      one:
+          'Te-ai conectat deja la acest canal vocal de pe 1 alt dispozitiv. Ce dorești să faci?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get voiceConnectionConfirmSwitch => 'Comută la acest dispozitiv';
+
+  @override
+  String get voiceConnectionConfirmJustJoin =>
+      'Doar alătură-te (păstrează celelalte conexiuni)';
+
+  @override
+  String get voiceConnectionConfirmDoNothing =>
+      'Nu face nimic, nu vreau să mă alătur';
+
+  @override
+  String get voiceJoinFailedTitle => 'Nu am putut să te alături la voce';
+
+  @override
+  String get voiceMultiDeviceDisconnectFailed =>
+      'Nu am putut deconecta celelalte dispozitive. Încearcă din nou peste o clipă.';
+
+  @override
+  String get voiceChannelJoin => 'Alătură-te canalului vocal';
+
+  @override
+  String get voiceCallJoin => 'Alătură-te apelului';
+
+  @override
+  String get voiceChannelJoinConnect => 'Conectare la voce';
+
+  @override
+  String get voiceChannelNoConnectPermission =>
+      'Nu ai permisiunea de a te alătura acestui canal vocal';
+
+  @override
+  String get voiceChannelE2eeEncrypted =>
+      'Conținutul microfonului, al camerei și al partajării ecranului este criptat de la un capăt la altul.';
+
+  @override
+  String get voiceCallE2eeEncrypted =>
+      'Conținutul microfonului, al camerei și al partajării ecranului este criptat de la un capăt la altul.';
+
+  @override
+  String get voiceChannelE2eeBroken =>
+      'Criptarea end-to-end nu este disponibilă, deoarece pe acest canal vocal se află un participant incompatibil.';
+
+  @override
+  String get voiceCallE2eeBroken =>
+      'Criptarea end-to-end nu este disponibilă, deoarece în acest apel se află un participant incompatibil.';
+
+  @override
+  String get voiceE2eeUpdateRequired =>
+      'Acest client trebuie actualizat înainte de a vă alătura apelului criptat.';
+
+  @override
+  String get voiceMicPublishFailedStayConnected =>
+      'Nu am putut porni microfonul. Rămâi în apel.';
+
+  @override
+  String get voiceChannelStatusConnecting => 'Se conectează…';
+
+  @override
+  String get voiceParticipantTooltipMobileDevice => 'Dispozitiv mobil';
+
+  @override
+  String get voiceParticipantTooltipDesktopDevice => 'Dispozitiv desktop';
+
+  @override
+  String get voiceParticipantTooltipCommunityMuted =>
+      'Comunitatea a dezactivat sunetul';
+
+  @override
+  String get voiceParticipantTooltipMuted => 'Dezactivat';
+
+  @override
+  String get voiceParticipantTooltipCommunityDeafened =>
+      'Comunitatea a dezactivat microfonul';
+
+  @override
+  String get voiceParticipantTooltipDeafened => 'Sunet dezactivat';
+
+  @override
+  String voiceParticipantTooltipConnection(String connectionId) {
+    return 'Conexiune: $connectionId';
+  }
+
+  @override
+  String voiceChannelParticipantCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participanți',
+      one: '1 participant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get voiceChannelLeave => 'Părăsește';
+
+  @override
+  String get voiceControlMute => 'Dezactivează sunetul';
+
+  @override
+  String get voiceControlUnmute => 'Anulează mutarea';
+
+  @override
+  String get voiceControlDeafen => 'Dezactivează sunetul';
+
+  @override
+  String get voiceControlUndeafen => 'Activează sunetul';
+
+  @override
+  String get voiceControlVideo => 'Video';
+
+  @override
+  String get voiceControlFlipCamera => 'Inversează camera';
+
+  @override
+  String get voiceControlScreenShare => 'Partajare ecran';
+
+  @override
+  String get voiceScreenShareNotificationText => 'Se partajează ecranul.';
+
+  @override
+  String get voiceControlDisconnect => 'Deconectare';
+
+  @override
+  String get voiceInChat => 'În chatul vocal';
+
+  @override
+  String get voiceConnectionFailed => 'Conexiune eșuată';
+
+  @override
+  String get voiceConnectionRetry => 'Încearcă din nou';
+
+  @override
+  String get voiceConnectionDismiss => 'Închide';
+
+  @override
+  String get voiceConnectionDisconnected => 'Deconectat';
+
+  @override
+  String voicePingMs(int currentLatency) {
+    return 'Ping: $currentLatency ms';
+  }
+
+  @override
+  String get voiceMeasuringLatency => 'Se măsoară latența...';
+
+  @override
+  String voiceJumpToChannel(String channelSourceLabel) {
+    return 'Salt la $channelSourceLabel';
+  }
+
+  @override
+  String get shellResizeSidebar => 'Redimensionează bara laterală';
+
+  @override
+  String get voiceConnectionTitle => 'Conexiune vocală';
+
+  @override
+  String get voiceConnectionAdvancedStats => 'Avansat';
+
+  @override
+  String get voiceShowCallAvatars => 'Afișează avatarele apelului';
+
+  @override
+  String get voiceShowConnectionId => 'Afișează ID-ul conexiunii';
+
+  @override
+  String get voiceAudioProcessing => 'Procesare audio';
+
+  @override
+  String get voiceConnectionSessionSection => 'Sesiune';
+
+  @override
+  String get voiceConnectionDurationLabel => 'Durată';
+
+  @override
+  String get voiceConnectionParticipantsLabel => 'Participanți';
+
+  @override
+  String get voiceConnectionNetworkSection => 'Rețea';
+
+  @override
+  String get voiceConnectionPingLabel => 'Ping';
+
+  @override
+  String get voiceConnectionJitterLabel => 'Jitter';
+
+  @override
+  String get voiceConnectionSendLabel => 'Trimite';
+
+  @override
+  String get voiceConnectionReceiveLabel => 'Primit';
+
+  @override
+  String get voiceConnectionUnavailable => '—';
+
+  @override
+  String voiceConnectionDuration(int minutes, int seconds) {
+    return '${minutes}m ${seconds}s';
+  }
+
+  @override
+  String voiceConnectionLatencyMs(int latency) {
+    return '$latency ms';
+  }
+
+  @override
+  String voiceConnectionJitterMs(String jitter) {
+    return '$jitter ms';
+  }
+
+  @override
+  String voiceConnectionBandwidthKbps(String bandwidth) {
+    return '$bandwidth kbps';
+  }
+
+  @override
+  String get userAreaMuteMicrophone => 'Dezactivează microfonul';
+
+  @override
+  String get userAreaUnmuteMicrophone => 'Activează microfonul';
+
+  @override
+  String get userAreaUserSettings => 'Setări utilizator';
+
+  @override
+  String get voiceParticipantMenuViewProfile => 'Vezi profilul';
+
+  @override
+  String get voiceParticipantMenuFocus => 'Focalizează această persoană';
+
+  @override
+  String get voiceParticipantMenuUnfocus => 'Anulează focalizarea';
+
+  @override
+  String get voiceParticipantMenuCommunityMute =>
+      'Dezactivează microfonul în comunitate';
+
+  @override
+  String get voiceParticipantMenuCommunityDeafen =>
+      'Dezactivează sunetul în comunitate';
+
+  @override
+  String get voiceParticipantMenuUserVolume => 'Volum utilizator';
+
+  @override
+  String get voiceParticipantMenuStreamVolume => 'Volum stream';
+
+  @override
+  String get voiceParticipantMenuStopStreaming => 'Oprește streamingul';
+
+  @override
+  String get voiceControlChat => 'Chat';
+
+  @override
+  String get voiceCallViewModeLabel => 'Vizualizare';
+
+  @override
+  String get voiceCallViewModeGrid => 'Grilă';
+
+  @override
+  String get voiceCallViewModeFocus => 'Focalizare';
+
+  @override
+  String get voicePanelSettingsSectionTitle => 'Setări voce';
+
+  @override
+  String get voicePanelUseEarpieceLabel => 'Folosește receptorul';
+
+  @override
+  String get voiceOutputRouteSpeaker => 'Difuzor';
+
+  @override
+  String get voiceOutputRouteEarpiece => 'Receptor';
+
+  @override
+  String get voiceOutputRouteHeadset => 'Căști';
+
+  @override
+  String get voiceChangeAudioOutputLabel => 'Change audio output';
+
+  @override
+  String get voicePanelOnlyShowVideosLabel => 'Afișează doar videoclipuri';
+
+  @override
+  String get voicePanelOnlyShowVideosDescription =>
+      'Afișează doar participanții care au camera pornită.';
+
+  @override
+  String get voicePanelShowOwnCameraLabel => 'Afișează-mi propria cameră';
+
+  @override
+  String get voicePrioritizeSpeakersLabel => 'Prioritizează vorbitorii';
+
+  @override
+  String get voiceTextChatShow => 'Afișează chatul';
+
+  @override
+  String voiceTextChatShowUnread(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesaje necitite',
+      one: '$count mesaj necitit',
+    );
+    return 'Afișează chatul cu $_temp0';
+  }
+
+  @override
+  String get voiceCameraPermissionRequired =>
+      'Este necesară permisiunea camerei pentru video.';
+
+  @override
+  String get voiceErrorScreenShareToggle =>
+      'Nu am putut porni partajarea ecranului. Te rugăm să încerci din nou.';
+
+  @override
+  String get voiceErrorScreenSharePermissionDenied =>
+      'Permisiunea de partajare a ecranului a fost refuzată.';
+
+  @override
+  String get voiceErrorScreenShareUnsupported =>
+      'Partajarea ecranului nu este disponibilă pe acest dispozitiv.';
+
+  @override
+  String get voiceWatchStream => 'Urmărește streamul';
+
+  @override
+  String get voiceStopWatching => 'Oprește vizionarea';
+
+  @override
+  String get voiceStopWatchingCurrentStreamTooltip =>
+      'Nu mai urmări fluxul curent';
+
+  @override
+  String get voiceScreenShareEnterFullscreenTooltip => 'Ecran complet';
+
+  @override
+  String get voiceScreenShareExitFullscreenTooltip =>
+      'Ieși din ecranul complet';
+
+  @override
+  String voiceVideoZoomLevel(String scale) {
+    return 'Zoom $scale';
+  }
+
+  @override
+  String get voiceOwnScreenShareTitle => 'Transmiteți';
+
+  @override
+  String get voiceOwnScreenShareSubtitle =>
+      'Streamul tău este live pentru participanți.';
+
+  @override
+  String get voiceLiveBadge => 'În direct';
+
+  @override
+  String get dmVoiceViewCall => 'Vezi apelul';
+
+  @override
+  String get dmVoiceCallFullScreen => 'Ecran complet';
+
+  @override
+  String get dmVoiceCallFullScreenTooltip => 'Deschide apelul pe tot ecranul';
+
+  @override
+  String get dmVoiceStripStatusConnecting => 'Se conectează…';
+
+  @override
+  String get dmVoiceStripStatusInCall => 'În apel';
+
+  @override
+  String get dmVoiceEmbeddedFallbackTitle => 'Apel vocal';
+
+  @override
+  String get dmVoiceCallBarConnecting => 'Se conectează…';
+
+  @override
+  String get dmVoiceCallBarDirectPrimary => 'Apel direct';
+
+  @override
+  String get dmVoiceCallBarGroupPrimary => 'Apel de grup';
+
+  @override
+  String get dmVoiceCallBarIssueFallback => 'Problem vocal';
+
+  @override
+  String get dmVoiceFullscreenTitle => 'Vocal';
+
+  @override
+  String get voiceCallBarGuildConnectedFallback => 'Conectat la apel';
+
+  @override
+  String get notificationsPageTitle => 'Notificări';
+
+  @override
+  String get notificationsFilterUnreads => 'Necitite';
+
+  @override
+  String get notificationsFilterMentions => 'Mențiuni';
+
+  @override
+  String get notificationsBookmarksTooltip => 'Mesaje salvate';
+
+  @override
+  String get notificationsMentionFilterTooltip => 'Filtrează mențiunile';
+
+  @override
+  String get notificationsMentionFiltersTitle => 'Filtre pentru mențiuni';
+
+  @override
+  String get notificationsMentionIncludeEveryone =>
+      'Include mențiunile @everyone și @here';
+
+  @override
+  String get notificationsMentionIncludeRoles => 'Include mențiunile rolurilor';
+
+  @override
+  String get notificationsMentionIncludeGuilds =>
+      'Include toate mențiunile din comunitate';
+
+  @override
+  String get notificationsNoUnreadTitle => 'Fără mesaje necitite';
+
+  @override
+  String get notificationsNoUnreadBody => 'Ești la zi.';
+
+  @override
+  String get notificationsNoMentionsTitle => 'Fără mențiuni recente';
+
+  @override
+  String get notificationsNoMentionsBody =>
+      'Toate @mențiunile tale vor apărea aici timp de 7 zile.';
+
+  @override
+  String get notificationsMentionsEndTitle => 'Ai ajuns la final';
+
+  @override
+  String get notificationsMentionsEndBody =>
+      'Ai văzut toate mențiunile tale recente. Nu-ți face griji, vor apărea mai multe aici curând.';
+
+  @override
+  String get notificationsJump => 'Salt';
+
+  @override
+  String get notificationsRemoveMentionTooltip => 'Elimină mențiunea';
+
+  @override
+  String get notificationsViewAllUnread => 'Vezi toate mesajele necitite';
+
+  @override
+  String get notificationsMarkAsRead => 'Marchează ca citit';
+
+  @override
+  String get notificationsExpand => 'Extinde';
+
+  @override
+  String get notificationsCollapse => 'Restrânge';
+
+  @override
+  String get notificationsMessageUnavailable =>
+      'Acest mesaj nu a putut fi încărcat.';
+
+  @override
+  String notificationsMentionedYouIn(String author, String place) {
+    return '$author te-a menționat în $place:';
+  }
+
+  @override
+  String notificationsRepliedToYouIn(String author, String place) {
+    return '$author ți-a răspuns în $place:';
+  }
+
+  @override
+  String notificationsMentionedYou(String author) {
+    return '$author te-a menționat:';
+  }
+
+  @override
+  String notificationsRepliedToYou(String author) {
+    return '$author ți-a răspuns:';
+  }
+
+  @override
+  String notificationsMentionPlace(String server, String channel) {
+    return '$server – $channel';
+  }
+
+  @override
+  String get notificationsSendReply => 'Trimite un răspuns';
+
+  @override
+  String get notificationsRecentActivity => 'Activitate recentă';
+
+  @override
+  String get notificationsRemoveNotification => 'Elimină notificarea';
+
+  @override
+  String characterCounterRemaining(int remaining) {
+    return '$remaining caractere rămase';
+  }
+
+  @override
+  String get characterCounterTooLong => 'Mesajul este prea lung';
+
+  @override
+  String characterCounterRemainingPlutoniumUpsell(
+    int remaining,
+    String productName,
+    int premiumMaxLength,
+  ) {
+    return '$remaining caractere rămase. Obține $productName pentru a scrie până la $premiumMaxLength caractere.';
+  }
+
+  @override
+  String get chatMessageFailedToSend => 'Mesaj netrimis';
+
+  @override
+  String get chatMessageFailedToSendTapForOptions =>
+      'Nu am putut trimite mesajul. Atingeți pentru opțiuni.';
+
+  @override
+  String chatSendFailureDmRestricted(String settingsPath) {
+    return 'Mesajul tău nu a putut fi livrat. Acest lucru se întâmplă de obicei deoarece nu împărtășiți o comunitate cu destinatarul sau destinatarul acceptă mesaje directe doar de la prieteni. De asemenea, este posibil să fie necesar să ajustezi propriile setări de confidențialitate pentru mesajele directe în $settingsPath.';
+  }
+
+  @override
+  String get chatSendFailureUnclaimedDm =>
+      'Mesajul tău nu a putut fi livrat. Trebuie să-ți revendici contul pentru a trimite mesaje directe.';
+
+  @override
+  String get chatSendFailureUnclaimedGeneral =>
+      'Mesajul tău nu a putut fi livrat. Trebuie să-ți revendici contul pentru a trimite mesaje.';
+
+  @override
+  String get chatSendFailureContentBlocked =>
+      'Mesajul tău nu a putut fi livrat deoarece a fost semnalat de sistemele noastre de siguranță. Dacă crezi că este o greșeală, te rugăm să contactezi asistența.';
+
+  @override
+  String get chatSendFailureContentBlockedSelfHosted =>
+      'Mesajul tău nu a putut fi livrat deoarece a fost semnalat de sistemele noastre de siguranță. Dacă crezi că este o greșeală, te rugăm să contactezi administratorii acestei instanțe.';
+
+  @override
+  String get chatSendFailureNsfwEmojiSticker =>
+      'Mesajul tău nu a putut fi livrat deoarece conține emoji sau stickere mature, care nu sunt permise în acest context.';
+
+  @override
+  String get chatClientSystemOnlyYouCanSee => 'Doar tu poți vedea acest mesaj.';
+
+  @override
+  String get chatClientSystemDismiss => 'Închide';
+
+  @override
+  String get privacyDashboardCommunicationSection => 'Comunicare';
+
+  @override
+  String get privacyDashboardProfilePrivacySection =>
+      'Confidențialitatea profilului';
+
+  @override
+  String get privacyDashboardFriendsAndDirectMessagesSection =>
+      'Prieteni și mesaje directe';
+
+  @override
+  String get privacyDashboardActivitySharingSection => 'Partajarea activității';
+
+  @override
+  String get privacyDashboardSensitiveContentSection => 'Conținut sensibil';
+
+  @override
+  String get privacyDashboardDataExportSection => 'Exportul datelor';
+
+  @override
+  String get privacyDashboardDataDeletionSection => 'Ștergerea datelor';
+
+  @override
+  String get privacyDashboardProfilePrivacyTitle =>
+      'Cine îți poate vedea profilul complet';
+
+  @override
+  String get privacyDashboardProfilePrivacyAllCommunities =>
+      'Prieteni și toate comunitățile';
+
+  @override
+  String get privacyDashboardProfilePrivacyAllCommunitiesDesc =>
+      'Profilul tău complet este vizibil prietenilor și oricui din comunitățile tale';
+
+  @override
+  String get privacyDashboardProfilePrivacySmallCommunities =>
+      'Doar prietenii și comunitățile mici';
+
+  @override
+  String get privacyDashboardProfilePrivacySmallCommunitiesDesc =>
+      'Profilul tău complet este vizibil pentru prieteni și membrii comunităților tale cu 200 sau mai puțini membri';
+
+  @override
+  String get privacyDashboardProfilePrivacyFriendsOnly => 'Doar prietenii';
+
+  @override
+  String get privacyDashboardProfilePrivacyFriendsOnlyDesc =>
+      'Profilul tău complet este vizibil doar pentru prietenii tăi';
+
+  @override
+  String get privacyDashboardFriendRequestsTitle => 'Cereri de prietenie';
+
+  @override
+  String get privacyDashboardFriendRequestsEveryone => 'Toată lumea';
+
+  @override
+  String get privacyDashboardFriendRequestsFriendsOfFriends =>
+      'Prieteni ai prietenilor';
+
+  @override
+  String get privacyDashboardFriendRequestsCommunityMembers =>
+      'Membrii comunității';
+
+  @override
+  String get privacyDashboardDirectMessagesTitle => 'Mesaje directe';
+
+  @override
+  String get privacyDashboardDirectMessagesMembers =>
+      'Permite mesaje directe de la membrii comunității';
+
+  @override
+  String get privacyDashboardDirectMessagesBots =>
+      'Permite mesaje directe de la boții comunității';
+
+  @override
+  String get privacyDashboardIncomingCallsTitle => 'Apeluri primite';
+
+  @override
+  String get privacyDashboardAllowedCallers => 'Apelanți permiși';
+
+  @override
+  String get privacyDashboardIncomingCallNobodyDesc =>
+      'Blochează toate apelurile primite';
+
+  @override
+  String get privacyDashboardIncomingCallFriendsOnlyDesc =>
+      'Permite doar prietenilor să te sune (recomandat)';
+
+  @override
+  String get privacyDashboardIncomingCallCustomDesc =>
+      'Permite prietenilor plus grupuri suplimentare pe care le alegi';
+
+  @override
+  String get privacyDashboardIncomingCallEveryoneDesc =>
+      'Permite oricui să te sune, chiar și străinilor';
+
+  @override
+  String get privacyDashboardAdditionalGroups => 'Grupuri suplimentare';
+
+  @override
+  String get privacyDashboardRingBehavior => 'Comportament sonerie';
+
+  @override
+  String get privacyDashboardSilentCalls =>
+      'Apeluri silențioase de la toată lumea';
+
+  @override
+  String get privacyDashboardGroupDmTitle =>
+      'Cine te poate adăuga la conversații de grup';
+
+  @override
+  String get privacyDashboardAllowedInvites => 'Invitații permise';
+
+  @override
+  String get privacyDashboardGroupDmNobodyDesc =>
+      'Nu lăsa pe nimeni să te adauge în conversații de grup fără să întrebe';
+
+  @override
+  String get privacyDashboardGroupDmFriendsOnlyDesc =>
+      'Permite doar prietenilor să te adauge fără confirmare (recomandat)';
+
+  @override
+  String get privacyDashboardGroupDmCustomDesc =>
+      'Permite prietenilor și grupurilor suplimentare să te adauge';
+
+  @override
+  String get privacyDashboardGroupDmEveryoneDesc =>
+      'Permite oricui să te adauge în conversații de grup fără să ceară permisiunea';
+
+  @override
+  String get privacyDashboardVoiceActivityTitle =>
+      'Activitate vocală în „Activ acum”';
+
+  @override
+  String get privacyDashboardShareVoiceActivity =>
+      'Partajează activitatea vocală cu prietenii';
+
+  @override
+  String get privacyDashboardVoiceActivityEnableTitle =>
+      'Partajezi activitatea vocală cu toți prietenii?';
+
+  @override
+  String get privacyDashboardVoiceActivityDisableTitle =>
+      'Oprești partajarea activității vocale cu toți prietenii?';
+
+  @override
+  String get privacyDashboardVoiceActivityEnableDesc =>
+      'Ești pe cale să începi să partajezi activitatea vocală cu toți prietenii tăi, inclusiv cu cei viitori. Aceasta trimite o actualizare tuturor și poate fi modificată din nou abia peste 24 de ore.';
+
+  @override
+  String get privacyDashboardVoiceActivityDisableDesc =>
+      'Ești pe cale să nu mai partajezi activitatea vocală cu toți prietenii tăi, inclusiv cu cei viitori. Aceasta trimite o actualizare tuturor și poate fi modificată din nou abia peste 24 de ore.';
+
+  @override
+  String get privacyDashboardVoiceActivityEnableConfirm =>
+      'Da, partajează cu toți prietenii';
+
+  @override
+  String get privacyDashboardVoiceActivityDisableConfirm =>
+      'Da, nu mai partaja';
+
+  @override
+  String privacyDashboardVoiceActivityCooldown(String time) {
+    return 'Disponibil din nou în $time';
+  }
+
+  @override
+  String get privacyDashboardVoiceActivityUpdated =>
+      'Partajarea activității vocale a fost actualizată';
+
+  @override
+  String get privacyDashboardVoiceActivityUpdateFailed =>
+      'Nu s-a putut actualiza acum partajarea activității vocale';
+
+  @override
+  String get privacyDashboardDataExportDesc =>
+      'Creează o arhivă descărcabilă cu datele contului tău, inclusiv mesajele și adresele URL ale atașamentelor. Majoritatea oamenilor vor tot, dar poți restrânge selecția mai jos.';
+
+  @override
+  String get privacyDashboardExportMyData => 'Exportă-mi datele';
+
+  @override
+  String get privacyDashboardDataDeletionDesc =>
+      'Șterge definitiv mesajele pe care le-ai trimis în DM-uri, DM-uri de grup și comunități. Procesul rulează în fundal și vei primi un DM când se finalizează.';
+
+  @override
+  String get privacyDashboardDeleteMyMessages => 'Șterge-mi mesajele';
+
+  @override
+  String get privacyDashboardDmConfirmAllowMembersTitle =>
+      'Permiți mesaje directe de la membrii comunității?';
+
+  @override
+  String get privacyDashboardDmConfirmBlockMembersTitle =>
+      'Blochezi mesajele directe de la membrii comunității?';
+
+  @override
+  String get privacyDashboardDmConfirmAllowBotsTitle =>
+      'Permiți boților să-ți trimită mesaje directe?';
+
+  @override
+  String get privacyDashboardDmConfirmBlockBotsTitle =>
+      'Blochezi mesajele directe de la boți?';
+
+  @override
+  String get privacyDashboardDmConfirmAllowMembersDesc =>
+      'Vrei să permiți și mesajele directe de la membrii comunităților tale existente?';
+
+  @override
+  String get privacyDashboardDmConfirmBlockMembersDesc =>
+      'Vrei să blochezi și mesajele directe de la membrii comunităților tale existente?';
+
+  @override
+  String get privacyDashboardDmConfirmAllowBotsDesc =>
+      'Vrei să permiți și boților din comunitățile tale existente să-ți trimită mesaje directe?';
+
+  @override
+  String get privacyDashboardDmConfirmBlockBotsDesc =>
+      'Vrei să blochezi roboții și din comunitățile tale existente?';
+
+  @override
+  String get privacyDashboardDmConfirmPerCommunityHint =>
+      'Poți schimba și această setare per-comunitate apăsând lung pe numele comunității și selectând Setări de confidențialitate.';
+
+  @override
+  String get privacyDashboardDmConfirmAllowAll =>
+      'Permite pentru toate comunitățile';
+
+  @override
+  String get privacyDashboardDmConfirmBlockAll =>
+      'Blochează pentru toate comunitățile';
+
+  @override
+  String get privacyDashboardDmConfirmSkip => 'Omite acest pas';
+
+  @override
+  String get privacyDashboardDataRequestGoBack => 'Înapoi';
+
+  @override
+  String get privacyDashboardDataRequestExportTitle => 'Exportă-mi datele';
+
+  @override
+  String get privacyDashboardDataRequestDeleteTitle => 'Șterge-mi mesajele';
+
+  @override
+  String get privacyDashboardDataRequestExportSuccess =>
+      'Vom procesa asta cât mai curând posibil. Vei primi un e-mail când arhiva ta este gata.';
+
+  @override
+  String get privacyDashboardDataRequestDeleteSuccess =>
+      'Vom procesa asta cât mai curând posibil. Vei primi un DM de la noi când e gata.';
+
+  @override
+  String get privacyDashboardDataRequestScopeTitle => 'Ce să includem';
+
+  @override
+  String get privacyDashboardDataRequestExportEverything => 'Totul';
+
+  @override
+  String get privacyDashboardDataRequestExportEverythingDesc =>
+      'Exportă fiecare mesaj pe care l-ai trimis vreodată, plus toate setările contului, apartenența la comunități și metadatele.';
+
+  @override
+  String get privacyDashboardDataRequestExportCustom =>
+      'Selecție personalizată';
+
+  @override
+  String get privacyDashboardDataRequestExportCustomDesc =>
+      'Alege ce tipuri de conversații, comunități și interval de timp să incluzi în arhivă.';
+
+  @override
+  String get privacyDashboardDataRequestDeleteSelected => 'Alege ce să incluzi';
+
+  @override
+  String get privacyDashboardDataRequestDeleteSelectedDesc =>
+      'Alege ce tipuri de conversații să ștergi.';
+
+  @override
+  String get privacyDashboardDataRequestDeleteInaccessible =>
+      'Doar locurile la care nu mai am acces';
+
+  @override
+  String get privacyDashboardDataRequestDeleteInaccessibleDesc =>
+      'Șterge doar mesajele din comunitățile și DM-urile de grup pe care le-ai părăsit sau din care ai fost eliminat.';
+
+  @override
+  String get privacyDashboardDataRequestKindsTitle => 'Ce conversații';
+
+  @override
+  String get privacyDashboardDataRequestKindsBody =>
+      'Activează tipurile de conversații pe care vrei să le incluzi.';
+
+  @override
+  String get privacyDashboardDataRequestKindDms => 'DM-uri deschise';
+
+  @override
+  String get privacyDashboardDataRequestKindDmsClosed => 'DM-uri închise';
+
+  @override
+  String get privacyDashboardDataRequestKindGroupDms => 'DM-uri de grup';
+
+  @override
+  String get privacyDashboardDataRequestKindCommunities => 'Comunități';
+
+  @override
+  String get privacyDashboardDataRequestCommunitiesTitle => 'Ce comunități';
+
+  @override
+  String get privacyDashboardDataRequestGuildFilterMode =>
+      'Filtru de comunități';
+
+  @override
+  String get privacyDashboardDataRequestGuildFilterExclude =>
+      'Include tot, cu excepția celor selectate';
+
+  @override
+  String get privacyDashboardDataRequestGuildFilterInclude =>
+      'Doar cele selectate';
+
+  @override
+  String get privacyDashboardDataRequestCommunitiesEmpty =>
+      'Nu ești în nicio comunitate în acest moment.';
+
+  @override
+  String get privacyDashboardDataRequestWhenTitle => 'Interval de timp';
+
+  @override
+  String get privacyDashboardDataRequestDateMode => 'Interval de timp';
+
+  @override
+  String get privacyDashboardDataRequestAllTime => 'Oricând';
+
+  @override
+  String get privacyDashboardDataRequestCustomRange => 'Interval personalizat';
+
+  @override
+  String get privacyDashboardDataRequestStartDate => 'Data de început';
+
+  @override
+  String get privacyDashboardDataRequestEndDate => 'Data de încheiere';
+
+  @override
+  String get privacyDashboardDataRequestDateHelper =>
+      'Lasă oricare câmp necompletat pentru ca acel capăt al intervalului să rămână nelimitat.';
+
+  @override
+  String get privacyDashboardDataRequestNeedInclusion =>
+      'Alege cel puțin un tip de conversație de inclus.';
+
+  @override
+  String get privacyDashboardDataRequestDateRangeError =>
+      'Data de început trebuie să fie anterioară datei de sfârșit.';
+
+  @override
+  String get privacyDashboardDataRequestConfirmTitle =>
+      'Revizuiește și confirmă';
+
+  @override
+  String get privacyDashboardDataRequestExportConfirmEverything =>
+      'Vom crea o arhivă descărcabilă cu toate mesajele pe care le-ai trimis vreodată și te vom anunța prin e-mail când este gata. Linkul de descărcare din acel e-mail expiră după 7 zile.';
+
+  @override
+  String get privacyDashboardDataRequestExportConfirmCustom =>
+      'Vom crea o arhivă descărcabilă care corespunde filtrelor de mai jos și îți vom trimite un e-mail când este gata. Linkul de descărcare din acel e-mail expiră după 7 zile.';
+
+  @override
+  String get privacyDashboardDataRequestDeleteConfirm =>
+      'Șterge definitiv mesajele care corespund filtrelor de mai jos. Această acțiune nu poate fi anulată.';
+
+  @override
+  String get privacyDashboardDataRequestDeleteDanger =>
+      'Nu se mai poate reveni după ce începe. Îți vom trimite un DM când se termină.';
+
+  @override
+  String get privacyDashboardDataRequestRequestExport => 'Solicită exportul';
+
+  @override
+  String get privacyDashboardDataRequestDeleteMessages => 'Șterge mesajele';
+
+  @override
+  String get privacyDashboardDataRequestSummaryScope => 'Domeniu';
+
+  @override
+  String get privacyDashboardDataRequestSummaryConversations => 'Conversații';
+
+  @override
+  String get privacyDashboardDataRequestSummaryCommunities => 'Comunități';
+
+  @override
+  String get privacyDashboardDataRequestSummaryTimeRange => 'Interval de timp';
+
+  @override
+  String get privacyDashboardDataRequestSummaryNone => 'Niciunul';
+
+  @override
+  String privacyDashboardDataRequestSummaryFrom(String start) {
+    return 'De la $start';
+  }
+
+  @override
+  String privacyDashboardDataRequestSummaryUntil(String end) {
+    return 'Până la $end';
+  }
+
+  @override
+  String privacyDashboardDataRequestSummaryBetween(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String privacyDashboardDataRequestSummaryGuildExclude(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comunități',
+      one: '$count comunitate',
+    );
+    return 'Toate, cu excepția $_temp0';
+  }
+
+  @override
+  String privacyDashboardDataRequestSummaryGuildInclude(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comunități',
+      one: '$count comunitate',
+    );
+    return 'Doar $_temp0';
+  }
+
+  @override
+  String get privacyDashboardDataRequestSummaryDmsOpen =>
+      'Mesaje directe deschise';
+
+  @override
+  String get privacyDashboardDataRequestSummaryDmsClosed =>
+      'Mesaje directe închise';
+
+  @override
+  String get privacyDashboardDataRequestSummaryDmsBoth =>
+      'Mesaje directe (deschise și închise)';
+
+  @override
+  String get privacyDashboardDataRequestSummaryGroupDms => 'DM-uri de grup';
+
+  @override
+  String get privacyDashboardDataRequestSummaryCommunitiesIncluded =>
+      'Comunități';
+
+  @override
+  String privacyDashboardDurationHoursMinutes(int hours, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours ore',
+      one: '$hours oră',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minute',
+      one: '$minutes minut',
+    );
+    return '$_temp0 și $_temp1';
+  }
+
+  @override
+  String privacyDashboardDurationHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours ore',
+      one: '$hours oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyDashboardDurationMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minute',
+      one: '$minutes minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyDashboardDurationSeconds(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds secunde',
+      one: '$seconds secundă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDashboardLoadFailed =>
+      'Nu s-au putut încărca setările de confidențialitate';
+
+  @override
+  String get privacyDashboardRetry => 'Reîncercați';
+
+  @override
+  String get privacyDashboardSensitiveContentSaveFailed =>
+      'Nu am putut salva setările pentru conținut sensibil.';
+
+  @override
+  String get privacyDashboardDataRequestFailed =>
+      'Solicitarea nu a putut fi finalizată.';
+
+  @override
+  String get chatMessageDeleteFailed => 'Șterge mesajul eșuat';
+
+  @override
+  String get chatMessageAddReaction => 'Adaugă o reacție';
+
+  @override
+  String get doubleTapReactionHint => 'Atinge de două ori un mesaj pentru a';
+
+  @override
+  String get doubleTapEditHint =>
+      'Atinge de două ori propriul mesaj ca să-l editezi';
+
+  @override
+  String get doubleTapReactionEdit => 'Editează';
+
+  @override
+  String get doubleTapReactionEditTitle => 'Editează implicitul';
+
+  @override
+  String get doubleTapReactionEditSubtitle =>
+      'Alege emoji-ul pentru atingere dublă';
+
+  @override
+  String get messagesMediaGesturesSectionTitle => 'Gesturi';
+
+  @override
+  String get messagesMediaGesturesSectionDescription =>
+      'Configurează atingerea dublă și glisarea pe mesaje.';
+
+  @override
+  String get messagesMediaGesturesReactionLabel => 'Emoji pentru reacție';
+
+  @override
+  String get messagesMediaGesturesReactionDescription =>
+      'Folosit când atingerea dublă este setată să adauge o reacție.';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionLabel =>
+      'Acțiune la atingere dublă';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionReactName =>
+      'Adaugă o reacție';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionReactDescription =>
+      'Adaugă emoji-ul tău implicit pentru atingere dublă ca reacție.';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionEditName => 'Editează mesajul';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionEditDescription =>
+      'Deschide editorul pe mesajele trimise de tine. Celelalte mesaje nu sunt afectate.';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionNoneName => 'Nimic';
+
+  @override
+  String get messagesMediaGesturesDoubleTapActionNoneDescription =>
+      'Atingerea dublă este dezactivată.';
+
+  @override
+  String get messagesMediaGesturesSwipeRightToLeftLabel =>
+      'Glisare de la dreapta la stânga';
+
+  @override
+  String get messagesMediaGesturesSwipeRightToLeftReplyName =>
+      'Glisează pentru a răspunde';
+
+  @override
+  String get messagesMediaGesturesSwipeRightToLeftReplyDescription =>
+      'Glisează un mesaj ca să răspunzi și ține apăsat ca să-ți editezi propriile mesaje.';
+
+  @override
+  String get messagesMediaGesturesSwipeRightToLeftChannelDetailsName =>
+      'Afișează detaliile canalului';
+
+  @override
+  String get messagesMediaGesturesSwipeRightToLeftChannelDetailsDescription =>
+      'Glisează un mesaj sau atinge antetul canalului ca să deschizi detaliile canalului într-un panou lateral.';
+
+  @override
+  String get chatMessageEdit => 'Editează mesajul';
+
+  @override
+  String get chatMessageReply => 'Răspunde';
+
+  @override
+  String get notificationReplyPlaceholder => 'Mesaj';
+
+  @override
+  String get notificationReplyFailed => 'Nu s-a putut trimite răspunsul';
+
+  @override
+  String get chatMessageForward => 'Redirecționează';
+
+  @override
+  String get forwardMessageTitle => 'Redirecționează mesajul';
+
+  @override
+  String get forwardSearchHint => 'Căutați canale sau mesaje directe';
+
+  @override
+  String get forwardDirectMessagesSection => 'Mesaje directe';
+
+  @override
+  String get forwardCommentHint => 'Adaugă un comentariu (opțional)';
+
+  @override
+  String forwardSendButton(int count, int limit) {
+    return 'Trimite ($count/$limit)';
+  }
+
+  @override
+  String get forwardEmptyState => 'Nu s-au găsit canale';
+
+  @override
+  String get forwardSuccessToast => 'Mesaj redirecționat';
+
+  @override
+  String get forwardCommentSlowmodeDisabled =>
+      'Comentariile nu sunt disponibile, deoarece un canal selectat are activată funcția de încetinire.';
+
+  @override
+  String get forwardSendSlowmodeBlocked =>
+      'Se așteaptă expirarea modului lent în unul sau mai multe canale selectate.';
+
+  @override
+  String get slowmodeRateLimitedTitle => 'Modul lent activ';
+
+  @override
+  String slowmodeRateLimitedMessage(String duration) {
+    return 'Modul lent este activat — așteaptă $duration înainte de a trimite un alt mesaj.';
+  }
+
+  @override
+  String get chatAttachmentDropSlowmodeDisabled =>
+      'Încărcarea directă este dezactivată în timpul modului lent.';
+
+  @override
+  String get shareMediaTitle => 'Trimite către';
+
+  @override
+  String get shareMediaMessageHint => 'Adaugă un mesaj opțional…';
+
+  @override
+  String get shareMediaSendButton => 'Trimite';
+
+  @override
+  String get shareMediaSuccessToast => 'Media distribuită';
+
+  @override
+  String shareMediaPartialSuccessToast(int count) {
+    return 'Partajat către $count destinații';
+  }
+
+  @override
+  String get shareMediaFailedToast => 'Nu s-a putut partaja media';
+
+  @override
+  String get forwardDestinationNoSendPermission =>
+      'Nu poți trimite mesaje aici';
+
+  @override
+  String get forwardDestinationNoEmbedPermission =>
+      'Nu poți încorpora linkuri aici';
+
+  @override
+  String get forwardDestinationNoAttachPermission =>
+      'Nu poți atașa fișiere aici';
+
+  @override
+  String get forwardDestinationGuildSendDisabled =>
+      'Trimiterea mesajelor este dezactivată în această comunitate';
+
+  @override
+  String get forwardDestinationTimedOut =>
+      'Ai primit o penalizare în această comunitate';
+
+  @override
+  String forwardDestinationSlowmodeCoolingDown(String remaining) {
+    return 'Slowmode - așteaptă $remaining';
+  }
+
+  @override
+  String get chatMessageCopyText => 'Copiază mesajul';
+
+  @override
+  String get chatMessageCopyEmbedText => 'Copiază textul încorporat';
+
+  @override
+  String get chatMessageTranslate => 'Tradu';
+
+  @override
+  String chatMessageTranslatedFrom(String language) {
+    return 'Tradus din $language';
+  }
+
+  @override
+  String get chatMessageSeeOriginal => 'Vezi originalul';
+
+  @override
+  String get chatMessageSeeTranslation => 'Vezi traducerea';
+
+  @override
+  String get chatMessageTranslating => 'Se traduce…';
+
+  @override
+  String get chatMessageTranslateFailed => 'Nu am putut traduce acest mesaj.';
+
+  @override
+  String get chatMessageTranslateUnavailable =>
+      'Traducerea nu este disponibilă pe acest dispozitiv.';
+
+  @override
+  String get chatMessageSpeak => 'Citește mesajul';
+
+  @override
+  String get chatMessageStopSpeaking => 'Oprește citirea';
+
+  @override
+  String get chatMessagePin => 'Fixare mesaj';
+
+  @override
+  String get chatMessageUnpin => 'Anulează fixarea mesajului';
+
+  @override
+  String get chatMessageUnpinIt => 'Anulează fixarea';
+
+  @override
+  String get chatMessageBookmark => 'Salvează mesajul';
+
+  @override
+  String get chatMessageRemoveBookmark => 'Elimină din mesaje salvate';
+
+  @override
+  String get chatMessageMarkAsUnread => 'Marchează ca necitit';
+
+  @override
+  String get chatMessageCopyMessageLink => 'Copiază linkul mesajului';
+
+  @override
+  String get chatMessageOpenLink => 'Deschide linkul';
+
+  @override
+  String get chatMessageCopyLink => 'Copiază linkul';
+
+  @override
+  String get chatMessageCopyMessageId => 'Copiază ID-ul mesajului';
+
+  @override
+  String get chatMessageViewReactions => 'Vezi reacțiile';
+
+  @override
+  String get chatMessageRemoveAllReactions => 'Elimină toate reacțiile';
+
+  @override
+  String get chatMessageDebug => 'Depanare mesaj';
+
+  @override
+  String get chatMessageDebugSheetTitle => 'Depanare mesaj';
+
+  @override
+  String get chatMessageDebugCopyJson => 'Copiază JSON';
+
+  @override
+  String get chatMessageDebugJsonCopiedToast =>
+      'JSON-ul mesajului a fost copiat în clipboard';
+
+  @override
+  String get chatReactionsSheetTitle => 'Reacții';
+
+  @override
+  String get chatReactionsSheetEmpty =>
+      'Nimeni nu a reacționat încă cu acest emoji.';
+
+  @override
+  String get chatReactionAddFailed => 'Nu am putut adăuga reacția';
+
+  @override
+  String get chatReactionRemoveFailed => 'Nu am putut elimina reacția';
+
+  @override
+  String get chatMessageReport => 'Raportează mesajul';
+
+  @override
+  String get reportFlowTitleMessage => 'Raportează mesajul';
+
+  @override
+  String get reportFlowTitleUserProfile => 'Raportează profilul';
+
+  @override
+  String get reportFlowSummaryTitle => 'Verifică raportul tău';
+
+  @override
+  String get reportFlowSummarySubtitle =>
+      'Asigură-te că totul arată corect înainte de a trimite.';
+
+  @override
+  String reportFlowDisclaimer(String guidelines) {
+    return 'Raportează doar ce crezi sincer că încalcă regulile. Utilizarea greșită a rapoartelor contravine $guidelines.';
+  }
+
+  @override
+  String get reportFlowCommunityGuidelinesLink => 'regulile comunității';
+
+  @override
+  String get reportFlowDisclaimerNoLink =>
+      'Raportează doar ce crezi sincer că încalcă regulile și, te rog, nu trimite același raport de două ori.';
+
+  @override
+  String get reportFlowSelectedMessage => 'Mesajul pe care îl raportezi';
+
+  @override
+  String get reportFlowSelectedUser => 'Profilul pe care îl raportezi';
+
+  @override
+  String get reportFlowReportCategory => 'Răspunsurile tale';
+
+  @override
+  String get reportFlowSubmit => 'Trimite raportul';
+
+  @override
+  String get reportFlowBack => 'Înapoi';
+
+  @override
+  String get reportFlowNext => 'Înainte';
+
+  @override
+  String get reportFlowDone => 'Gata';
+
+  @override
+  String get reportFlowThankYouTitle => 'Raport trimis';
+
+  @override
+  String get reportFlowThankYouNoReportTitle =>
+      'Mulțumim că ai semnalat acest lucru';
+
+  @override
+  String reportFlowThankYouBody(String productName) {
+    return 'Echipa de siguranță $productName va analiza raportul tău. Nu vom dezvălui că a venit de la tine.';
+  }
+
+  @override
+  String get reportFlowThankYouNoReportBody =>
+      'Mulțumim că ne-ai spus. Acest lucru nu încalcă regulile noastre de la sine, așa că nu am trimis un raport. Dacă vizează pe cineva sau folosește insulte, raportează din nou și alege „Conținut abuziv sau dăunător”.';
+
+  @override
+  String get reportFlowThankYouNoReportBodyShort =>
+      'Mulțumim că ne-ai spus. Acest lucru nu încalcă regulile noastre de la sine, așa că nu am trimis un raport.';
+
+  @override
+  String get reportFlowMoreYouCanDo => 'Opțiunile tale';
+
+  @override
+  String reportFlowBlockName(String name) {
+    return 'Blochează $name';
+  }
+
+  @override
+  String get reportFlowBlockDescription =>
+      'Ascunde mesajele acestei persoane și o împiedică să-ți trimită mesaje';
+
+  @override
+  String get reportFlowBlockButton => 'Blochează';
+
+  @override
+  String get reportFlowBlockedButton => 'Blocat';
+
+  @override
+  String get reportFlowUrgentBanner =>
+      'Dacă cineva este în pericol imediat, contactează mai întâi serviciile de urgență locale.';
+
+  @override
+  String get reportFlowLoadFailed =>
+      'Nu am putut încărca formularul de raportare.';
+
+  @override
+  String get reportFlowTryAgain => 'Încearcă din nou';
+
+  @override
+  String get reportFlowOutdated =>
+      'Formularul de raportare s-a modificat. Te rugăm să începi din nou.';
+
+  @override
+  String get reportFlowAlreadyReported => 'Ai raportat deja acest mesaj.';
+
+  @override
+  String get reportFlowAlreadyReportedProfile =>
+      'Ai raportat deja acest profil astăzi.';
+
+  @override
+  String get reportFlowRateLimited =>
+      'Trimiți rapoarte prea repede. Încearcă din nou mai târziu.';
+
+  @override
+  String get reportFlowSubmitFailed =>
+      'Raportul tău nu a fost trimis. Încearcă din nou.';
+
+  @override
+  String get reportFlowAccountSetupRequired =>
+      'Revendică-ți contul și verifică-ți e-mailul pentru a trimite rapoarte.';
+
+  @override
+  String get chatMessageSuppressEmbeds => 'Suprimă încorporările';
+
+  @override
+  String get chatMessageUnsuppressEmbeds => 'Afișează previzualizările';
+
+  @override
+  String get chatMessageDelete => 'Șterge mesajul';
+
+  @override
+  String get chatMessageDeleteConfirmTitle => 'Șterge mesajul';
+
+  @override
+  String get chatMessageDeleteConfirmDescription =>
+      'Ești sigur că vrei să ștergi acest mesaj?';
+
+  @override
+  String get chatMessageDeleteAttachment => 'Șterge atașamentul';
+
+  @override
+  String get chatMessageDeleteAttachmentConfirmDescription =>
+      'Sigur vrei să ștergi acest atașament?';
+
+  @override
+  String get chatMessageEditAttachmentAltText => 'Editează textul alternativ';
+
+  @override
+  String get chatMessageMore => 'Mai multe';
+
+  @override
+  String get chatEditingMessage => 'Se editează mesajul';
+
+  @override
+  String get chatReplyOriginalDeleted => 'Mesajul original a fost șters';
+
+  @override
+  String get chatReplyOriginalFailedToLoad =>
+      'Mesajul original nu a putut fi încărcat';
+
+  @override
+  String get chatReplyAttachedMedia => 'Mesajul conține fișiere media atașate';
+
+  @override
+  String chatBlockedMessagesCollapsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesaje blocate',
+      one: '1 mesaj blocat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chatSpammerMessagesCollapsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesaje potențiale de spammer',
+      one: '1 mesaj potențial de spammer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chatReplyHiddenBlockedAuthor =>
+      'Răspunsul este ascuns deoarece autorul original este blocat.';
+
+  @override
+  String get chatReplyHiddenSpammerAuthor =>
+      'Răspunsul este ascuns deoarece autorul original este marcat ca spammer.';
+
+  @override
+  String get devMarkAsSpamLocally => 'Marchează local ca spam';
+
+  @override
+  String get devIgnoreSpamFlag => 'Ignoră semnalarea ca spam';
+
+  @override
+  String get chatMessagesLoadError => 'Nu am putut încărca mesajele.';
+
+  @override
+  String get chatMessagesFailedToLoad => 'Mesajele nu s-au putut încărca';
+
+  @override
+  String get chatReplyMentionOverrideTitle =>
+      'Suprascrii preferința de menționare?';
+
+  @override
+  String chatReplyMentionPrefersMentionBody(String authorNickname) {
+    return '$authorNickname preferă să fie menționat(ă) în răspunsuri. Trimiți oricum, fără mențiune?';
+  }
+
+  @override
+  String chatReplyMentionPrefersNoMentionBody(String authorNickname) {
+    return '$authorNickname preferă răspunsurile fără mențiune @. Trimiți oricum cu mențiune?';
+  }
+
+  @override
+  String get chatReplyMentionIgnorePreference => 'Ignoră preferința';
+
+  @override
+  String get chatReplyMentionDisableTooltip =>
+      'Dă clic pentru a dezactiva notificarea utilizatorului căruia îi răspunzi.';
+
+  @override
+  String get chatReplyMentionEnableTooltip =>
+      'Dă clic pentru a activa notificarea utilizatorului căruia îi răspunzi.';
+
+  @override
+  String get chatReplyMentionAccessibilityLabel =>
+      'Menționează utilizatorul care a răspuns';
+
+  @override
+  String get chatReplyMentionOn => 'ACTIVAT';
+
+  @override
+  String get chatReplyMentionOff => 'DEZACTIVAT';
+
+  @override
+  String get chatReplyCancel => 'Anulează răspunsul';
+
+  @override
+  String get chatEditMessageHint => 'Editează mesajul';
+
+  @override
+  String get chatEditNoChanges => 'Nicio modificare de salvat';
+
+  @override
+  String get chatEditFailed => 'Mesajul tău nu a fost actualizat';
+
+  @override
+  String get chatEditFailedEditAgain => 'Editează din nou';
+
+  @override
+  String get chatChannelNotReady =>
+      'Acest canal nu este gata încă. Încearcă din nou peste o clipă.';
+
+  @override
+  String get chatMessageEdited => '(editat)';
+
+  @override
+  String get chatMessageSilent => 'Aceasta a fost un mesaj @silent.';
+
+  @override
+  String chatMessageTimestampToday(String time) {
+    return 'Azi la $time';
+  }
+
+  @override
+  String chatMessageTimestampYesterday(String time) {
+    return 'Ieri la $time';
+  }
+
+  @override
+  String get mediaViewerImagePreview => 'Previzualizare imagine';
+
+  @override
+  String get mediaViewerClose => 'Închide vizualizatorul media';
+
+  @override
+  String get mediaViewerOpenInBrowser => 'Deschide în browser';
+
+  @override
+  String get mediaViewerOptions => 'Opțiuni media';
+
+  @override
+  String get mediaViewerCopyLink => 'Copiază linkul';
+
+  @override
+  String get mediaViewerForward => 'Redirecționează';
+
+  @override
+  String get mediaViewerZoomIn => 'Mărire';
+
+  @override
+  String get mediaViewerZoomOut => 'Micșorare';
+
+  @override
+  String get mediaViewerPreviousAttachment => 'Atașamentul anterior';
+
+  @override
+  String get mediaViewerNextAttachment => 'Atașamentul următor';
+
+  @override
+  String mediaViewerAttachmentIndex(int current, int total) {
+    return '$current/$total';
+  }
+
+  @override
+  String mediaViewerAttachmentThumbnail(int index) {
+    return 'Fișier atașat $index';
+  }
+
+  @override
+  String get mediaViewerDismissBackdrop => 'Închide';
+
+  @override
+  String get chatAttachmentVideoToggleControls =>
+      'Afișează/ascunde controalele video';
+
+  @override
+  String get chatAttachmentVideoMute => 'Dezactivează sunetul videoclipului';
+
+  @override
+  String get chatAttachmentVideoUnmute => 'Dezactivează sunetul videoclipului';
+
+  @override
+  String get chatAttachmentVideoPlay => 'Redă videoclipul';
+
+  @override
+  String get chatAttachmentVideoPause => 'Oprește videoclipul';
+
+  @override
+  String get chatAttachmentVideoProgress => 'Progres video';
+
+  @override
+  String get chatVideoPlaybackFailed => 'Nu s-a putut reda acest videoclip.';
+
+  @override
+  String get chatImageCouldNotLoad => 'Nu s-a putut încărca această imagine.';
+
+  @override
+  String get composerAutocompleteRoleMentionDescription =>
+      'Notifică-i pe utilizatorii cu acest rol care au permisiunea de a vedea acest canal.';
+
+  @override
+  String get composerAutocompleteSuggestions => 'Sugestii';
+
+  @override
+  String get composerAutocompleteCommandsHeading => 'Comenzi';
+
+  @override
+  String get composerAutocompleteChoicesHeading => 'Opțiuni';
+
+  @override
+  String get composerAutocompleteOptionalArgumentsHeading =>
+      'Argumente opționale';
+
+  @override
+  String get composerAutocompleteMediaHeading => 'Media';
+
+  @override
+  String get composerAutocompleteStickersHeading => 'Stickere';
+
+  @override
+  String get composerAutocompleteEmojisHeading => 'Emoji';
+
+  @override
+  String get composerAutocompleteGifsHeading => 'GIF-uri';
+
+  @override
+  String get composerAutocompleteNoGifs => 'Nu s-au găsit GIF-uri';
+
+  @override
+  String get composerCommandShrugDescription =>
+      'Adaugă ¯\\_(ツ)_/¯ la mesajul tău.';
+
+  @override
+  String get composerCommandTableflipDescription =>
+      'Adaugă (╯°□°)╯︵ ┻━┻ la mesajul tău.';
+
+  @override
+  String get composerCommandUnflipDescription =>
+      'Adaugă ┬─┬ ノ( ゜-゜ノ) la mesajul tău.';
+
+  @override
+  String get composerCommandMeDescription =>
+      'Trimite un mesaj de acțiune (se afișează în italic).';
+
+  @override
+  String get composerCommandSpoilerDescription =>
+      'Trimite un mesaj spoiler (îl încadrează în etichete spoiler).';
+
+  @override
+  String get composerCommandTtsDescription =>
+      'Trimite un mesaj text-to-speech.';
+
+  @override
+  String get composerCommandNickDescription =>
+      'Schimbă-ți pseudonimul în această comunitate.';
+
+  @override
+  String get composerCommandKickDescription =>
+      'Elimină un membru din această comunitate.';
+
+  @override
+  String get composerCommandBanDescription =>
+      'Banează un membru din această comunitate.';
+
+  @override
+  String get composerCommandMsgDescription =>
+      'Trimite un mesaj direct unui utilizator.';
+
+  @override
+  String get composerCommandSavedDescription =>
+      'Trimite un element media salvat.';
+
+  @override
+  String get composerCommandStickerDescription => 'Trimite un sticker.';
+
+  @override
+  String get composerCommandGifDescription => 'Caută și trimite un GIF.';
+
+  @override
+  String get composerCommandMemberOption => 'Membrul vizat.';
+
+  @override
+  String get composerCommandReasonOption => 'Motiv (opțional).';
+
+  @override
+  String get composerCommandMessageOption => 'Mesajul de trimis.';
+
+  @override
+  String get composerCommandQueryOption => 'Ce să cauți.';
+
+  @override
+  String get composerCommandNicknameOption =>
+      'Noul tău pseudonim sau lasă gol pentru a-l reseta.';
+
+  @override
+  String get composerCommandDeleteMessagesOption =>
+      'Cât din istoricul mesajelor recente ale membrului să fie șters.';
+
+  @override
+  String get composerCommandDeleteMessagesNone => 'Nu șterge nimic';
+
+  @override
+  String composerCommandDeleteMessagesDays(int count) {
+    return 'Ultimele $count zile';
+  }
+
+  @override
+  String get composerCommandDeleteMessagesOneDay => 'Ultimele 24 de ore';
+
+  @override
+  String get composerCommandOptionRequired =>
+      'Această opțiune este obligatorie. Introdu o valoare.';
+
+  @override
+  String get composerCommandClear => 'Șterge comanda';
+
+  @override
+  String composerCommandNicknameChanged(
+    String previousNickname,
+    String newNickname,
+  ) {
+    return 'Ți-ai schimbat pseudonimul în această comunitate din **$previousNickname** în **$newNickname**.';
+  }
+
+  @override
+  String get composerCommandUnknownUser => 'Utilizator necunoscut';
+
+  @override
+  String composerCommandMsgFailed(String username) {
+    return 'Nu am putut trimite un mesaj către **$username**. Este posibil ca persoana respectivă să aibă dezactivate mesajele directe sau să fiți blocat.';
+  }
+
+  @override
+  String composerCommandOptionalMore(int count) {
+    return '+ $count mai multe';
+  }
+
+  @override
+  String get addGuildModalTitle => 'Adaugă o comunitate';
+
+  @override
+  String get addGuildModalLandingDescription =>
+      'Creează o comunitate nouă sau alătură-te uneia existente.';
+
+  @override
+  String get addGuildCreateCommunity => 'Creează o comunitate';
+
+  @override
+  String get addGuildJoinCommunity => 'Alătură-te comunității';
+
+  @override
+  String get addGuildImportDiscordTemplate => 'Importă șablon Discord';
+
+  @override
+  String get addGuildJoinTitle => 'Alătură-te unei comunități';
+
+  @override
+  String get addGuildJoinDescription =>
+      'Introdu linkul de invitație pentru a te alătura unei comunități.';
+
+  @override
+  String get addGuildInviteLinkLabel => 'Link de invitație';
+
+  @override
+  String get addGuildJoinSubmit => 'Alătură-te comunității';
+
+  @override
+  String get addGuildInviteInvalid =>
+      'Acest link de invitație este invalid sau a expirat.';
+
+  @override
+  String get addGuildCreateTitle => 'Creează o comunitate';
+
+  @override
+  String get addGuildCreateDescription =>
+      'Creează o comunitate pentru tine și prietenii tăi, unde puteți discuta.';
+
+  @override
+  String get addGuildCreateNameLabel => 'Numele comunității';
+
+  @override
+  String get addGuildCreateSubmit => 'Creează o comunitate';
+
+  @override
+  String get addGuildCreateFailed =>
+      'Nu s-a putut crea comunitatea. Te rugăm să încerci din nou.';
+
+  @override
+  String get addGuildCreateClaimTitle => 'Revendică-ți contul';
+
+  @override
+  String get addGuildCreateClaimDescription =>
+      'Trebuie să-ți revendici contul înainte de a putea crea o comunitate.';
+
+  @override
+  String get addGuildCreateVerifyTitle => 'Verifică-ți adresa de e-mail';
+
+  @override
+  String get addGuildCreateVerifyDescription =>
+      'Trebuie să-ți verifici adresa de e-mail înainte de a putea crea o comunitate.';
+
+  @override
+  String get addGuildCreateAnimatedIconUnsupported =>
+      'Nu se acceptă pictograme animate la crearea unei noi comunități. Folosește o imagine statică.';
+
+  @override
+  String get addGuildCreateGuidelinesBefore =>
+      'Prin crearea unei comunități, ești de acord să respecți și să susții ';
+
+  @override
+  String addGuildCreateGuidelinesLink(String productName) {
+    return 'Ghidul comunității $productName';
+  }
+
+  @override
+  String get addGuildCreateSingleCommunityBlocked =>
+      'Instanța este o singură comunitate, deci nu pot fi create comunități suplimentare.';
+
+  @override
+  String get addGuildCreateChangeIcon => 'Schimbă pictograma';
+
+  @override
+  String get addGuildCreateIconLabel => 'Pictogramă comunitate';
+
+  @override
+  String get addGuildCreateIconHint =>
+      'PNG, JPEG, WebP, AVIF, HEIC, HEIF, JXL, SVG. Maxim 10 MB. Recomandat: 512×512px';
+
+  @override
+  String get addGuildImportDescription =>
+      'Lipește un URL de șablon Discord pentru a-i importa structura într-o comunitate nouă.';
+
+  @override
+  String get addGuildImportUrlLabel => 'URL șablon';
+
+  @override
+  String get addGuildImportUrlInvalid =>
+      'Introdu o adresă URL sau un cod de șablon Discord valid.';
+
+  @override
+  String get addGuildImportFetchFailed =>
+      'Nu am putut prelua șablonul comunității. Este posibil ca șablonul să nu existe sau serviciul extern să fie indisponibil.';
+
+  @override
+  String get addGuildImportInvalidResponse =>
+      'Acesta nu pare a fi un răspuns de șablon valid.';
+
+  @override
+  String get addGuildImportTemplateLabel => 'Șablon';
+
+  @override
+  String addGuildImportTemplateStats(
+    int textChannelCount,
+    int voiceChannelCount,
+    int categoryCount,
+    int roleCount,
+  ) {
+    return '$textChannelCount text, $voiceChannelCount voce, $categoryCount categorii, $roleCount roluri';
+  }
+
+  @override
+  String get addGuildImportRemoveIcon => 'Elimină pictograma';
+
+  @override
+  String get addGuildImportTemplateInvalid =>
+      'Datele șablonului comunității sunt invalide sau incorecte.';
+
+  @override
+  String get chatMessageRemoveAllReactionsConfirmTitle =>
+      'Elimină toate reacțiile';
+
+  @override
+  String get chatMessageRemoveAllReactionsConfirmDescription =>
+      'Ești sigur că vrei să elimini toate reacțiile de la acest mesaj?';
+
+  @override
+  String get chatMessagePinConfirm => 'Fixare';
+
+  @override
+  String get chatMessagePinConfirmDescription =>
+      'Fixează acest mesaj pe canal pentru ca toată lumea să-l vadă.';
+
+  @override
+  String get chatMessageUnpinConfirmTitle => 'Anulează fixarea mesajului';
+
+  @override
+  String get chatMessageUnpinConfirmDescription =>
+      'Trimiți acest mesaj fixat înapoi în timp?';
+
+  @override
+  String systemPinMessage(
+    String username,
+    String messageLink,
+    String allPinsLink,
+  ) {
+    return '$username a afișat $messageLink în acest canal. Vezi $allPinsLink.';
+  }
+
+  @override
+  String get systemPinMessageMessageLink => 'un mesaj';
+
+  @override
+  String get systemPinMessageAllPinsLink => 'toate mesajele fixate';
+
+  @override
+  String get channelPinsEmptyTitle => 'Niciun mesaj fixat';
+
+  @override
+  String get channelPinsEmptyDescription => 'Mesajele fixate apar aici.';
+
+  @override
+  String get channelDetailsFallbackTitle => 'Detalii';
+
+  @override
+  String channelDetailsGroupDmSubtitle(int count) {
+    return 'Grup privat · $count membri';
+  }
+
+  @override
+  String channelDetailsCloseDmDescription(String name) {
+    return 'Închizi conversația cu $name?';
+  }
+
+  @override
+  String channelDetailsLeaveGroupDescription(String name) {
+    return 'Părăsești $name?';
+  }
+
+  @override
+  String get channelDetailsChannelSettingsTitle => 'Setări canal';
+
+  @override
+  String get channelDetailsGroupSettingsTitle => 'Setări grup';
+
+  @override
+  String get channelDetailsDmSettingsTitle => 'Setări DM';
+
+  @override
+  String get channelDetailsInvitePeople => 'Invită persoane';
+
+  @override
+  String get channelDetailsCopyLink => 'Copiază linkul';
+
+  @override
+  String get channelMenuCopyChannelLink => 'Copiază linkul canalului';
+
+  @override
+  String get channelMenuCopyRedirectLink => 'Copiază linkul de redirecționare';
+
+  @override
+  String get channelDetailsAddFriendsToGroup => 'Adaugă prieteni în grup';
+
+  @override
+  String get channelDetailsGroupInvites => 'Invitații de grup';
+
+  @override
+  String get channelDetailsEditChannel => 'Editează canalul';
+
+  @override
+  String get channelDetailsDeleteChannel => 'Șterge canalul';
+
+  @override
+  String get channelSettingsEditCategory => 'Editează categoria';
+
+  @override
+  String get channelSettingsTabOverview => 'Prezentare generală';
+
+  @override
+  String get channelSettingsTabPermissions => 'Permisiuni';
+
+  @override
+  String get channelSettingsTabInvites => 'Invitații';
+
+  @override
+  String get channelSettingsTabWebhooks => 'Webhook-uri';
+
+  @override
+  String get channelSettingsDeleteChannel => 'Șterge canalul';
+
+  @override
+  String channelSettingsDeleteChannelConfirm(String channelName) {
+    return 'Ești sigur că vrei să ștergi $channelName? Această acțiune nu poate fi anulată.';
+  }
+
+  @override
+  String channelSettingsDeleteCategoryConfirm(String categoryName) {
+    return 'Ești sigur că vrei să ștergi $categoryName? Această acțiune nu poate fi anulată.';
+  }
+
+  @override
+  String get channelSettingsDeleteCategory => 'Șterge categoria';
+
+  @override
+  String get channelSettingsChannelUpdated => 'Canal actualizat';
+
+  @override
+  String get channelSettingsChannelName => 'Numele canalului';
+
+  @override
+  String get channelSettingsCategoryName => 'Numele categoriei';
+
+  @override
+  String get channelSettingsMyCategory => 'Categoria mea';
+
+  @override
+  String get categoryExpandCategory => 'Extinde categoria';
+
+  @override
+  String get categoryCollapseCategory => 'Restrânge categoria';
+
+  @override
+  String get categoryExpandAllCategories => 'Extinde toate categoriile';
+
+  @override
+  String get categoryCollapseAllCategories => 'Restrânge toate categoriile';
+
+  @override
+  String get categoryMuteCategory => 'Pune categoria pe silențios';
+
+  @override
+  String get categoryUnmuteCategory => 'Scoate categoria de pe silențios';
+
+  @override
+  String get categoryCopyCategoryId => 'Copiază ID-ul categoriei';
+
+  @override
+  String get categoryIdCopied => 'ID categorie copiat';
+
+  @override
+  String get channelSettingsChannelNamePlaceholder => 'general';
+
+  @override
+  String get channelSettingsUrl => 'URL';
+
+  @override
+  String get channelSettingsUrlPlaceholder => 'https://exemplu.ro';
+
+  @override
+  String get channelSettingsTopic => 'Subiect';
+
+  @override
+  String get channelSettingsTopicPlaceholder =>
+      'Adaugă un subiect acestui canal';
+
+  @override
+  String get channelSettingsInsertEmoji => 'Inserează emoji';
+
+  @override
+  String get channelSettingsTopicTooLongTitle =>
+      'Subiectul canalului este prea lung.';
+
+  @override
+  String get channelSettingsTopicTooLongMessage =>
+      'Scurtează subiectul și încearcă din nou.';
+
+  @override
+  String get channelSettingsSlowmode => 'Mod lent';
+
+  @override
+  String channelSettingsSlowmodeDescription(
+    String bypassSlowmodePermissionLabel,
+  ) {
+    return 'Așteaptă între mesaje. „$bypassSlowmodePermissionLabel” poate să ocolească această limită.';
+  }
+
+  @override
+  String get channelSettingsSlowmodeOff => 'Dezactivat';
+
+  @override
+  String channelSettingsSlowmodeSeconds(int seconds) {
+    return '$seconds secunde';
+  }
+
+  @override
+  String channelSettingsSlowmodeMinutes(int minutes) {
+    return '$minutes minute';
+  }
+
+  @override
+  String channelSettingsSlowmodeHours(int hours) {
+    return '$hours ore';
+  }
+
+  @override
+  String channelSettingsSlowmodeOneMinute(int oneMinute) {
+    return '$oneMinute minut';
+  }
+
+  @override
+  String channelSettingsSlowmodeOneHour(int oneHour) {
+    return '$oneHour oră';
+  }
+
+  @override
+  String get channelSettingsVoiceQuality => 'Calitatea vocii';
+
+  @override
+  String get channelSettingsVoiceQualityDescription =>
+      'O rată de biți mai mare = calitate mai bună și utilizare mai mare a lățimii de bandă.';
+
+  @override
+  String channelSettingsVoiceQualityKbps(int kilobits) {
+    return '$kilobits kbps';
+  }
+
+  @override
+  String get channelSettingsParticipantLimit => 'Limită de participanți';
+
+  @override
+  String get channelSettingsParticipantLimitDescription =>
+      'Numărul maxim de membri care se pot alătura simultan. 0 înseamnă nelimitat.';
+
+  @override
+  String channelSettingsParticipantLimitValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participanți',
+      one: '1 participant',
+      zero: '∞ Fără limită',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get channelSettingsConnectionLimit => 'Limită de conexiuni';
+
+  @override
+  String get channelSettingsConnectionLimitDescription =>
+      'Numărul maxim de conexiuni active pe care un membru le poate menține în acest canal.';
+
+  @override
+  String channelSettingsConnectionLimitValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conexiuni',
+      one: '1 conexiune',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get channelSettingsVoiceRegion => 'Regiune vocală';
+
+  @override
+  String get channelSettingsVoiceRegionDescription =>
+      'Selectează o regiune vocală pentru acest canal. Automată folosește cea mai apropiată regiune.';
+
+  @override
+  String get channelSettingsVoiceRegionAutomatic => 'Automat';
+
+  @override
+  String get channelSettingsVoiceRegionsLoadFailed =>
+      'Nu s-au putut încărca regiunile vocale';
+
+  @override
+  String get channelSettingsVoiceRegionsLoadFailedDescription =>
+      'Încearcă din nou peste un moment.';
+
+  @override
+  String channelSettingsMatureContentSectionDescription(String scopeLevel) {
+    return 'Înlocuiește setarea de nivel $scopeLevel pentru acest canal. Conținutul matur este afișat în spatele unui filtru înainte de intrare.';
+  }
+
+  @override
+  String get channelSettingsMatureContentInherit => 'Moștenit';
+
+  @override
+  String get channelSettingsMatureContentOn => 'Activat';
+
+  @override
+  String get channelSettingsMatureContentOff => 'Dezactivat';
+
+  @override
+  String get channelSettingsMatureContentOnDescription =>
+      'Marchează acest canal pentru conținut pentru adulți.';
+
+  @override
+  String get channelSettingsMatureContentOffDescription =>
+      'Părăsește acest canal neblocat pentru conținut matur.';
+
+  @override
+  String channelSettingsMatureContentInheritsOn(String inheritedSourceLabel) {
+    return 'Moștenit de la $inheritedSourceLabel: activat';
+  }
+
+  @override
+  String channelSettingsMatureContentInheritsOff(String inheritedSourceLabel) {
+    return 'Moștenit de la $inheritedSourceLabel: dezactivat';
+  }
+
+  @override
+  String get channelSettingsMatureContentCategoryScope => 'Categorie';
+
+  @override
+  String get channelSettingsMatureContentCommunityScope => 'Comunitate';
+
+  @override
+  String get channelSettingsContentWarningToggle =>
+      'Afișează un avertisment de conținut în acest canal';
+
+  @override
+  String get channelSettingsContentWarningToggleDescription =>
+      'Afișează o solicitare de consimțământ înainte de a intra în acest canal.';
+
+  @override
+  String get channelSettingsContentWarningText =>
+      'Text de avertizare personalizat';
+
+  @override
+  String get channelSettingsContentWarningDefault =>
+      'Acest conținut este sensibil.';
+
+  @override
+  String get channelSettingsUnknownRole => 'Rol necunoscut';
+
+  @override
+  String get channelSettingsUnknownUser => 'Utilizator necunoscut';
+
+  @override
+  String get channelSettingsEveryoneRole => '@everyone';
+
+  @override
+  String get channelSettingsPermissionsAccessOverrides => 'Suprascrieri acces';
+
+  @override
+  String channelSettingsPermissionsEditAccessFor(String name) {
+    return 'Editează accesul pentru $name';
+  }
+
+  @override
+  String get channelSettingsPermissionsBackToOverrides =>
+      'Înapoi la suprascrieri';
+
+  @override
+  String get channelSettingsPermissionsConfigureBaseAccess =>
+      'Configurează accesul de bază pentru acest canal';
+
+  @override
+  String get channelSettingsPermissionsConfigureRoleOverrides =>
+      'Configurează suprascrieri pentru acest rol';
+
+  @override
+  String get channelSettingsPermissionsConfigureMemberOverrides =>
+      'Configurează suprascrieri pentru acest membru';
+
+  @override
+  String get channelSettingsPermissionsSearchPlaceholder => 'Caută permisiuni…';
+
+  @override
+  String get channelSettingsPermissionsChannelAccessUpdated =>
+      'Accesul la canal a fost actualizat';
+
+  @override
+  String get channelSettingsPermissionsTitle => 'Controlul accesului';
+
+  @override
+  String get channelSettingsPermissionsSyncedWithParentPrefix =>
+      'Acest canal este sincronizat cu categoria părinte ';
+
+  @override
+  String get channelSettingsPermissionsSyncedWithParentSuffix => '.';
+
+  @override
+  String get channelSettingsPermissionsNotSyncedWithParentPrefix =>
+      'Acest canal nu este sincronizat cu categoria părinte ';
+
+  @override
+  String get channelSettingsPermissionsNotSyncedWithParentSuffix => '.';
+
+  @override
+  String get channelSettingsPermissionsSyncWithCategory =>
+      'Sincronizează cu categoria';
+
+  @override
+  String get channelSettingsPermissionsSyncedWithParentToast =>
+      'Canal sincronizat cu categoria părinte';
+
+  @override
+  String get channelSettingsPermissionsAddOverride => 'Adaugă suprascriere';
+
+  @override
+  String get channelSettingsPermissionsSearchRolesOrMembers =>
+      'Caută roluri sau membri…';
+
+  @override
+  String get channelSettingsDeleteInvite => 'Șterge invitația';
+
+  @override
+  String get channelSettingsDeleteInviteConfirm =>
+      'Ștergi această invitație? Acțiunea nu poate fi anulată.';
+
+  @override
+  String get channelSettingsCopyInviteCode => 'Copiază codul de invitație';
+
+  @override
+  String get channelSettingsCopyInviteUrl => 'Copiază URL-ul invitației';
+
+  @override
+  String get channelSettingsWebhookCreated => 'Webhook creat';
+
+  @override
+  String get channelSettingsWebhookCreateFailed =>
+      'Crearea webhook-ului a eșuat';
+
+  @override
+  String get channelSettingsCreateWebhook => 'Creează webhook';
+
+  @override
+  String get channelSettingsInvitesDescription =>
+      'Gestionează linkurile de invitație pentru acest canal.';
+
+  @override
+  String get channelSettingsInvitesCreate => 'Creează invitație';
+
+  @override
+  String get channelSettingsInvitesEmpty => 'Nu există linkuri de invitație';
+
+  @override
+  String get channelSettingsInvitesEmptyDescription =>
+      'Acest canal nu are încă linkuri de invitație. Creează unul pentru a invita persoane pe acest canal.';
+
+  @override
+  String get channelSettingsInvitesLoadFailedDescription =>
+      'A apărut o eroare la încărcarea linkurilor de invitație pentru acest canal. Încearcă din nou.';
+
+  @override
+  String get channelSettingsWebhooksDescription =>
+      'Gestionează webhook-urile de intrare care pot posta mesaje în acest canal.';
+
+  @override
+  String get channelSettingsWebhooksEmpty => 'Niciun webhook';
+
+  @override
+  String get channelSettingsWebhooksEmptyDescription =>
+      'Nu există webhook-uri configurate pentru acest canal. Creează un webhook pentru a permite aplicațiilor externe să posteze mesaje.';
+
+  @override
+  String get channelSettingsWebhooksUnsupported =>
+      'Acest canal nu acceptă webhook-uri.';
+
+  @override
+  String channelSettingsWebhooksPermissionRequired(String permission) {
+    return 'Ai nevoie de permisiunea „$permission” pentru a vizualiza și edita webhook-urile pentru acest canal.';
+  }
+
+  @override
+  String get channelSettingsWebhooksLoadFailedTitle =>
+      'Nu s-au putut încărca webhook-urile';
+
+  @override
+  String get channelSettingsWebhooksLoadFailedDescription =>
+      'A apărut o eroare la încărcarea webhook-urilor pentru acest canal. Încearcă din nou.';
+
+  @override
+  String channelSettingsWebhooksCreatedBy(String creator, String date) {
+    return 'Creat de $creator pe $date';
+  }
+
+  @override
+  String get channelSettingsWebhooksAvatar => 'Avatar';
+
+  @override
+  String get channelSettingsWebhooksUploadImage => 'Încarcă imaginea';
+
+  @override
+  String get channelSettingsWebhooksRemove => 'Elimină';
+
+  @override
+  String get channelSettingsWebhooksName => 'Nume';
+
+  @override
+  String get channelSettingsWebhooksNamePlaceholder => 'Nume webhook';
+
+  @override
+  String get channelSettingsWebhooksChannel => 'Canal';
+
+  @override
+  String get channelSettingsWebhooksUrl => 'URL webhook';
+
+  @override
+  String get channelSettingsWebhooksCopyUrl => 'Copiază URL-ul webhook-ului';
+
+  @override
+  String get channelSettingsWebhooksDelete => 'Șterge webhook-ul';
+
+  @override
+  String get channelSettingsWebhooksDeleteFailed =>
+      'Nu s-a putut șterge acest webhook';
+
+  @override
+  String get channelSettingsWebhooksDeleteConfirm =>
+      'Ștergi acest webhook? Nu poate fi anulat.';
+
+  @override
+  String get channelSettingsWebhookTryAgainInAMoment =>
+      'Încearcă din nou peste un moment.';
+
+  @override
+  String get channelMenuOpenChat => 'Deschide chatul';
+
+  @override
+  String get channelMenuDuplicateChannel => 'Duplică canalul';
+
+  @override
+  String channelDuplicateHelper(String channelName) {
+    return 'Noul canal va prelua permisiunile de la $channelName.';
+  }
+
+  @override
+  String channelDuplicateVoiceHelper(String channelName) {
+    return 'Noul canal vocal va prelua permisiunile, limita de utilizatori și rata de biți de la $channelName.';
+  }
+
+  @override
+  String get channelMenuMoveToCategory => 'Mută în categorie';
+
+  @override
+  String get channelMenuNoCategory => 'Fără categorie';
+
+  @override
+  String get channelMoveCategoryFullTitle => 'Categorie plină';
+
+  @override
+  String channelMoveCategoryFullMessage(int maxChannelsPerCategory) {
+    return 'Această categorie conține deja numărul maxim de $maxChannelsPerCategory canale.';
+  }
+
+  @override
+  String get channelMenuResetMatureContentAgreeState =>
+      'Resetează starea acordului privind conținutul matur';
+
+  @override
+  String get channelMenuDeleteMyMessagesTitle =>
+      'Ștergi mesajele tale din acest canal?';
+
+  @override
+  String get channelMenuDeleteMyMessagesDescription =>
+      'Aceasta va șterge definitiv toate mesajele pe care le-ai trimis vreodată pe acest canal. Această acțiune nu poate fi anulată.';
+
+  @override
+  String get channelMenuDeleteMyMessagesConfirm => 'Șterge-mi mesajele';
+
+  @override
+  String get channelMenuDeletedYourMessages => 'Mesajele tale au fost șterse';
+
+  @override
+  String get channelMenuCouldNotDeleteYourMessages =>
+      'Nu s-au putut șterge mesajele tale';
+
+  @override
+  String get channelDetailsSystemMessage => 'Mesaj de sistem';
+
+  @override
+  String get channelDetailsTextChannel => 'Canal text';
+
+  @override
+  String get channelDetailsVoiceChannel => 'Canal vocal';
+
+  @override
+  String get channelDetailsCategory => 'Categorie';
+
+  @override
+  String get channelDetailsLinkChannel => 'Conectează canalul';
+
+  @override
+  String get channelDetailsGenericChannel => 'Canal';
+
+  @override
+  String get channelDetailsMutedConversation => 'Conversație dezactivată';
+
+  @override
+  String get channelDetailsUnmutedConversation => 'Conversație demutedă';
+
+  @override
+  String get channelDetailsMutedChannel => 'Canal dezactivat';
+
+  @override
+  String get channelDetailsUnmutedChannel => 'Canalul a fost dezactivat';
+
+  @override
+  String get channelDetailsNotificationSettingsUpdated =>
+      'Setări de notificări actualizate';
+
+  @override
+  String get channelDetailsTabMembers => 'Membri';
+
+  @override
+  String get channelDetailsTabPins => 'Mesaje fixate';
+
+  @override
+  String get channelDetailsActionMute => 'Dezactivează sunetul';
+
+  @override
+  String get channelDetailsActionUnmute => 'Reactivați';
+
+  @override
+  String get channelDetailsActionSearch => 'Căutare';
+
+  @override
+  String get channelDetailsActionMore => 'Mai multe';
+
+  @override
+  String get channelDetailsMembersEmptyTitle => 'Nu există membri de afișat';
+
+  @override
+  String get channelDetailsMembersEmptyBody =>
+      'Membrii vor apărea aici odată ce datele comunității vor fi încărcate.';
+
+  @override
+  String get memberListPermissionDeniedTitle => 'Nu poți vedea membrii';
+
+  @override
+  String get memberListPermissionDeniedBody =>
+      'Nu poți vedea membrii acestui canal în această comunitate';
+
+  @override
+  String get memberListUnavailableTitle =>
+      'Lista de membri nu este disponibilă';
+
+  @override
+  String get memberListUnavailableBody =>
+      'Listele de membri sunt temporar indisponibile în această comunitate';
+
+  @override
+  String get channelDetailsPinsLoadFailedTitle => 'Nu s-au putut încărca pinii';
+
+  @override
+  String get channelDetailsPinsGuildEndHint =>
+      'Membrii cu permisiunea „Fixează mesaje” pot fixa mesaje pentru ca toată lumea să le vadă.';
+
+  @override
+  String get channelDetailsPinsDmEndHint =>
+      'Poți fixa mesaje în această conversație pentru ca toată lumea să le vadă.';
+
+  @override
+  String get channelDetailsPinsEndReached => 'Ai ajuns la final';
+
+  @override
+  String get channelHeaderPinnedMessages => 'Mesaje fixate';
+
+  @override
+  String get channelHeaderPinnedMessagesUnread => 'Mesaje fixate, necitite';
+
+  @override
+  String get channelHeaderMemberList => 'Listă membri';
+
+  @override
+  String get channelHeaderInbox => 'Mesaje primite';
+
+  @override
+  String get channelHeaderNotificationSettingsMuted =>
+      'Setări notificări, dezactivat';
+
+  @override
+  String get channelDetailsSearchTitle => 'Căutare';
+
+  @override
+  String get channelDetailsSearchHint => 'Caută mesaje';
+
+  @override
+  String get channelDetailsSearchFilterFrom => 'De la';
+
+  @override
+  String get channelDetailsSearchFilterHas => 'Conține';
+
+  @override
+  String get channelDetailsSearchFilterIn => 'În';
+
+  @override
+  String get channelDetailsSearchFilterMentions => 'Mențiuni';
+
+  @override
+  String get channelDetailsSearchFilterMore => 'Mai multe';
+
+  @override
+  String get channelDetailsSearchMoreFiltersActive => 'Activ';
+
+  @override
+  String channelDetailsSearchChannelsCount(int count) {
+    return '$count canale';
+  }
+
+  @override
+  String channelDetailsSearchUsersCount(int count) {
+    return '$count utilizatori';
+  }
+
+  @override
+  String get channelDetailsSearchAuthorTypeUser => 'Utilizator';
+
+  @override
+  String get channelDetailsSearchAuthorTypeBot => 'Bot';
+
+  @override
+  String get channelDetailsSearchAuthorTypeWebhook => 'Webhook';
+
+  @override
+  String get channelDetailsSearchFilterByChannel => 'Filtrează după canal';
+
+  @override
+  String get channelDetailsSearchChannelsHint => 'Caută canale';
+
+  @override
+  String get channelDetailsSearchChannelsEmpty => 'Nu s-au găsit canale';
+
+  @override
+  String get channelDetailsSearchMoreFiltersPinned => 'Fixate';
+
+  @override
+  String get channelDetailsSearchPinnedTrue => 'Doar fixate';
+
+  @override
+  String get channelDetailsSearchPinnedFalse => 'Exclude de la fixate';
+
+  @override
+  String get channelDetailsSearchClearFilter => 'Șterge';
+
+  @override
+  String get channelDetailsSearchMoreFiltersAuthorType => 'Tip autor';
+
+  @override
+  String get channelDetailsSearchMoreFiltersDate => 'Dată';
+
+  @override
+  String get channelDetailsSearchMoreFiltersDateMode => 'Mod dată';
+
+  @override
+  String get channelDetailsSearchMoreFiltersPickDate => 'Alege o dată';
+
+  @override
+  String get channelDetailsSearchMoreFiltersLink => 'Nume gazdă link';
+
+  @override
+  String get channelDetailsSearchMoreFiltersFileName =>
+      'Numele fișierului conține';
+
+  @override
+  String get channelDetailsSearchMoreFiltersFileType => 'Extensie fișier';
+
+  @override
+  String get channelDetailsSearchContentPoll => 'Sondaj';
+
+  @override
+  String get channelDetailsSearchContentPollDescription =>
+      'Mesaje cu un sondaj';
+
+  @override
+  String get channelDetailsSearchContentForward => 'Redirecționează';
+
+  @override
+  String get channelDetailsSearchContentForwardDescription =>
+      'Mesaje redirecționate';
+
+  @override
+  String get channelDetailsSearchFilterSort => 'Sortare';
+
+  @override
+  String get channelHeaderSearchFiltersTitle => 'Filtre de căutare';
+
+  @override
+  String get channelHeaderSearchRecentTitle => 'Căutări recente';
+
+  @override
+  String get channelHeaderSearchUsersTitle => 'Utilizatori';
+
+  @override
+  String get channelHeaderSearchChannelsTitle => 'Canale';
+
+  @override
+  String get channelHeaderSearchValuesTitle => 'Valori';
+
+  @override
+  String get channelHeaderSearchDatesTitle => 'Date';
+
+  @override
+  String get channelHeaderSearchDefaultBadge => 'Implicit';
+
+  @override
+  String get channelHeaderSearchClearHistory => 'Șterge';
+
+  @override
+  String get channelSearchRemoveRecent => 'Elimină din căutările recente';
+
+  @override
+  String get channelSearchFiltersButton => 'Filtre';
+
+  @override
+  String get channelSearchFilterMenuTitle => 'Filtrează rezultatele';
+
+  @override
+  String get channelSearchFilterFromLabel => 'De la o anumită persoană';
+
+  @override
+  String get channelSearchFilterMentionsLabel =>
+      'Menționează o anumită persoană';
+
+  @override
+  String get channelSearchFilterHasLabel =>
+      'Conține un link, fișier sau o încorporare';
+
+  @override
+  String get channelSearchFilterInLabel => 'Într-un anumit canal';
+
+  @override
+  String get channelSearchFilterDuringLabel => 'Trimis la o dată';
+
+  @override
+  String get channelSearchFilterBeforeLabel => 'Trimis înainte de o dată';
+
+  @override
+  String get channelSearchFilterAfterLabel => 'Trimis după o dată';
+
+  @override
+  String get channelSearchFilterPinnedLabel => 'Fixat sau nefixat';
+
+  @override
+  String get channelSearchFilterAuthorTypeLabel => 'După tipul autorului';
+
+  @override
+  String get channelSearchDateToday => 'Azi';
+
+  @override
+  String get channelSearchDateYesterday => 'Ieri';
+
+  @override
+  String get channelSearchTabMessages => 'Mesaje';
+
+  @override
+  String get channelSearchTabImages => 'Imagini';
+
+  @override
+  String get channelSearchTabPins => 'Mesaje fixate';
+
+  @override
+  String get channelSearchTabLinks => 'Linkuri';
+
+  @override
+  String get channelSearchTabFiles => 'Fișiere';
+
+  @override
+  String channelSearchTabCount(String label, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$label ($countString)';
+  }
+
+  @override
+  String get channelHeaderSearchFilterDescFrom => 'un utilizator';
+
+  @override
+  String get channelHeaderSearchFilterDescMentions => 'un utilizator';
+
+  @override
+  String get channelHeaderSearchFilterDescHas =>
+      'link, embed, imagine, video, sunet, fișier, sticker, …';
+
+  @override
+  String get channelHeaderSearchFilterDescBefore =>
+      'o dată sau un interval de date';
+
+  @override
+  String get channelHeaderSearchFilterDescOn =>
+      'o dată sau un interval de date';
+
+  @override
+  String get channelHeaderSearchFilterDescDuring =>
+      'o dată sau un interval de date';
+
+  @override
+  String get channelHeaderSearchFilterDescAfter =>
+      'o dată sau un interval de date';
+
+  @override
+  String get channelHeaderSearchFilterDescIn => 'un canal';
+
+  @override
+  String get channelHeaderSearchFilterDescPinned => 'adevărat sau fals';
+
+  @override
+  String get channelHeaderSearchFilterDescAuthorType =>
+      'utilizator, bot sau webhook';
+
+  @override
+  String get channelHeaderSearchFilterDescLinkFrom =>
+      'un nume de gazdă, de ex. example.com';
+
+  @override
+  String get channelHeaderSearchFilterDescFileName =>
+      'parte dintr-un nume de fișier atașat';
+
+  @override
+  String get channelHeaderSearchFilterDescFileType =>
+      'o extensie de fișier, de ex. png';
+
+  @override
+  String get channelHeaderSearchFilterDescSort => 'dată sau relevanță';
+
+  @override
+  String get channelHeaderSearchFilterDescOrder => 'asc sau desc';
+
+  @override
+  String channelDetailsSearchResultCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString rezultate',
+      one: '1 rezultat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get channelDetailsSearchFilterByUser => 'Filtrează după utilizator';
+
+  @override
+  String get channelDetailsSearchFilterByContent => 'Filtrează după conținut';
+
+  @override
+  String get channelDetailsSearchSortBy => 'Sortează rezultatele după';
+
+  @override
+  String get channelDetailsSearchIn => 'Caută în';
+
+  @override
+  String get channelDetailsSearchEmptyTitle => 'Caută în această conversație';
+
+  @override
+  String get channelDetailsSearchEmptyBody =>
+      'Introdu text, un autor sau un filtru de conținut pentru a găsi mesaje.';
+
+  @override
+  String get channelDetailsSearchIndexingTitle => 'Mesajele sunt indexate';
+
+  @override
+  String get channelDetailsSearchIndexingBody =>
+      'Încearcă din nou în scurt timp, după ce căutarea termină de indexat acest domeniu.';
+
+  @override
+  String get channelDetailsSearchNoResultsTitle => 'Niciun rezultat';
+
+  @override
+  String get channelDetailsSearchNoResultsBody =>
+      'Încearcă alți termeni de căutare sau filtre.';
+
+  @override
+  String get channelDetailsMembersOnline => 'Conectat';
+
+  @override
+  String get channelDetailsMembersOffline => 'Deconectat';
+
+  @override
+  String get channelDetailsMemberYou => 'Tu';
+
+  @override
+  String get channelDetailsSearchUsersHint => 'Caută utilizatori';
+
+  @override
+  String get channelDetailsSearchUsersTypeToSearch =>
+      'Scrie pentru a căuta membri';
+
+  @override
+  String get channelDetailsSearchUsersEmpty => 'Nu s-au găsit utilizatori';
+
+  @override
+  String get channelDetailsSearchUsersNoAvailable =>
+      'Niciun utilizator disponibil';
+
+  @override
+  String get channelDetailsDone => 'Gata';
+
+  @override
+  String get channelDetailsHasFilterPrompt => 'Afișează mesajele care conțin:';
+
+  @override
+  String get channelDetailsRetry => 'Reîncercați';
+
+  @override
+  String get channelDetailsPinnedMessageTitle => 'Mesaj fixat';
+
+  @override
+  String get channelDetailsSearchResultTitle => 'Rezultat căutare';
+
+  @override
+  String get channelDetailsJumpToMessage => 'Salt la mesaj';
+
+  @override
+  String get channelDetailsUnpinMessage => 'Anulează fixarea mesajului';
+
+  @override
+  String get channelDetailsCopyMessageLink => 'Copiază linkul mesajului';
+
+  @override
+  String get channelDetailsCopyMessageId => 'Copiază ID-ul mesajului';
+
+  @override
+  String get channelDetailsMessageUnpinned => 'Fixare mesaj anulată';
+
+  @override
+  String get channelDetailsSearchScopeCurrentCommunity => 'Comunitatea curentă';
+
+  @override
+  String get channelDetailsSearchScopeCurrentDm => 'DM-ul curent';
+
+  @override
+  String get channelDetailsSearchScopeAllCommunities => 'Toate comunitățile';
+
+  @override
+  String get channelDetailsSearchScopeAllDmsOnlyGuild => 'Doar toate DM-urile';
+
+  @override
+  String get channelDetailsSearchScopeAllDms => 'Toate DM-urile';
+
+  @override
+  String get channelDetailsSearchScopeOpenDmsOnlyGuild =>
+      'Doar DM-uri deschise';
+
+  @override
+  String get channelDetailsSearchScopeOpenDms => 'DM-uri deschise';
+
+  @override
+  String get channelDetailsSearchScopeAllDmsAndCommunities =>
+      'Toate DM-urile + comunitățile';
+
+  @override
+  String get channelDetailsSearchScopeOpenDmsAndCommunities =>
+      'DM-uri deschise + comunități';
+
+  @override
+  String get channelDetailsSearchScopeCurrentCommunityDescription =>
+      'Caută doar în comunitatea curentă';
+
+  @override
+  String get channelDetailsSearchScopeCurrentDmDescription =>
+      'Caută doar în DM-ul curent';
+
+  @override
+  String get channelDetailsSearchScopeAllCommunitiesDescription =>
+      'În toate comunitățile în care te afli în prezent';
+
+  @override
+  String get channelDetailsSearchScopeAllDmsOnlyGuildDescription =>
+      'Doar în toate DM-urile în care ai fost vreodată';
+
+  @override
+  String get channelDetailsSearchScopeAllDmsDescription =>
+      'În toate DM-urile în care ai fost vreodată';
+
+  @override
+  String get channelDetailsSearchScopeOpenDmsOnlyGuildDescription =>
+      'În toate conversațiile tale private deschise acum';
+
+  @override
+  String get channelDetailsSearchScopeOpenDmsDescription =>
+      'În toate conversațiile tale private deschise';
+
+  @override
+  String get channelDetailsSearchScopeAllDmsAndCommunitiesDescription =>
+      'În toate conversațiile directe în care ai fost vreodată + toate comunitățile în care ești în prezent';
+
+  @override
+  String get channelDetailsSearchScopeOpenDmsAndCommunitiesDescription =>
+      'În toate conversațiile tale directe deschise + toate comunitățile din care faci parte';
+
+  @override
+  String get channelDetailsSearchSortNewest => 'Cele mai noi mai întâi';
+
+  @override
+  String get channelDetailsSearchSortOldest => 'Cele mai vechi mai întâi';
+
+  @override
+  String get channelDetailsSearchSortRelevance => 'Cele mai relevante';
+
+  @override
+  String get channelDetailsSearchSortNewestDescription =>
+      'Afișează mai întâi cele mai recente mesaje';
+
+  @override
+  String get channelDetailsSearchSortOldestDescription =>
+      'Afișează mai întâi cele mai vechi mesaje';
+
+  @override
+  String get channelDetailsSearchSortRelevanceDescription =>
+      'Afișează mai întâi cele mai relevante mesaje';
+
+  @override
+  String get channelDetailsSearchContentImage => 'Încărcare imagine';
+
+  @override
+  String get channelDetailsSearchContentVideo => 'Încărcare video';
+
+  @override
+  String get channelDetailsSearchContentAudio => 'Încărcare audio';
+
+  @override
+  String get channelDetailsSearchContentFile => 'Încărcare fișier';
+
+  @override
+  String get channelDetailsSearchContentLink => 'Link';
+
+  @override
+  String get channelDetailsSearchContentEmbed =>
+      'Previzualizare link sau încorporare';
+
+  @override
+  String get channelDetailsSearchContentSticker => 'Sticker';
+
+  @override
+  String get channelDetailsSearchContentImageDescription =>
+      'Doar fișiere imagine încărcate';
+
+  @override
+  String get channelDetailsSearchContentVideoDescription =>
+      'Doar fișiere video încărcate';
+
+  @override
+  String get channelDetailsSearchContentAudioDescription =>
+      'Doar fișiere audio încărcate';
+
+  @override
+  String get channelDetailsSearchContentFileDescription =>
+      'Orice atașament încărcat';
+
+  @override
+  String get channelDetailsSearchContentLinkDescription =>
+      'URL tastat în textul mesajului';
+
+  @override
+  String get channelDetailsSearchContentEmbedDescription =>
+      'Previzualizări generate și încorporări îmbogățite, nu fișiere încărcate';
+
+  @override
+  String get channelDetailsSearchContentStickerDescription =>
+      'Sticker atașat mesajului';
+
+  @override
+  String channelDetailsSearchContentTypesCount(int count) {
+    return '$count tipuri';
+  }
+
+  @override
+  String get personalNotesTitle => 'Note personale';
+
+  @override
+  String get personalNotesSubtitle =>
+      'Spațiul tău privat pentru gânduri și memento-uri';
+
+  @override
+  String groupDmWelcome(String displayName) {
+    return 'Bun venit pe $displayName. Adaugă prieteni pentru a porni conversația.';
+  }
+
+  @override
+  String get groupDmWelcomeEditGroup => 'Editează grupul';
+
+  @override
+  String get groupDmWelcomeAddFriends => 'Adaugă prieteni în grup';
+
+  @override
+  String get dmGroupInvites => 'Invitații';
+
+  @override
+  String get groupDmEditTitle => 'Editează grupul';
+
+  @override
+  String get groupDmGroupName => 'Numele grupului';
+
+  @override
+  String get groupDmMyGroup => 'Grupul meu';
+
+  @override
+  String get groupDmGroupNameMaxLength =>
+      'Numele grupului nu poate depăși 100 de caractere';
+
+  @override
+  String get groupDmGroupIcon => 'Pictograma grupului';
+
+  @override
+  String get groupDmUploadIcon => 'Încarcă pictogramă';
+
+  @override
+  String get groupDmChangeIcon => 'Schimbă pictograma';
+
+  @override
+  String get groupDmRemoveIcon => 'Elimină pictograma';
+
+  @override
+  String get groupDmUpdated => 'Grup actualizat';
+
+  @override
+  String get groupDmUpdateFailed =>
+      'Nu am putut actualiza grupul. Încearcă din nou.';
+
+  @override
+  String get groupDmAnimatedIconNotSupported =>
+      'Pictogramele animate nu sunt acceptate. Folosește o imagine statică.';
+
+  @override
+  String get groupDmAnimatedIconNotSupportedTitle =>
+      'Pictogramele animate nu sunt acceptate';
+
+  @override
+  String get groupDmIconFileTooLargeTitle =>
+      'Fișierul pictogramei este prea mare';
+
+  @override
+  String groupDmIconFileTooLargeBody(String maxSize) {
+    return 'Fișierul pictogramei este prea mare. Alege un fișier mai mic de $maxSize.';
+  }
+
+  @override
+  String get groupDmUnsupportedIconFormat => 'Format pictogramă neacceptat';
+
+  @override
+  String get groupDmUnsupportedIconFormatBody => 'Tip de fișier neacceptat.';
+
+  @override
+  String get groupDmInvalidImage => 'Imagine nevalidă';
+
+  @override
+  String get groupDmInvalidImageBody =>
+      'Această imagine este nevalidă. Încearcă alta.';
+
+  @override
+  String get groupDmAddFriends => 'Adaugă';
+
+  @override
+  String get groupDmOrSendInvite => 'sau trimite o invitație unui prieten:';
+
+  @override
+  String get groupDmGenerateInviteLink => 'Generează link de invitație';
+
+  @override
+  String get groupDmCreateInvite => 'Creează';
+
+  @override
+  String get groupDmInviteExpires24Hours => 'Invitația ta expiră în 24 de ore';
+
+  @override
+  String get groupDmAddFriendFailed =>
+      'Nu s-a putut adăuga acest prieten în grup. Te rugăm să încerci din nou.';
+
+  @override
+  String get groupDmGroupFull =>
+      'Acest grup este plin. Elimină pe cineva înainte de a adăuga mai multe persoane.';
+
+  @override
+  String get groupDmRateLimited =>
+      'Mergi prea repede. Așteaptă un moment și încearcă din nou.';
+
+  @override
+  String get groupDmCreateInviteFailedBody =>
+      'Nu s-a putut genera un link de invitație. Te rugăm să încerci din nou.';
+
+  @override
+  String get guildNavbarCreateInviteFailed =>
+      'Nu am putut crea un link de invitație. Te rugăm să încerci din nou.';
+
+  @override
+  String get guildNavbarCreateInviteMissingPermissions =>
+      'Nu ai permisiunea de a crea o invitație în acest canal.';
+
+  @override
+  String get guildNavbarCreateInviteMaxInvites =>
+      'Comunitatea a atins limita de invitații.';
+
+  @override
+  String get groupDmCopyInviteFailed =>
+      'Nu s-a putut copia linkul de invitație';
+
+  @override
+  String get groupDmInvitesOwnerOnly =>
+      'Doar proprietarul grupului poate gestiona invitațiile.';
+
+  @override
+  String get groupDmNoInvitesCreated => 'Nu au fost create invitații';
+
+  @override
+  String get groupDmLoadingInvites => 'Se încarcă invitațiile...';
+
+  @override
+  String get groupDmInvitesLoadFailed =>
+      'Nu s-au putut încărca invitațiile. Încearcă din nou.';
+
+  @override
+  String get groupDmInvitesRevokeConfirm =>
+      'Revoci această invitație? Acțiunea nu poate fi anulată.';
+
+  @override
+  String get groupDmInviteRevoked => 'Invitație revocată';
+
+  @override
+  String get groupDmRemoveFromGroup => 'Elimină din grup';
+
+  @override
+  String groupDmRemoveFromGroupConfirm(String userName) {
+    return 'Elimini $userName din grup?';
+  }
+
+  @override
+  String get groupDmRemoveFromGroupAction => 'Elimină';
+
+  @override
+  String get groupDmRemovedFromGroup => 'Eliminat din grup';
+
+  @override
+  String groupDmRemoveFromGroupFailed(String userName) {
+    return '$userName este încă în grup. Încearcă din nou peste câteva momente.';
+  }
+
+  @override
+  String groupDmInviteCreatedByExpires(String name, String time) {
+    return 'Creat de $name. Expiră în $time.';
+  }
+
+  @override
+  String channelWelcomeHeading(String channelName) {
+    return 'Bun venit în $channelName';
+  }
+
+  @override
+  String channelWelcomeDescription(String channelName) {
+    return 'Aceasta este începutul lui $channelName.';
+  }
+
+  @override
+  String get personalNotesComposerHint => 'Trimite-ți un mesaj';
+
+  @override
+  String channelComposerHint(String channelName) {
+    return 'Scrie un mesaj în #$channelName';
+  }
+
+  @override
+  String dmComposerHint(String recipientName) {
+    return 'Trimite mesaj lui @$recipientName';
+  }
+
+  @override
+  String groupDmNamedComposerHint(String groupName) {
+    return 'Scrie un mesaj în $groupName';
+  }
+
+  @override
+  String get groupDmComposerHint => 'Grup de mesaje';
+
+  @override
+  String get composerHint => 'Trimite mesaj';
+
+  @override
+  String get composerOpenExpressionPicker => 'Deschide selectorul de expresii';
+
+  @override
+  String get composerShowKeyboard => 'Afișează tastatura';
+
+  @override
+  String get composerCloseAttachmentPanel => 'Închide selectorul de atașamente';
+
+  @override
+  String get chatAttachmentPanelPhotos => 'Fotografii';
+
+  @override
+  String get chatAttachmentPanelFiles => 'Fișiere';
+
+  @override
+  String get chatAttachmentLibraryPermissionTitle =>
+      'Acces la biblioteca foto necesar';
+
+  @override
+  String get chatAttachmentLibraryPermissionBody =>
+      'Permite accesul la biblioteca foto pentru a răsfoi și atașa fotografii și videoclipuri recente.';
+
+  @override
+  String get chatAttachmentLibraryPermissionSettings => 'Deschide setările';
+
+  @override
+  String get chatAttachmentLibraryLimitedBody =>
+      'Aici apar doar fotografiile și videoclipurile pe care ai ales să le partajezi.';
+
+  @override
+  String get chatAttachmentLibraryLimitedManage => 'Gestionează';
+
+  @override
+  String messageAccessibilityLabel(String author, String summary) {
+    return '$author, $summary';
+  }
+
+  @override
+  String get messageAccessibilitySendingSuffix => ', trimițând';
+
+  @override
+  String get messageAccessibilityFailedSuffix => ', a eșuat trimiterea';
+
+  @override
+  String get messageAccessibilityAttachmentSummary => 'un atașament';
+
+  @override
+  String messageAccessibilityAttachmentsSummary(int count) {
+    return '$count atașamente';
+  }
+
+  @override
+  String get messageAccessibilityImageSummary => 'o imagine';
+
+  @override
+  String get messageAccessibilityVideoSummary => 'un videoclip';
+
+  @override
+  String get messageAccessibilityAudioSummary => 'un fișier audio';
+
+  @override
+  String messageAccessibilityStickerSummary(String name) {
+    return 'sticker $name';
+  }
+
+  @override
+  String messageAccessibilityFileSummary(String filename) {
+    return 'fișierul $filename';
+  }
+
+  @override
+  String get messageAccessibilitySpoilerAttachmentSummary =>
+      'un atașament spoiler';
+
+  @override
+  String get messageAccessibilityEmbedSummary => 'o încorporare';
+
+  @override
+  String get messageAccessibilityEmptySummary => 'un mesaj';
+
+  @override
+  String get personalNotesPrivateSpace => 'Spațiul tău privat';
+
+  @override
+  String get purgePersonalNotes => 'Șterge notițele personale';
+
+  @override
+  String get purgePersonalNotesConfirmDescription =>
+      'Aceasta va șterge permanent fiecare mesaj și atașament din notele tale personale. Această acțiune nu poate fi anulată.';
+
+  @override
+  String get purgePersonalNotesConfirmButton => 'Șterge';
+
+  @override
+  String purgePersonalNotesSuccess(int count) {
+    return 'Au fost șterse $count mesaje din notele personale';
+  }
+
+  @override
+  String get purgePersonalNotesAlreadyEmpty =>
+      'Notele personale erau deja goale';
+
+  @override
+  String get purgePersonalNotesFailed =>
+      'Nu s-au putut șterge notele personale';
+
+  @override
+  String get userSettingsGroupYourAccount => 'Contul tău';
+
+  @override
+  String get userSettingsGroupBilling => 'Facturare';
+
+  @override
+  String get userSettingsGroupApplication => 'Aplicație';
+
+  @override
+  String get userSettingsGroupDeveloper => 'Dezvoltator';
+
+  @override
+  String get userSettingsGroupStaffOnly => 'Doar pentru staff';
+
+  @override
+  String get userSettingsSearchPlaceholder => 'Caută setări...';
+
+  @override
+  String get userSettingsSearchClear => 'Șterge căutarea';
+
+  @override
+  String get userSettingsSearchNoResults => 'Nu s-au găsit setări';
+
+  @override
+  String get userSettingsCopyLinkToSection => 'Copiază linkul către secțiune';
+
+  @override
+  String get userSettingsCopyLinkToPage => 'Copiază linkul către pagină';
+
+  @override
+  String userSettingsJumpLinkPremiumPage(String productName) {
+    return 'Pagina $productName';
+  }
+
+  @override
+  String get userSettingsNavProfile => 'Profil';
+
+  @override
+  String get userSettingsNavSecurityLogin => 'Securitate și autentificare';
+
+  @override
+  String get userSettingsNavFluxerPlutonium => 'Fluxer Plutonium';
+
+  @override
+  String get userSettingsNavGiftsAndCodes => 'Cadouri';
+
+  @override
+  String get giftSettingsClaimAccountTitle => 'Revendică-ți contul';
+
+  @override
+  String get giftSettingsClaimAccountDescription =>
+      'Revendică-ți contul pentru a răscumpăra sau gestiona codurile cadou Plutonium.';
+
+  @override
+  String get giftSettingsRedeemTitle => 'Valorifică un cadou';
+
+  @override
+  String get giftSettingsRedeemDescription =>
+      'Introdu un cod cadou pentru a răscumpăra Plutonium pentru contul tău.';
+
+  @override
+  String get giftSettingsRedeemPlaceholder => 'Introdu codul cadou…';
+
+  @override
+  String get giftSettingsRedeemButton => 'Valorifică';
+
+  @override
+  String get giftSettingsRedeemSuccess =>
+      'Cadou răscumpărat cu succes. Bucură-te de Plutonium.';
+
+  @override
+  String get giftSettingsPurchasedTitle => 'Cadouri cumpărate';
+
+  @override
+  String get giftSettingsPurchasedDescription =>
+      'Gestionează codurile cadou Plutonium pe care le-ai achiziționat. Distribuie URL-ul cadoului cu cineva drag sau valorifică-l pentru tine!';
+
+  @override
+  String get giftSettingsEmptyTitle => 'Încă niciun cadou';
+
+  @override
+  String get giftSettingsEmptyDescription =>
+      'Cumpără un cadou Plutonium din fila Plutonium pentru a-l împărtăși cu prietenii.';
+
+  @override
+  String get giftSettingsGoToPlutonium => 'Mergi la Plutonium';
+
+  @override
+  String get giftSettingsLoadFailedTitle =>
+      'Nu s-a putut încărca inventarul de cadouri';
+
+  @override
+  String get giftSettingsLoadFailedDescription =>
+      'Încearcă din nou mai târziu.';
+
+  @override
+  String get giftSettingsTryAgain => 'Încearcă din nou';
+
+  @override
+  String get giftSettingsGiftUrl => 'URL cadou';
+
+  @override
+  String get giftSettingsCopy => 'Copiază';
+
+  @override
+  String get giftSettingsCopied => 'Copiat';
+
+  @override
+  String giftSettingsPurchasedDate(String date) {
+    return 'Cumpărat $date';
+  }
+
+  @override
+  String giftSettingsRedeemedDate(String date) {
+    return 'Reținut $date';
+  }
+
+  @override
+  String giftSettingsRedeemedBy(String name) {
+    return 'Răscumpărat de $name';
+  }
+
+  @override
+  String get giftSettingsAlreadyRedeemed => 'Acest cadou a fost revendicat';
+
+  @override
+  String get giftSettingsRedeemForYourself => 'Valorifică pentru tine';
+
+  @override
+  String get giftSettingsShareWithFriend => 'Trimite unui prieten';
+
+  @override
+  String get premiumPlutoniumTagline =>
+      'Deblochează limite mai mari și funcții exclusive, susținând în același timp o platformă de comunicare independentă.';
+
+  @override
+  String get premiumPurchaseMode => 'Mod de achiziție';
+
+  @override
+  String get premiumForMe => 'Pentru mine';
+
+  @override
+  String get premiumAsAGift => 'Ca un cadou';
+
+  @override
+  String get premiumMonthly => 'Lunar';
+
+  @override
+  String get premiumYearly => 'Anual';
+
+  @override
+  String get premiumPerMonth => 'pe lună';
+
+  @override
+  String get premiumPerYear => 'pe an';
+
+  @override
+  String get premiumOneTimePurchase => 'achiziție unică';
+
+  @override
+  String get premiumSave17 => 'Economisește 17%';
+
+  @override
+  String get premiumUpgradeNow => 'Fă upgrade acum';
+
+  @override
+  String get premiumBuyGift => 'Cumpără cadou';
+
+  @override
+  String get premiumOneYearGift => 'Cadou 1 an';
+
+  @override
+  String get premiumOneMonthGift => 'Cadou 1 lună';
+
+  @override
+  String get premiumScrollPrompt =>
+      'Derulează în jos pentru a vedea toate beneficiile incluse cu Plutonium';
+
+  @override
+  String get premiumFreeVsPlutonium => 'Gratuit vs Plutonium';
+
+  @override
+  String get premiumFreeColumn => 'Gratuit';
+
+  @override
+  String get premiumGiftSectionTitle => 'Oferă Plutonium';
+
+  @override
+  String get premiumGiftSectionDescription =>
+      'Oferă-le prietenilor tăi experiența Plutonium cumpărând un abonament cadou.';
+
+  @override
+  String get premiumGiftBannerOne => 'Ai un nou cod cadou care te așteaptă!';
+
+  @override
+  String premiumGiftBannerMany(int count) {
+    return 'Ai $count coduri cadou noi care te așteaptă!';
+  }
+
+  @override
+  String get premiumViewGifts => 'Vezi cadourile';
+
+  @override
+  String get premiumReadyToUpgrade => 'Ești gata să faci upgrade?';
+
+  @override
+  String get premiumReadyToBuyGift => 'Ești gata să cumperi un cadou?';
+
+  @override
+  String get premiumManageSubscription => 'Gestionează abonamentul';
+
+  @override
+  String get premiumRedeemGiftCode => 'Valorifică codul cadou';
+
+  @override
+  String get premiumGiftBadge => 'Cadou';
+
+  @override
+  String get premiumCancelSubscriptionTitle => 'Anulezi abonamentul?';
+
+  @override
+  String get premiumCancelSubscriptionBody =>
+      'Îți păstrezi beneficiile până la următoarea dată de reînnoire, apoi ai o perioadă de grație de 3 zile pentru a te reabona și a-ți păstra istoricul de abonat.';
+
+  @override
+  String get premiumCancelSubscriptionConfirm => 'Anulează abonamentul';
+
+  @override
+  String get premiumPurchaseHistoryTitle => 'Istoric achiziții';
+
+  @override
+  String get premiumPurchaseHistoryDescription =>
+      'Facturile tale recente. Pentru a schimba metoda de plată pentru abonamentul tău, adaugă sau alege una în portalul de facturare și seteaz-o ca implicită.';
+
+  @override
+  String get premiumManagePaymentMethods => 'Gestionează metodele de plată';
+
+  @override
+  String get premiumSelfServeRefundButton => 'Restituie ultima achiziție';
+
+  @override
+  String get premiumDisclaimerAgreementPrefix =>
+      'Prin achiziționare, ești de acord cu termenii noștri ';
+
+  @override
+  String get premiumDisclaimerAgreementPastPrefix =>
+      'Prin achiziționare, ați fost de acord cu ';
+
+  @override
+  String get premiumDisclaimerAgreementMiddle => ' și ';
+
+  @override
+  String premiumActiveUntil(String date) {
+    return 'Activ până la $date';
+  }
+
+  @override
+  String get premiumSubscriptionCanceling => 'Se anulează';
+
+  @override
+  String premiumCancelsOn(String date) {
+    return 'Se anulează pe $date. Avantajele rămân active până atunci.';
+  }
+
+  @override
+  String get premiumReactivateSubscription => 'Reactivează';
+
+  @override
+  String premiumGiftedUntil(String date) {
+    return 'Cadou până la $date. Nu se reînnoiește automat.';
+  }
+
+  @override
+  String get premiumGiftGraceEnded =>
+      'Timpul tău cadou s-a încheiat. Abonează-te pentru a păstra Plutonium.';
+
+  @override
+  String get premiumGiftTimeAddedAfterSubscription =>
+      'Vei fi taxat acum. Timpul tău cadou rămas se adaugă după perioada plătită, astfel încât nimic din el să nu se piardă.';
+
+  @override
+  String get premiumComparisonFeatureColumn => 'Funcție';
+
+  @override
+  String get premiumDisclaimerRefund =>
+      'Rambursări self-service disponibile în termen de 3 zile de la plată, o dată la 30 de zile. Rambursarea unui abonament îl anulează. Cumpărătorii din UE/SEE renunță la dreptul de retragere de 14 zile la finalizarea comenzii pentru a accesa conținutul imediat. Folosește butonul de rambursare din aplicație în loc de o anulare a plății. Anulările plăților pot restricționa permanent contul tău. Stripe gestionează plățile în siguranță. Nu vedem niciodată numărul complet al cardului tău.';
+
+  @override
+  String get premiumTermsOfService => 'Termeni și condiții';
+
+  @override
+  String get premiumPrivacyPolicy => 'Politica de confidențialitate';
+
+  @override
+  String get premiumCheckoutStartFailedTitle => 'Nu s-a putut iniția plata';
+
+  @override
+  String get premiumCheckoutStartFailedBody =>
+      'A apărut o eroare la inițierea plății. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get premiumPlanUnavailable =>
+      'Acest plan nu este disponibil. Contactează asistența.';
+
+  @override
+  String get premiumPlanUnavailableSelfHosted =>
+      'Acest plan nu este disponibil. Contactează administratorii acestei instanțe.';
+
+  @override
+  String get premiumCompletePaymentTitle => 'Finalizează plata';
+
+  @override
+  String get premiumCompletePaymentBody =>
+      'Acum vei fi redirecționat către Stripe pentru a finaliza plata. Revino la Fluxer după ce ai terminat.';
+
+  @override
+  String get premiumChoosePaymentMethodTitle => 'Alege metoda de plată';
+
+  @override
+  String get premiumPixPaymentPromptDescription =>
+      'Plătește cu Pix automat pentru a autoriza direct de pe banca ta braziliană taxele recurente. Sau alege să folosești cardul pentru a introduce un card de credit pe ecranul următor al Stripe.';
+
+  @override
+  String get premiumUsePix => 'Folosește Pix';
+
+  @override
+  String get premiumUpiPaymentPromptDescription =>
+      'Plătește cu UPI pentru a configura un e-mandat conform RBI de la banca ta indiană. Sau alege să folosești cardul pentru a introduce un card de credit pe ecranul următor al Stripe.';
+
+  @override
+  String get premiumUseUpi => 'Folosește UPI';
+
+  @override
+  String get premiumUseCard => 'Folosește cardul';
+
+  @override
+  String get premiumCustomerPortalOpenFailedTitle =>
+      'Nu s-a putut deschide portalul de facturare';
+
+  @override
+  String get premiumCustomerPortalOpenFailedBody =>
+      'A apărut o eroare la deschiderea portalului de facturare. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get premiumAlreadyVisionaryTitle => 'Ești deja Visionary';
+
+  @override
+  String get premiumAlreadyVisionaryBody =>
+      'Visionary include deja acces permanent, deci nu este necesar un abonament recurent. Poți cumpăra în continuare cadouri pentru alții.';
+
+  @override
+  String get premiumExistingSubscriptionTitle => 'Abonamentul există deja';
+
+  @override
+  String get premiumExistingSubscriptionBody =>
+      'Am găsit un abonament Fluxer Plutonium existent pentru acest cont. Gestionați-l în portalul de facturare securizat pentru a actualiza detaliile de plată sau pentru a verifica starea reînnoirii. Dacă tocmai ați plătit, așteptați un minut și redeschideți această pagină.';
+
+  @override
+  String get premiumPurchasesDisabledTitle => 'Achizițiile nu sunt disponibile';
+
+  @override
+  String premiumPurchasesDisabledBody(String supportEmail) {
+    return 'Achizițiile sunt dezactivate pentru acest cont. Contactați $supportEmail dacă credeți că este o greșeală.';
+  }
+
+  @override
+  String get premiumPurchasesDisabledBodySelfHosted =>
+      'Achizițiile sunt dezactivate pentru acest cont. Contactați administratorii acestei instanțe dacă credeți că este o greșeală.';
+
+  @override
+  String get premiumClaimAccountToPurchase =>
+      'Revendică-ți contul pentru a cumpăra Fluxer Plutonium.';
+
+  @override
+  String get premiumVerifyEmailToPurchase =>
+      'Trebuie să îți verifici emailul înainte de a putea achiziționa Fluxer Plutonium.';
+
+  @override
+  String get premiumPerkCommunities => 'Comunități';
+
+  @override
+  String get premiumPerkMessageCharacterLimit => 'Limită de caractere mesaj';
+
+  @override
+  String get premiumPerkBookmarkedMessages => 'Mesaje salvate';
+
+  @override
+  String get premiumPerkFileUploadSize => 'Dimensiune fișier încărcat';
+
+  @override
+  String get premiumPerkUseAnimatedEmojis => 'Folosește emoji animate';
+
+  @override
+  String get premiumPerkVideoQuality => 'Calitatea video';
+
+  @override
+  String get premiumPerkAnimatedAvatarsBanners =>
+      'Avatare animate și bannere de profil';
+
+  @override
+  String get premiumPerkEarlyAccess => 'Acces timpuriu la funcții noi';
+
+  @override
+  String get premiumPerkVideoQualityRestricted => '720p/30fps';
+
+  @override
+  String get premiumPerkVideoQualityStock => 'Până la 4K/60fps';
+
+  @override
+  String storePlutoniumPriceLine(String monthly, String yearly) {
+    return '$monthly sau $yearly';
+  }
+
+  @override
+  String get storePlutoniumMonthSuffix => '/lună';
+
+  @override
+  String get storePlutoniumYearSuffix => '/an';
+
+  @override
+  String get storePlutoniumPriceOr => 'sau';
+
+  @override
+  String get storePlutoniumEmojiTitle => 'Emoji-urile tale, peste tot';
+
+  @override
+  String get storePlutoniumEmojiBody =>
+      'Adu emojiuri și stickere personalizate din oricare dintre comunitățile tale în fiecare conversație și comunitate în care te afli.';
+
+  @override
+  String get storePlutoniumProfileTitle => 'Un profil care iese în evidență';
+
+  @override
+  String get storePlutoniumProfileBody =>
+      'Obține un avatar și un banner animate, o insignă de abonat, eticheta din patru cifre pe care o vrei după numele de utilizator* și un profil separat pentru fiecare comunitate.';
+
+  @override
+  String get storePlutoniumFilesTitle => 'Trimite fișiere de până la 500 MB';
+
+  @override
+  String get storePlutoniumFilesBody =>
+      'Distribuie videoclipuri integrale și fișiere mari fără să le micșorezi mai întâi. Conturile gratuite pot trimite până la 25 MB.';
+
+  @override
+  String get storePlutoniumCompareTitle =>
+      'Compară planul gratuit cu Plutonium';
+
+  @override
+  String get storePlutoniumCompareMobileNote =>
+      'Nu toate aceste funcții sunt disponibile în aplicația mobilă. Unele sunt disponibile doar pe desktop.';
+
+  @override
+  String get storePlutoniumNotAvailable => 'Indisponibil';
+
+  @override
+  String get storePlutoniumAvailable => 'Disponibil';
+
+  @override
+  String get storePlutoniumCompareTag =>
+      'Alege numărul din 4 cifre de după numele tău de utilizator*';
+
+  @override
+  String get storePlutoniumCompareProfile =>
+      'Un profil separat pentru fiecare comunitate';
+
+  @override
+  String get storePlutoniumCompareBadge => 'Insigna de abonat din profilul tău';
+
+  @override
+  String get storePlutoniumCompareBackgrounds =>
+      'Fundaluri pentru apeluri video pe care le poți salva';
+
+  @override
+  String get storePlutoniumCompareCommunities =>
+      'Comunități la care te poți alătura';
+
+  @override
+  String get storePlutoniumCompareCharacters =>
+      'Caractere într-un singur mesaj';
+
+  @override
+  String get storePlutoniumCompareBookmarks => 'Mesaje pe care le poți salva';
+
+  @override
+  String get storePlutoniumCompareUpload =>
+      'Cel mai mare fișier pe care îl poți încărca';
+
+  @override
+  String get storePlutoniumCompareSavedMedia =>
+      'Elemente media pe care le poți salva pentru mai târziu';
+
+  @override
+  String get storePlutoniumCompareAnimatedEmoji =>
+      'Folosește emoji animate în mesaje';
+
+  @override
+  String get storePlutoniumCompareCustomEmoji =>
+      'Folosește emojiuri și stickere personalizate în orice comunitate';
+
+  @override
+  String get storePlutoniumCompareVideo =>
+      'Calitatea apelurilor video și a partajării ecranului';
+
+  @override
+  String get storePlutoniumCompareAvatar => 'Avatar animat și banner de profil';
+
+  @override
+  String get storePlutoniumCompareEarlyAccess =>
+      'Acces timpuriu la funcții noi';
+
+  @override
+  String get storePlutoniumCompareThemes =>
+      'Teme personalizate pentru aplicație';
+
+  @override
+  String get storePlutoniumVideoFree => 'Până la 720p la 30 FPS';
+
+  @override
+  String get storePlutoniumVideoPlutonium => 'Până la 4K la 60 FPS';
+
+  @override
+  String get storePlutoniumTagFootnote =>
+      'Poți alege doar un tag pe care nimeni altcineva cu același nume de utilizator nu-l are deja. Numele de utilizator nu sunt sensibile la majuscule, așa că Mina#4821 și mina#4821 sunt considerate la fel. Tagul #0000 este rezervat membrilor Fluxer Visionary.';
+
+  @override
+  String get storePlutoniumLearnVisionary => 'Află mai multe despre Visionary.';
+
+  @override
+  String get storePlutoniumDonatePrompt =>
+      'Vrei doar să susții dezvoltarea open source a Fluxer? ';
+
+  @override
+  String get storePlutoniumDonateLink => 'Donează în schimb.';
+
+  @override
+  String get storePlutoniumHighlightsLead =>
+      'Abonarea finanțează Fluxer și deblochează';
+
+  @override
+  String get storePlutoniumHighlightEmoji =>
+      'Emoji și stickere personalizate în orice chat';
+
+  @override
+  String get storePlutoniumHighlightProfile =>
+      'Profil animat, insignă și număr personalizat din 4 cifre';
+
+  @override
+  String get storePlutoniumHighlightFiles => 'Încărcări de până la 500 MB';
+
+  @override
+  String get storePlutoniumHighlightMessages =>
+      'Trimite mesaje de până la 4.000 de caractere';
+
+  @override
+  String get storePlutoniumHighlightCommunityProfile =>
+      'Un profil separat pentru fiecare comunitate';
+
+  @override
+  String get storePlutoniumHighlightsMore => 'Și multe altele';
+
+  @override
+  String get storePlutoniumRenewsThroughPlay =>
+      'Se reînnoiește automat prin Google Play până la anulare.';
+
+  @override
+  String get storePlutoniumRenewsThroughAppStore =>
+      'Se reînnoiește automat prin App Store până la anulare.';
+
+  @override
+  String get storePlutoniumRestorePurchases => 'Restaurează achizițiile';
+
+  @override
+  String get storePlutoniumAlreadySubscribed =>
+      'Ai deja un abonament Fluxer Plutonium.';
+
+  @override
+  String storePlutoniumSavePercent(int percent) {
+    return 'Economisește $percent%';
+  }
+
+  @override
+  String get storePlutoniumWaiting =>
+      'Achiziție primită. Plutonium va apărea aici odată ce se activează.';
+
+  @override
+  String get storePlutoniumUnavailable =>
+      'Abonamentele din aplicație nu sunt încă disponibile pe acest dispozitiv.';
+
+  @override
+  String get storePlutoniumVisionaryStatus =>
+      'Visionary include deja acces permanent, așa că nu este necesar un abonament recurent.';
+
+  @override
+  String get userSettingsNavPrivacyDashboard => 'Panou de confidențialitate';
+
+  @override
+  String get userSettingsNavAuthorizedApps => 'Aplicații autorizate';
+
+  @override
+  String get userSettingsNavBlockedUsers => 'Utilizatori blocați';
+
+  @override
+  String get userSettingsNavLinkedDevices => 'Dispozitive conectate';
+
+  @override
+  String get userSettingsNavConnections => 'Conexiuni';
+
+  @override
+  String get userSettingsNavLookAndFeel => 'Aspect';
+
+  @override
+  String get userSettingsNavAccessibility => 'Accesibilitate';
+
+  @override
+  String get userSettingsNavChat => 'Chat';
+
+  @override
+  String get userSettingsNavAudioAndVideo => 'Audio și video';
+
+  @override
+  String get userSettingsNavShortcuts => 'Comenzi rapide';
+
+  @override
+  String get audioAndVideoAudioSectionTitle => 'Audio';
+
+  @override
+  String get audioAndVideoAudioSectionDescription =>
+      'Configurează microfonul, difuzoarele și procesarea vocii.';
+
+  @override
+  String get audioAndVideoVideoSectionTitle => 'Video';
+
+  @override
+  String get audioAndVideoVideoSectionDescription =>
+      'Configurează calitatea camerei tale și a partajării ecranului.';
+
+  @override
+  String get audioAndVideoInCallBehaviorSectionTitle => 'Comportament în apel';
+
+  @override
+  String get audioAndVideoInCallBehaviorSectionDescription =>
+      'Controlează solicitările de confirmare în timpul apelurilor vocale și video.';
+
+  @override
+  String get audioAndVideoInputDeviceLabel => 'Dispozitiv de intrare';
+
+  @override
+  String get audioAndVideoOutputDeviceLabel => 'Dispozitiv de ieșire';
+
+  @override
+  String get audioAndVideoDefaultDeviceLabel => 'Implicit';
+
+  @override
+  String get audioAndVideoUseSpeakerLabel => 'Folosește difuzorul';
+
+  @override
+  String get audioAndVideoUseSpeakerDescription =>
+      'Când este dezactivat, sunetul se redă prin receptor sau prin căștile conectate.';
+
+  @override
+  String get audioAndVideoInputVolumeLabel => 'Volum de intrare';
+
+  @override
+  String get audioAndVideoOutputVolumeLabel => 'Volum ieșire';
+
+  @override
+  String get audioAndVideoVoiceProcessingSectionTitle => 'Procesarea vocii';
+
+  @override
+  String get audioAndVideoFocusedVoiceLabel => 'Voce focalizată';
+
+  @override
+  String get audioAndVideoFocusedVoiceDescription =>
+      'Recomandat. Îți curăță sunetul microfonului pentru o voce clară.';
+
+  @override
+  String get audioAndVideoDirectInputLabel => 'Intrare directă';
+
+  @override
+  String get audioAndVideoDirectInputDescription =>
+      'Trimite sunetul tău nemodificat. Cel mai bine dacă folosești software audio extern.';
+
+  @override
+  String get audioAndVideoCustomProfileLabel => 'Personalizat';
+
+  @override
+  String get audioAndVideoCustomProfileDescription =>
+      'Ajustează manual fiecare setare: suprimarea zgomotului, anularea ecoului și amplificarea.';
+
+  @override
+  String get audioAndVideoNoiseSuppressionSectionTitle =>
+      'Suprimarea zgomotului';
+
+  @override
+  String get audioAndVideoNoiseSuppressionEnhancedLabel => 'Îmbunătățit';
+
+  @override
+  String get audioAndVideoNoiseSuppressionStandardLabel => 'Standard';
+
+  @override
+  String get audioAndVideoNoiseSuppressionNoneLabel => 'Niciuna';
+
+  @override
+  String get audioAndVideoEchoCancellationLabel => 'Anulare ecou';
+
+  @override
+  String get audioAndVideoAutomaticGainControlLabel =>
+      'Control automat al amplificării';
+
+  @override
+  String get audioAndVideoAutomaticGainControlDescription =>
+      'Echilibrează volumul microfonului. Dezactivat când suprimarea îmbunătățită este activată.';
+
+  @override
+  String get audioAndVideoMicTestSectionTitle => 'Test microfon';
+
+  @override
+  String get audioAndVideoMicTestStartLabel => 'Pornește testul microfonului';
+
+  @override
+  String get audioAndVideoMicTestStopLabel => 'Oprește testul microfonului';
+
+  @override
+  String get audioAndVideoCameraLabel => 'Cameră';
+
+  @override
+  String get audioAndVideoMirrorCameraLabel => 'Oglindește camera';
+
+  @override
+  String get audioAndVideoCameraQualitySectionTitle => 'Calitatea camerei';
+
+  @override
+  String get audioAndVideoCameraQuality480pLabel => '480p';
+
+  @override
+  String get audioAndVideoCameraQuality720pLabel => '720p';
+
+  @override
+  String get audioAndVideoCameraQuality1080pLabel => '1080p';
+
+  @override
+  String get audioAndVideoScreenShareQualitySectionTitle =>
+      'Calitatea partajării ecranului';
+
+  @override
+  String get audioAndVideoFrameRateSectionTitle => 'Rată de cadre';
+
+  @override
+  String get audioAndVideoFrameRate15Label => '15 FPS';
+
+  @override
+  String get audioAndVideoFrameRate30Label => '30 FPS';
+
+  @override
+  String get audioAndVideoFrameRate60Label => '60 FPS';
+
+  @override
+  String get audioAndVideoInstanceVideoQualityLimit =>
+      'Instanța curentă permite partajarea ecranului până la 720p la 30 FPS.';
+
+  @override
+  String get audioAndVideoSkipHideOwnCameraConfirmLabel =>
+      'Nu mă mai întreba când îmi ascund camera';
+
+  @override
+  String get audioAndVideoSkipHideOwnScreenshareConfirmLabel =>
+      'Nu mă mai întreba când îmi ascund partajarea ecranului';
+
+  @override
+  String get userSettingsNavNotifications => 'Notificări';
+
+  @override
+  String get notificationsGeneralSectionTitle => 'General';
+
+  @override
+  String get notificationsEnableNotificationsLabel => 'Activează notificările';
+
+  @override
+  String notificationsEnableNotificationsDescription(String productName) {
+    return 'Primești notificări când îți sosesc mesaje. S-ar putea să fie nevoie să permiți notificările pentru $productName în setările dispozitivului. Pentru controlul pe canal sau pe comunitate, deschide setările de notificare din meniul unei comunități.';
+  }
+
+  @override
+  String get notificationsEnableDesktopNotificationsLabel =>
+      'Activează notificările pe desktop';
+
+  @override
+  String get notificationsEnableDesktopNotificationsDescription =>
+      'Folosește centrul de notificări al sistemului de operare. Pentru control la nivel de canal/comunitate, dă clic dreapta pe o pictogramă de comunitate și deschide setările de notificare.';
+
+  @override
+  String get notificationsPushInactiveTimeoutLabel =>
+      'Timp de inactivitate pentru notificările push';
+
+  @override
+  String notificationsPushInactiveTimeoutDescription(String productName) {
+    return '$productName evită trimiterea de notificări push către dispozitivele tale mobile când ești la calculator. Alege cât timp trebuie să fii inactiv pe desktop înainte de a primi notificări push.';
+  }
+
+  @override
+  String notificationsPushInactiveTimeoutOneMinute(int oneMinute) {
+    return '$oneMinute minut';
+  }
+
+  @override
+  String notificationsPushInactiveTimeoutMinutes(int minutes) {
+    return '$minutes minute';
+  }
+
+  @override
+  String get notificationsMentionPreferenceSectionTitle =>
+      'Preferințe mențiuni';
+
+  @override
+  String get notificationsReplyMentionPreferenceAriaLabel =>
+      'Preferință pentru mențiuni la răspuns';
+
+  @override
+  String get notificationsMentionNoPreferenceName => 'Fără preferință';
+
+  @override
+  String get notificationsMentionNoPreferenceDescription =>
+      'Respectă intenția expeditorului, fără avertisment când activează mențiunea @';
+
+  @override
+  String get notificationsMentionPreferMentionName => 'Cu @mențiune';
+
+  @override
+  String get notificationsMentionPreferMentionDescription =>
+      'Implicit, răspunsurile te @menționează, iar expeditorul este avertizat dacă dezactivează opțiunea';
+
+  @override
+  String get notificationsMentionPreferNoMentionName => 'Fără @mențiune';
+
+  @override
+  String get notificationsMentionPreferNoMentionDescription =>
+      'Implicit, răspunsurile omit @mențiunea, iar expeditorul este avertizat dacă o activează';
+
+  @override
+  String get notificationsTtsSectionTitle => 'Notificări text în vorbire';
+
+  @override
+  String get notificationsTtsEnableCommandLabel =>
+      'Activează redarea vocală /tts';
+
+  @override
+  String get notificationsTtsEnableCommandDescription =>
+      'Permite ca /tts să-ți citească mesajul cu voce tare. Dezactivarea setării păstrează aceste comenzi ca text obișnuit.';
+
+  @override
+  String get notificationsTtsAccessibilityLinkPrefix =>
+      'Ajustează viteza de redare în ';
+
+  @override
+  String get notificationsTtsAccessibilityLinkLabel => 'Accesibilitate';
+
+  @override
+  String get notificationsTtsAccessibilityLinkSuffix => '.';
+
+  @override
+  String get notificationsTtsAutoNarrationTitle =>
+      'Nararea automată a mesajelor';
+
+  @override
+  String get notificationsTtsAutoNarrationDescription =>
+      'Convertește conținutul primit în vorbire, indiferent dacă provine de la /tts.';
+
+  @override
+  String get notificationsTtsModeAllChannelsName => 'Fiecare canal';
+
+  @override
+  String get notificationsTtsModeAllChannelsDescription =>
+      'Fiecare mesaj primit va fi citit, indiferent de canalul deschis.';
+
+  @override
+  String get notificationsTtsModeCurrentChannelName => 'Doar canalul activ';
+
+  @override
+  String get notificationsTtsModeCurrentChannelDescription =>
+      'Narează doar canalul pe care îl vizualizezi. Narațiunea te însoțește între canale.';
+
+  @override
+  String get notificationsTtsModeNeverName => 'Niciodată automat';
+
+  @override
+  String get notificationsTtsModeNeverDescription =>
+      'Nu se aude nimic decât dacă cineva rulează manual /tts.';
+
+  @override
+  String get notificationsTtsModeAriaLabel =>
+      'Citește toate mesajele cu voce tare';
+
+  @override
+  String get notificationsSoundsSectionTitle => 'Sunete';
+
+  @override
+  String get notificationsMasterVolumeLabel => 'Volum principal';
+
+  @override
+  String get notificationsMasterVolumeDescription =>
+      'Setează nivelul pentru fiecare efect sonor. Suprascrierile individuale ale sunetelor ignoră această setare.';
+
+  @override
+  String get notificationsResetToDefaultVolume =>
+      'Resetează volumul la valoarea implicită';
+
+  @override
+  String get notificationsDisableAllSoundsLabel =>
+      'Dezactivează toate sunetele de notificare';
+
+  @override
+  String get notificationsDisableAllSoundsDescription =>
+      'Setările tale existente pentru sunetul notificărilor vor fi păstrate.';
+
+  @override
+  String get notificationsShowMoreSoundEffects =>
+      'Afișează mai multe efecte sonore';
+
+  @override
+  String get notificationsShowFewerSoundEffects =>
+      'Afișează mai puține efecte sonore';
+
+  @override
+  String get notificationsPreviewSound => 'Previzualizează sunetul';
+
+  @override
+  String get notificationsPerSoundVolumeTitle => 'Volum pentru fiecare sunet';
+
+  @override
+  String get notificationsPerSoundVolumeDescription =>
+      'Setează volume personalizate pentru sunete individuale. Sunetele fără o setare personalizată vor urma volumul principal.';
+
+  @override
+  String notificationsPerSoundVolumeOverrideDescription(int overrideCount) {
+    return 'Setări personalizate active pentru volumul sunetelor: $overrideCount.';
+  }
+
+  @override
+  String notificationsFollowingMasterVolume(int effectiveValue) {
+    return 'Urmărește master • $effectiveValue%';
+  }
+
+  @override
+  String notificationsResetSoundToMasterVolume(String label) {
+    return 'Resetează $label la volumul principal';
+  }
+
+  @override
+  String get notificationsResetAllOverrides =>
+      'Resetează toate setările personalizate';
+
+  @override
+  String notificationsMuteSound(String label) {
+    return 'Dezactivează sunetul pentru $label';
+  }
+
+  @override
+  String notificationsUnmuteSound(String label) {
+    return 'Activează sunetul pentru $label';
+  }
+
+  @override
+  String get notificationsSoundMessage =>
+      'Notificări pentru mesajele comunității';
+
+  @override
+  String get notificationsSoundDirectMessage =>
+      'Notificări pentru mesaje directe';
+
+  @override
+  String get notificationsSoundSameChannelMessage =>
+      'Notificări pentru mesajele din canalul curent';
+
+  @override
+  String get notificationsSoundMute => 'Dezactivare microfon';
+
+  @override
+  String get notificationsSoundUnmute => 'Activare microfon';
+
+  @override
+  String get notificationsSoundDeaf => 'Dezactivare sunet';
+
+  @override
+  String get notificationsSoundUndeaf => 'Activare sunet';
+
+  @override
+  String get notificationsSoundUserJoin => 'Utilizatorul intră pe canal';
+
+  @override
+  String get notificationsSoundUserLeave => 'Utilizatorul părăsește canalul';
+
+  @override
+  String get notificationsSoundUserMove => 'Utilizatorul a mutat canalul';
+
+  @override
+  String get notificationsSoundViewerJoin =>
+      'Spectatorul se alătură transmisiunii';
+
+  @override
+  String get notificationsSoundViewerLeave =>
+      'Spectatorul părăsește transmisiunea';
+
+  @override
+  String get notificationsSoundVoiceDisconnect => 'Voce deconectată';
+
+  @override
+  String get notificationsSoundIncomingRing => 'Apel primit';
+
+  @override
+  String get notificationsSoundCameraOn => 'Cameră pornită';
+
+  @override
+  String get notificationsSoundCameraOff => 'Cameră oprită';
+
+  @override
+  String get notificationsSoundScreenShareStart => 'Pornire partajare ecran';
+
+  @override
+  String get notificationsSoundScreenShareStop => 'Oprire partajare ecran';
+
+  @override
+  String get notificationsAfkTimeoutSyncFailed =>
+      'Nu am putut actualiza timpul de expirare al notificărilor push. Încearcă din nou.';
+
+  @override
+  String get notificationsMentionPreferenceSyncFailed =>
+      'Nu am putut actualiza preferința pentru mențiuni. Încearcă din nou.';
+
+  @override
+  String get notificationsPermissionDeniedTitle => 'Notificări blocate';
+
+  @override
+  String get notificationsEnableNotificationsPermissionDenied =>
+      'Nu am putut activa notificările. Permite permisiunea de notificare pentru a continua.';
+
+  @override
+  String get notificationsPushDeliveryProviderLabel => 'Furnizor push';
+
+  @override
+  String get notificationsPushDeliveryDistributorLabel => 'Distribuitor';
+
+  @override
+  String get notificationsPushDeliveryDistributorNone => 'Neselectat';
+
+  @override
+  String get notificationsPushDeliveryDistributorSheetTitle =>
+      'Alege distribuitorul';
+
+  @override
+  String get notificationsPushDeliveryDistributorPickAccessibility =>
+      'Schimbă distribuitorul push';
+
+  @override
+  String get notificationsPushDeliveryGatewayLabel => 'Gateway';
+
+  @override
+  String get notificationsPushDeliveryRelayLabel => 'Releu Fluxer Push';
+
+  @override
+  String get notificationsPushDeliveryRelayInUse => 'În uz';
+
+  @override
+  String get notificationsPushDeliveryRelayOff => 'Dezactivat';
+
+  @override
+  String get notificationsPushDeliveryRelayNotUsed => 'Nefolosit';
+
+  @override
+  String get notificationsPushRelaySectionTitle => 'Releu de notificări push';
+
+  @override
+  String notificationsPushRelaySectionDescription(String pushProvider) {
+    return '$pushProvider livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul Fluxer.';
+  }
+
+  @override
+  String get notificationsPushRelayConsentLabel =>
+      'Folosește releul push Fluxer';
+
+  @override
+  String get notificationsPushRelayConsentDescription =>
+      'Dacă dezactivezi asta, înregistrarea push a acestui dispozitiv este eliminată, iar dispozitivul nu mai primește notificări push.';
+
+  @override
+  String get pushRelayConsentTitle => 'Releu de notificări push';
+
+  @override
+  String pushRelayConsentDescription(String pushProvider) {
+    return '$pushProvider livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul Fluxer.';
+  }
+
+  @override
+  String get pushRelayConsentNoticePrefix => 'Acceptă ';
+
+  @override
+  String get pushRelayConsentNoticeLink =>
+      'nota de confidențialitate a releului push';
+
+  @override
+  String get pushRelayConsentNoticeSuffix =>
+      ' pentru a activa notificările push pe acest dispozitiv. Trebuie să accepți o singură dată per dispozitiv.';
+
+  @override
+  String get pushRelayConsentAgree => 'Acceptă și continuă';
+
+  @override
+  String get pushRelayConsentDecline => 'Nu acum';
+
+  @override
+  String get userSettingsNavLanguageAndTime => 'Limbă și timp';
+
+  @override
+  String get languageAndTimeLanguageSectionTitle => 'Limba interfeței';
+
+  @override
+  String get languageAndTimeLanguageSectionDescription =>
+      'Alege limba folosită în aplicație';
+
+  @override
+  String get languageAndTimeTimeFormatSectionTitle => 'Format oră';
+
+  @override
+  String get languageAndTimeTimeFormatSectionDescription =>
+      'Alege cum sunt afișate orele în aplicație';
+
+  @override
+  String get languageAndTimeTimeFormatSelectionLabel => 'Selectare format oră';
+
+  @override
+  String get languageAndTimeTimeFormatAuto => 'Automat';
+
+  @override
+  String get languageAndTimeTimeFormat12Hour => '12 ore';
+
+  @override
+  String get languageAndTimeTimeFormat24Hour => '24 ore';
+
+  @override
+  String languageAndTimeTimeFormatAppLanguage(String format) {
+    return 'Formatul orei pentru limba aplicației: $format';
+  }
+
+  @override
+  String languageAndTimeTimeFormatSystemLocale(String format) {
+    return 'Formatul orei din sistem: $format';
+  }
+
+  @override
+  String get languageAndTimeUseSystemLocaleForTimeFormat =>
+      'Folosește setările regionale ale sistemului pentru formatul orei';
+
+  @override
+  String get languageAndTimeTimeFormatSyncFailed =>
+      'Nu s-a putut actualiza formatul orei';
+
+  @override
+  String get userSettingsNavDefaultApps => 'Aplicații implicite';
+
+  @override
+  String get defaultAppsWebBrowserSectionTitle => 'Browser web';
+
+  @override
+  String get defaultAppsWebBrowserSectionDescription =>
+      'Alege ce browser se deschide când apeși pe un link.';
+
+  @override
+  String get defaultAppsWebBrowserNativeAppNote =>
+      'Dacă o aplicație este instalată pentru un site, linkurile se vor deschide mai întâi în acea aplicație.';
+
+  @override
+  String get defaultAppsWebBrowserInApp => 'Browser în aplicație';
+
+  @override
+  String get defaultAppsWebBrowserExternal => 'Browser extern';
+
+  @override
+  String get userSettingsNavAppIcon => 'Pictograma aplicației';
+
+  @override
+  String get appIconSectionTitle => 'Pictograma aplicației';
+
+  @override
+  String get appIconSectionDescription =>
+      'Alege ce pictogramă apare pe ecranul tău principal.';
+
+  @override
+  String get appIconSectionDescriptionAndroid =>
+      'Alege pictograma care apare pe ecranul de pornire. Schimbarea pictogramei repornește aplicația.';
+
+  @override
+  String get appIconAndroidChangeTitle => 'Schimbi pictograma aplicației?';
+
+  @override
+  String get appIconAndroidChangeDescription =>
+      'Fluxer va reporni ca să aplice noua pictogramă de pe ecranul de pornire.';
+
+  @override
+  String get appIconAndroidChangeConfirm => 'Schimbă pictograma';
+
+  @override
+  String get appIconOptionDefault => 'Implicit';
+
+  @override
+  String get appIconOptionStarfield => 'Câmp stelar';
+
+  @override
+  String get appIconOptionSweden => 'Suedia';
+
+  @override
+  String get appIconOptionGreyscale => 'Tonuri de gri';
+
+  @override
+  String get appIconOptionRainbow => 'Curcubeu';
+
+  @override
+  String get appIconOptionWaves => 'Valuri';
+
+  @override
+  String get appIconOptionChromaticAberration => 'Aberație cromatică';
+
+  @override
+  String get appIconOptionDefaultBrutalist => 'Brutalist';
+
+  @override
+  String get appIconOptionGreyscaleBrutalist => 'Brutalist în tonuri de gri';
+
+  @override
+  String get appIconUnsupported =>
+      'Schimbarea pictogramei aplicației nu este disponibilă pe acest dispozitiv.';
+
+  @override
+  String get userSettingsNavAdvanced => 'Avansat';
+
+  @override
+  String get advancedPerformanceReportingTitle => 'Raportare performanță';
+
+  @override
+  String get advancedCrashReportingSectionDescription =>
+      'Ajută Fluxer să remedieze erorile din această aplicație partajând date despre blocări și performanță. Această opțiune este dezactivată în mod implicit.';
+
+  @override
+  String get advancedPerformanceReportingLabel =>
+      'Trimite rapoarte de blocare și performanță';
+
+  @override
+  String get advancedCrashReportingDescription =>
+      'Rapoartele ajung la sistemul de urmărire a erorilor al Fluxer, chiar dacă ești conectat la o altă instanță. Nu includ nume de instanțe, ID-uri sau conținutul mesajelor.';
+
+  @override
+  String get observabilityReportingConsentTitle =>
+      'Ajută la remedierea blocărilor';
+
+  @override
+  String get observabilityReportingConsentSubtitle =>
+      'Fluxer s-a închis neașteptat. Partajarea datelor anonime despre blocări și erori ne ajută să remediem problemele mai repede.';
+
+  @override
+  String get observabilityReportingConsentBody =>
+      'Rapoartele includ jurnale de blocare, erori și date de bază despre performanță. Nu sunt partajate cu terți și poți dezactiva această opțiune oricând.';
+
+  @override
+  String observabilityReportingConsentEnableLater(String reportingToggle) {
+    return 'Ca să activezi mai târziu, deschide Setări → Avansat → $reportingToggle.';
+  }
+
+  @override
+  String get observabilityReportingConsentAgree =>
+      'Trimite rapoarte de blocare';
+
+  @override
+  String get observabilityReportingConsentDecline => 'Nu vreau să activez';
+
+  @override
+  String get advancedSettingsConfigure => 'Configurează';
+
+  @override
+  String get advancedSettingsCategoryPrivacy => 'Confidențialitate';
+
+  @override
+  String get advancedSettingsCategoryAppearance => 'Aspect';
+
+  @override
+  String get advancedSettingsCategoryAccessibility => 'Accesibilitate';
+
+  @override
+  String get advancedSettingsCategoryChat => 'Chat';
+
+  @override
+  String get advancedSettingsCategoryMedia => 'Media';
+
+  @override
+  String get advancedSettingsCategoryVoice => 'Vocal';
+
+  @override
+  String get advancedSettingsCategoryDeveloper => 'Dezvoltator';
+
+  @override
+  String get advancedSettingEnableTextSelectionLabel =>
+      'Activează selectarea textului';
+
+  @override
+  String get advancedSettingEnableTextSelectionDescription =>
+      'Permite selectarea textului în aplicație';
+
+  @override
+  String get advancedSettingVideoSeekThumbnailsLabel =>
+      'Activează miniaturile pentru navigarea în videoclipuri';
+
+  @override
+  String get advancedSettingVideoSeekThumbnailsDescription =>
+      'Miniatură sau cadru live în timpul derulării video';
+
+  @override
+  String get advancedSettingHapticFeedbackLabel => 'Feedback haptic';
+
+  @override
+  String get advancedSettingHapticFeedbackDescription =>
+      'Feedback de vibrații pentru atingeri și acțiuni. Nu se va sincroniza pe alte dispozitive.';
+
+  @override
+  String get advancedSettingShowNekoLabel => 'Afișează Neko';
+
+  @override
+  String get advancedSettingShowNekoDescription =>
+      'Pisica Neko care îți urmărește cursorul';
+
+  @override
+  String get advancedSettingShowNekoDescriptionTouch =>
+      'Afișează Neko la intrarea de chat';
+
+  @override
+  String get advancedSettingMobileSplashZoomAnimationLabel =>
+      'Animație de zoom la pornire';
+
+  @override
+  String get advancedSettingMobileSplashZoomAnimationDescription =>
+      'Micșorează logo-ul la ieșirea din ecranul de pornire';
+
+  @override
+  String get advancedSettingSplashQuotesLabel => 'Splash screen quotes';
+
+  @override
+  String get advancedSettingSplashQuotesDescription =>
+      'Show a random quote on the splash screen. Won\'t sync across devices.';
+
+  @override
+  String get advancedSettingKeyboardHintsLabel => 'Indicații de tastatură';
+
+  @override
+  String get advancedSettingKeyboardHintsDescription =>
+      'Indicații pentru comenzile rapide de la tastatură în tooltip-uri';
+
+  @override
+  String get advancedSettingEnableFavoritesLabel => 'Activează favoritele';
+
+  @override
+  String get advancedSettingEnableFavoritesDescription =>
+      'Afișează favoritele în toată aplicația';
+
+  @override
+  String get advancedSettingVoiceChannelJoinBehaviorLabel =>
+      'Comportamentul la intrarea în canalul vocal';
+
+  @override
+  String get advancedSettingVoiceChannelJoinBehaviorDescription =>
+      'Confirmare sau dublu clic pentru a intra în canalele vocale ale comunităților';
+
+  @override
+  String get advancedSettingRequireDoubleClickJoinLabel =>
+      'Solicită dublu clic pentru a te alătura canalelor vocale';
+
+  @override
+  String get advancedSettingConfirmBeforeJoiningVoiceLabel =>
+      'Confirmă înainte de a te alătura canalelor vocale';
+
+  @override
+  String get advancedSettingAutoSendGifsLabel =>
+      'Trimite automat GIF-urile când sunt selectate';
+
+  @override
+  String get advancedSettingAutoSendGifsDescription =>
+      'Trimite automat GIF-uri din selector, fără confirmare';
+
+  @override
+  String get advancedSettingSaveGifFavoritesLabel =>
+      'Salvează GIF-urile favorite ca media salvată';
+
+  @override
+  String get advancedSettingSaveGifFavoritesDescription =>
+      'Alege cum sunt stocate GIF-urile marcate ca favorite';
+
+  @override
+  String get advancedSettingMediaButtonsLabel => 'Butoane media';
+
+  @override
+  String get advancedSettingMediaButtonsDescription =>
+      'Personalizează ce butoane și indicatori apar pe atașamentele media și pe încorporări';
+
+  @override
+  String get advancedSettingPreuploadAttachmentsLabel =>
+      'Încarcă atașamente înainte de a trimite';
+
+  @override
+  String get advancedSettingPreuploadAttachmentsDescription =>
+      'Începe încărcarea atașamentelor imediat ce sunt adăugate în câmpul de mesaj';
+
+  @override
+  String get advancedSettingStripTrackingLabel =>
+      'Elimină parametrii de urmărire din URL-uri';
+
+  @override
+  String get advancedSettingStripTrackingDescription =>
+      'Elimină automat parametrii de urmărire din URL-urile mesajelor pe care le trimiți';
+
+  @override
+  String get advancedSettingTrustAllLinksLabel =>
+      'Acordă încredere tuturor linkurilor externe';
+
+  @override
+  String get advancedSettingSearchEnginesLabel => 'Motoare de căutare';
+
+  @override
+  String get advancedSettingSearchEnginesDescription =>
+      'Configurează motoarele de căutare utilizate pentru textul selectat';
+
+  @override
+  String get advancedSettingTranslatorsLabel => 'Traducători';
+
+  @override
+  String get advancedSettingTranslatorsDescription =>
+      'Configurează furnizorii de traducere utilizați pentru textul selectat';
+
+  @override
+  String get advancedSettingReverseImageSearchLabel =>
+      'Căutare inversă a imaginii';
+
+  @override
+  String get advancedSettingReverseImageSearchDescription =>
+      'Furnizori pentru căutarea inversă a imaginilor';
+
+  @override
+  String get advancedSettingMessageActionBarLabel => 'Bară de acțiuni mesaje';
+
+  @override
+  String get advancedSettingMessageActionBarDescription =>
+      'Personalizează bara de acțiuni care apare la trecerea cu mouse-ul peste mesaje';
+
+  @override
+  String get advancedSettingExpressionAutocompleteLabel =>
+      'Completare automată expresii';
+
+  @override
+  String get advancedSettingExpressionAutocompleteDescription =>
+      'Alege ce apare când tastezi două puncte în câmpul de mesaj';
+
+  @override
+  String get advancedSettingInputButtonsLabel =>
+      'Butoane de introducere a mesajului';
+
+  @override
+  String get advancedSettingInputButtonsDescription =>
+      'Alege ce butoane apar în câmpul de mesaj';
+
+  @override
+  String get advancedSettingScrollToBottomOnSendLabel =>
+      'Derulează în jos la trimiterea unui mesaj';
+
+  @override
+  String get advancedSettingScrollToBottomOnSendDescription =>
+      'Alege cum se derulează conversația după ce trimiți un mesaj';
+
+  @override
+  String get advancedSettingSkipMarkAllAsReadLabel =>
+      'Omitere confirmare „Marchează tot ca citit”';
+
+  @override
+  String get advancedSettingSkipMarkAllAsReadDescription =>
+      'Marchează imediat toate canalele necitite din inbox ca fiind citite, fără a cere confirmare';
+
+  @override
+  String get advancedSettingHideMutedChannelsLabel =>
+      'Ascunde implicit canalele puse pe silențios';
+
+  @override
+  String get advancedSettingHideMutedChannelsDescription =>
+      'Ascunde canalele puse pe silențios din barele laterale ale comunităților';
+
+  @override
+  String get advancedSettingShowGifIndicatorLabel => 'Afișează indicatorul GIF';
+
+  @override
+  String get advancedSettingShowAttachmentExpiryLabel =>
+      'Afișează indicatorul de expirare a atașamentelor';
+
+  @override
+  String get advancedSettingShowMediaDeleteLabel =>
+      'Afișează butonul de ștergere';
+
+  @override
+  String get advancedSettingShowMediaDownloadLabel =>
+      'Afișează butonul de descărcare';
+
+  @override
+  String get advancedSettingShowMediaFavoriteLabel =>
+      'Afișează butonul de favorite';
+
+  @override
+  String get advancedSettingShowSuppressEmbedsLabel =>
+      'Afișează butonul de suprimare a încorporărilor';
+
+  @override
+  String get advancedSettingShowMessageActionBarLabel =>
+      'Afișează bara de acțiuni a mesajelor';
+
+  @override
+  String get advancedSettingShowOnlyMoreButtonLabel =>
+      'Afișează doar butonul \"Mai multe\"';
+
+  @override
+  String get advancedSettingShowQuickReactionsLabel =>
+      'Afișează reacții rapide';
+
+  @override
+  String get advancedSettingEnableShiftToExpandLabel =>
+      'Activează Shift pentru a extinde';
+
+  @override
+  String get advancedSettingShowDefaultEmojisAutocompleteLabel =>
+      'Afișează emoji implicite în completarea automată a expresiilor';
+
+  @override
+  String get advancedSettingShowCustomEmojisAutocompleteLabel =>
+      'Afișează emoji personalizate în completarea automată a expresiilor';
+
+  @override
+  String get advancedSettingShowStickersAutocompleteLabel =>
+      'Afișează stickere în completarea automată a expresiilor';
+
+  @override
+  String get advancedSettingShowSavedMediaAutocompleteLabel =>
+      'Afișează media salvată în completarea automată a expresiilor';
+
+  @override
+  String get advancedSettingShowGifsButtonLabel => 'Afișează butonul GIF-uri';
+
+  @override
+  String get advancedSettingShowMediaButtonLabel => 'Afișează butonul media';
+
+  @override
+  String get advancedSettingShowStickersButtonLabel =>
+      'Afișează butonul de stickere';
+
+  @override
+  String get advancedSettingShowEmojiButtonLabel => 'Afișează butonul de emoji';
+
+  @override
+  String get advancedSettingShowSendButtonLabel =>
+      'Afișează butonul de trimitere';
+
+  @override
+  String get advancedSettingNewDeviceAlertsLabel =>
+      'Afișează alerte pentru dispozitive noi';
+
+  @override
+  String get advancedSettingNewDeviceAlertsDescription =>
+      'Afișează o alertă când se conectează un dispozitiv audio nou';
+
+  @override
+  String get advancedSettingConnectionVolumeControlsLabel =>
+      'Controale pentru volumul conexiunii';
+
+  @override
+  String get advancedSettingConnectionVolumeControlsDescription =>
+      'Afișează glisoare de volum per dispozitiv pentru participanți în meniurile vocale';
+
+  @override
+  String get advancedSettingScreenSharePreviewBehaviorLabel =>
+      'Comportamentul previzualizării la partajarea ecranului';
+
+  @override
+  String get advancedSettingScreenSharePreviewBehaviorDescription =>
+      'Comportamentul previzualizării, al ferestrelor separate și al miniaturilor de stream';
+
+  @override
+  String get advancedSettingScreenShareCodecLabel => 'Codec partajare ecran';
+
+  @override
+  String get advancedSettingScreenShareCodecDescription =>
+      'Codec video pentru partajarea ecranului';
+
+  @override
+  String get advancedSettingScreenShareCodecAuto => 'Automat (recomandat)';
+
+  @override
+  String get advancedSettingScreenShareCodecAv1 => 'AV1';
+
+  @override
+  String get advancedSettingScreenShareCodecH265 => 'H.265';
+
+  @override
+  String get advancedSettingScreenShareCodecVp9 => 'VP9';
+
+  @override
+  String get advancedSettingScreenShareCodecH264 => 'H.264';
+
+  @override
+  String get advancedSettingScreenShareCodecVp8 => 'VP8';
+
+  @override
+  String get advancedSettingPauseScreenSharePreviewLabel =>
+      'Întrerupe previzualizarea partajării ecranului în fundal';
+
+  @override
+  String get advancedSettingHideStreamPreviewLabel =>
+      'Ascunde miniatura de previzualizare a streamului meu';
+
+  @override
+  String get advancedSettingDeveloperModeLabel => 'Activează modul dezvoltator';
+
+  @override
+  String get advancedSettingDeveloperModeDescription =>
+      'Activează modul dezvoltator';
+
+  @override
+  String get advancedSettingDefaultSearchEngineLabel =>
+      'Motor de căutare implicit';
+
+  @override
+  String get advancedSettingDefaultSearchEngineDescription =>
+      'Alege motorul de căutare folosit implicit la căutarea textului selectat.';
+
+  @override
+  String get advancedSettingBuiltInSearchEnginesLabel =>
+      'Motoare de căutare încorporate';
+
+  @override
+  String get advancedSettingBuiltInSearchEnginesDescription =>
+      'Activează sau dezactivează motoarele de căutare încorporate. Motoarele activate apar în meniul contextual al mesajelor atunci când este selectat text.';
+
+  @override
+  String get advancedSettingCustomSearchEnginesLabel =>
+      'Motoare de căutare personalizate';
+
+  @override
+  String advancedSettingCustomSearchEnginesDescription(Object query) {
+    return 'Adaugă propriile motoare de căutare cu un model URL personalizat. Folosește „$query” ca placeholder pentru textul căutării.';
+  }
+
+  @override
+  String get advancedSettingAddSearchEngineLabel => 'Adaugă motor de căutare';
+
+  @override
+  String get advancedSettingEnableAtLeastOneSearchEngineLabel =>
+      'Activează cel puțin un motor de căutare de mai jos.';
+
+  @override
+  String get advancedSettingRemoveSearchEngineLabel =>
+      'Elimină motorul de căutare';
+
+  @override
+  String get advancedSettingDefaultTranslatorLabel => 'Traducător implicit';
+
+  @override
+  String get advancedSettingDefaultTranslatorDescription =>
+      'Alege traducătorul folosit implicit la traducerea textului selectat.';
+
+  @override
+  String get advancedSettingBuiltInTranslatorsLabel =>
+      'Traducători încorporați';
+
+  @override
+  String get advancedSettingBuiltInTranslatorsDescription =>
+      'Activează sau dezactivează traducătorii încorporați. Traducătorii activați apar în meniul contextual al mesajelor când este selectat text.';
+
+  @override
+  String get advancedSettingCustomTranslatorsLabel =>
+      'Traducători personalizați';
+
+  @override
+  String advancedSettingCustomTranslatorsDescription(Object query) {
+    return 'Adaugă propriile traducătoare cu un model URL personalizat. Folosește „$query” ca placeholder pentru textul de tradus.';
+  }
+
+  @override
+  String get advancedSettingAddTranslatorLabel => 'Adaugă traducător';
+
+  @override
+  String get advancedSettingEnableAtLeastOneTranslatorLabel =>
+      'Activează cel puțin un traducător de mai jos.';
+
+  @override
+  String get advancedSettingRemoveTranslatorLabel => 'Elimină traducătorul';
+
+  @override
+  String get advancedSettingDefaultReverseImageSearchLabel =>
+      'Căutare inversă implicită a imaginii';
+
+  @override
+  String get advancedSettingDefaultReverseImageSearchDescription =>
+      'Alege serviciul de căutare inversă a imaginilor folosit implicit la căutarea unei imagini.';
+
+  @override
+  String get advancedSettingBuiltInReverseImageSearchLabel =>
+      'Căutare inversă a imaginii încorporată';
+
+  @override
+  String get advancedSettingBuiltInReverseImageSearchDescription =>
+      'Activează sau dezactivează furnizorii încorporați de căutare inversă a imaginilor. Furnizorii activați apar în meniul contextual al imaginilor, avatarurilor, bannerelor, stickerelor și emoji-urilor.';
+
+  @override
+  String get advancedSettingCustomReverseImageSearchLabel =>
+      'Căutare inversă personalizată a imaginii';
+
+  @override
+  String advancedSettingCustomReverseImageSearchDescription(Object url) {
+    return 'Adaugă propriii furnizori de căutare inversă de imagini cu un model URL personalizat. Folosește \'$url\' ca placeholder pentru URL-ul imaginii.';
+  }
+
+  @override
+  String get advancedSettingAddReverseImageSearchLabel =>
+      'Adaugă căutare inversă a imaginii';
+
+  @override
+  String get advancedSettingEnableAtLeastOneReverseImageSearchLabel =>
+      'Activează cel puțin un furnizor de căutare inversă a imaginii de mai jos.';
+
+  @override
+  String get advancedSettingRemoveReverseImageSearchLabel =>
+      'Elimină căutarea inversă a imaginii';
+
+  @override
+  String get advancedSettingAddSearchEngineTitle => 'Adaugă motor de căutare';
+
+  @override
+  String get advancedSettingEditSearchEngineTitle =>
+      'Editează motorul de căutare';
+
+  @override
+  String get advancedSettingAddTranslatorTitle =>
+      'Adaugă furnizor de traduceri';
+
+  @override
+  String get advancedSettingEditTranslatorTitle =>
+      'Editează furnizorul de traduceri';
+
+  @override
+  String get advancedSettingAddReverseImageSearchTitle =>
+      'Adaugă motor de căutare inversă a imaginii';
+
+  @override
+  String get advancedSettingEditReverseImageSearchTitle =>
+      'Editează motorul de căutare inversă a imaginii';
+
+  @override
+  String get advancedSettingSearchProviderNameLabel => 'Nume';
+
+  @override
+  String get advancedSettingSearchProviderUrlLabel => 'Model URL';
+
+  @override
+  String get advancedSettingSearchProviderNameTextPlaceholder =>
+      'Motorul meu de căutare';
+
+  @override
+  String get advancedSettingSearchProviderNameTranslatePlaceholder =>
+      'Traducătorul meu';
+
+  @override
+  String get advancedSettingSearchProviderNameImagePlaceholder =>
+      'Căutarea mea inversă de imagini';
+
+  @override
+  String advancedSettingSearchProviderUrlTextHint(Object query) {
+    return 'Folosește \'$query\' unde ar trebui inserat textul căutării.';
+  }
+
+  @override
+  String advancedSettingSearchProviderUrlTranslateHint(Object query) {
+    return 'Folosește \'$query\' unde ar trebui inserat textul de tradus.';
+  }
+
+  @override
+  String advancedSettingSearchProviderUrlImageHint(Object url) {
+    return 'Folosește \'$url\' unde ar trebui inserat URL-ul imaginii.';
+  }
+
+  @override
+  String get advancedSettingSearchProviderNameRequired =>
+      'Numele este obligatoriu.';
+
+  @override
+  String get advancedSettingSearchProviderUrlRequired =>
+      'Modelul URL este obligatoriu.';
+
+  @override
+  String advancedSettingSearchProviderUrlMustContainQuery(Object query) {
+    return 'Modelul URL trebuie să conțină placeholder-ul „$query”.';
+  }
+
+  @override
+  String advancedSettingSearchProviderUrlMustContainUrl(Object url) {
+    return 'Modelul URL trebuie să conțină placeholder-ul „$url”.';
+  }
+
+  @override
+  String get advancedSettingSearchProviderUrlMustBeValid =>
+      'Modelul URL trebuie să fie un URL valid.';
+
+  @override
+  String get advancedSettingAddSearchProviderAction => 'Adaugă';
+
+  @override
+  String get advancedSettingEditSearchProviderAction => 'Editează';
+
+  @override
+  String get advancedSettingRemoveSearchProviderConfirmAction => 'Elimină';
+
+  @override
+  String advancedSettingRemoveSearchProviderConfirmDescription(
+    String engineName,
+  ) {
+    return 'Ești sigur că vrei să elimini $engineName?';
+  }
+
+  @override
+  String get userSettingsNavApplications => 'Aplicații';
+
+  @override
+  String get userSettingsNavAppLogs => 'Jurnale aplicație';
+
+  @override
+  String get userSettingsNavDeveloperTools => 'Instrumente pentru dezvoltatori';
+
+  @override
+  String get userSettingsNavLimitsConfig => 'Config. limite';
+
+  @override
+  String get userSettingsNavFeatureFlags => 'Drapele funcționalități';
+
+  @override
+  String get userSettingsNavWhatsNew => 'Noutăți';
+
+  @override
+  String get userSettingsJoinFluxerLabs => 'Alătură-te Fluxer Labs';
+
+  @override
+  String get userSettingsGiveFeedback => 'Trimite feedback';
+
+  @override
+  String get userSettingsNavAppLicenses => 'Licențe aplicație';
+
+  @override
+  String get userSettingsAppLicensesDescription =>
+      'Software open-source utilizat de această aplicație. Această aplicație este construită cu Flutter.';
+
+  @override
+  String get userSettingsAppLicensesLoadError =>
+      'Nu am putut încărca licențele aplicației.';
+
+  @override
+  String userSettingsAppLicensesPackageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count licențe',
+      one: '1 licență',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get userSettingsNavLogOut => 'Deconectare';
+
+  @override
+  String get userSettingsLogOutConfirmTitle => 'Deconectare?';
+
+  @override
+  String get userSettingsLogOutConfirmDescription =>
+      'Te poți conecta oricând din nou.';
+
+  @override
+  String get quickSwitcherTabSearch => 'Căutare';
+
+  @override
+  String get quickSwitcherTabFriends => 'Prieteni';
+
+  @override
+  String get quickSwitcherSearchPlaceholder =>
+      'Caută canale, persoane sau comunități';
+
+  @override
+  String get quickSwitcherSearchFriends => 'Caută prieteni';
+
+  @override
+  String get quickSwitcherNoMatchesFound => 'Niciun rezultat găsit';
+
+  @override
+  String get quickSwitcherEmptyHint =>
+      'Încearcă un alt nume sau folosește prefixele @ / # / ! / * pentru a filtra rezultatele.';
+
+  @override
+  String get quickSwitcherSectionPeople => 'Persoane';
+
+  @override
+  String get quickSwitcherSectionGroupMessages => 'Mesaje de grup';
+
+  @override
+  String get quickSwitcherSectionTextChannels => 'Canale text';
+
+  @override
+  String get quickSwitcherSectionThreads => 'Fire de discuție';
+
+  @override
+  String get quickSwitcherSectionVoiceChannels => 'Canale vocale';
+
+  @override
+  String get quickSwitcherSectionCommunities => 'Comunități';
+
+  @override
+  String get quickSwitcherSectionSettings => 'Setări';
+
+  @override
+  String get quickSwitcherHomeLabel => 'Acasă';
+
+  @override
+  String get quickSwitcherDirectMessagesLabel => 'Mesaje directe';
+
+  @override
+  String get quickSwitcherFavoritesLabel => 'Favorite';
+
+  @override
+  String get quickSwitcherUserSettingsLabel => 'Setări utilizator';
+
+  @override
+  String get quickSwitcherNotificationsLabel => 'Notificări';
+
+  @override
+  String get quickSwitcherBookmarksLabel => 'Mesaje salvate';
+
+  @override
+  String get savedMessagesEmptyTitle => 'Niciun mesaj salvat';
+
+  @override
+  String get savedMessagesEmptyBody =>
+      'Salvează mesajele ca să le regăsești mai târziu.';
+
+  @override
+  String get savedMessagesEndBody => 'Nu mai sunt alte elemente de afișat.';
+
+  @override
+  String get savedMessagesRemoveTooltip => 'Elimină din mesaje salvate';
+
+  @override
+  String get savedMessagesAddedToast => 'Adăugat la mesaje salvate';
+
+  @override
+  String get savedMessagesRemovedToast => 'Eliminat din mesaje salvate';
+
+  @override
+  String get quickSwitcherMentionsLabel => 'Mențiuni';
+
+  @override
+  String get quickSwitcherFriendsEmptyTitle => 'Încă nu ai prieteni';
+
+  @override
+  String get quickSwitcherFriendsEmptyHint =>
+      'Adaugă un prieten pentru a începe.';
+
+  @override
+  String get quickSwitcherFriendsNoMatchTitle =>
+      'Niciun prieten nu corespunde căutării';
+
+  @override
+  String get quickSwitcherFriendsNoMatchHint => 'Încearcă un alt nume.';
+
+  @override
+  String get quickSwitcherSearchAliasUser => 'Utilizator';
+
+  @override
+  String get quickSwitcherSearchAliasYou => 'Tu';
+
+  @override
+  String get quickSwitcherSearchAliasDm => 'DM';
+
+  @override
+  String get quickSwitcherSearchAliasDms => 'Conversații';
+
+  @override
+  String get quickSwitcherSearchAliasMessages => 'Mesaje';
+
+  @override
+  String get quickSwitcherSearchAliasFav => 'Favorite';
+
+  @override
+  String get quickSwitcherSearchAliasStarred => 'Favorite';
+
+  @override
+  String get quickSwitcherSearchAliasInbox => 'Mesaje primite';
+
+  @override
+  String get quickSwitcherSearchAliasSaved => 'Salvat';
+
+  @override
+  String get uiClose => 'Închide';
+
+  @override
+  String get chatJumpToBottom => 'Mergi la ultimul mesaj';
+
+  @override
+  String get chatUnreadDividerNew => 'Nou';
+
+  @override
+  String get uiConfirm => 'Confirmă';
+
+  @override
+  String get uiUnderstood => 'Am înțeles';
+
+  @override
+  String get uiLoading => 'Se încarcă';
+
+  @override
+  String get uiSearch => 'Căutare';
+
+  @override
+  String get uiStartCall => 'Inițiază apelul';
+
+  @override
+  String get uiStartVideoCall => 'Inițiază apel video';
+
+  @override
+  String get uiPlay => 'Redă';
+
+  @override
+  String get uiPause => 'Pauză';
+
+  @override
+  String get uiDownload => 'Descarcă';
+
+  @override
+  String get uiMoreActions => 'Mai multe acțiuni';
+
+  @override
+  String get uiUnsavedChanges => 'Modificări nesalvate';
+
+  @override
+  String get uiReset => 'Resetare';
+
+  @override
+  String get uiOpenColorPicker => 'Deschide selectorul de culori';
+
+  @override
+  String get uiSelectPlaceholder => 'Selectează';
+
+  @override
+  String get uiSearchPlaceholder => 'Căutare';
+
+  @override
+  String get uiNoOptionsFound => 'Nu s-au găsit opțiuni';
+
+  @override
+  String get uiDismissNotification => 'Închide notificarea';
+
+  @override
+  String get uiColorPickerTitle => 'Selector de culori';
+
+  @override
+  String get mentionConfirmTitle => 'Menționezi pe toată lumea?';
+
+  @override
+  String mentionConfirmEveryoneBody(int count) {
+    return 'Aceasta va notifica $count membri. Continuați?';
+  }
+
+  @override
+  String mentionConfirmHereBody(int count) {
+    return 'Aceasta va notifica $count membri online. Continuare?';
+  }
+
+  @override
+  String mentionConfirmRoleBody(int count, String roleName) {
+    return 'Aceasta va notifica $count membri cu rolul $roleName. Continuați?';
+  }
+
+  @override
+  String get mentionConfirmButton => 'Menționează';
+
+  @override
+  String get composerEmojiUnavailable => 'Nu poți folosi acel emoji aici.';
+
+  @override
+  String get instanceUrlLabel => 'URL instanță';
+
+  @override
+  String get instanceUrlPlaceholder =>
+      'Introdu adresa URL a instanței (ex. fluxer.com)';
+
+  @override
+  String get instanceUrlHelper =>
+      'Folosește fluxer.com pentru instanța oficială sau URL-ul exact al unei instanțe auto-găzduite.';
+
+  @override
+  String get resetToDefaultInstance => 'Resetează la Fluxer';
+
+  @override
+  String get instanceConnect => 'Conectare';
+
+  @override
+  String get instanceConnecting => 'Se conectează…';
+
+  @override
+  String get instanceConnectFailed => 'Nu s-a putut conecta la instanță';
+
+  @override
+  String instanceConnectFailedDomain(String domain) {
+    return 'Nu am putut să mă conectez la $domain. Încearcă din nou.';
+  }
+
+  @override
+  String get instanceInvalidDiscoveryResponse =>
+      'Nu am putut citi configurația acestei instanțe. Verifică adresa și încearcă din nou.';
+
+  @override
+  String instanceOutdatedForClient(String domain) {
+    return 'Această instanță este prea veche pentru această aplicație. Cere administratorului $domain să actualizeze Fluxer.';
+  }
+
+  @override
+  String instanceRequiresNewerClient(String domain) {
+    return '$domain rulează o versiune Fluxer mai nouă decât această aplicație. Actualizează aplicația, apoi încearcă din nou.';
+  }
+
+  @override
+  String get instanceCompatibilityTitle => 'Nu poți folosi această instanță';
+
+  @override
+  String get instanceCompatibilityRetry => 'Încearcă din nou';
+
+  @override
+  String get instanceCompatibilityUpdateApp => 'Actualizează aplicația';
+
+  @override
+  String get instanceCompatibilityStatusPagePrompt =>
+      'Verifică pagina de stare pentru noutăți.';
+
+  @override
+  String get instanceCompatibilityStatusPageLink => 'pagina de stare';
+
+  @override
+  String get recentInstances => 'Instanțe recente';
+
+  @override
+  String removeRecentInstance(String domain) {
+    return 'Elimină $domain din instanțele recente';
+  }
+
+  @override
+  String get instanceSheetTitle => 'Conectare la instanță';
+
+  @override
+  String get changeInstance => 'Schimbă';
+
+  @override
+  String get instanceConnectionRequired =>
+      'Conectează-te la instanță pentru a te autentifica';
+
+  @override
+  String get comingSoon => 'În curând';
+
+  @override
+  String get guildNavbarDirectMessages => 'Mesaje directe';
+
+  @override
+  String get guildNavbarExploreDiscoverableCommunities =>
+      'Explorează comunități';
+
+  @override
+  String get discoveryExplore => 'Explorează';
+
+  @override
+  String get discoveryExplorePublicCommunities => 'Explore comunități publice';
+
+  @override
+  String get discoveryListingSubheading =>
+      'Vrei să-ți listezi comunitatea aici? Aplică dacă îndeplinești cerințele din setările comunității tale > Explorează.';
+
+  @override
+  String get discoverySearchCommunities => 'Caută comunități';
+
+  @override
+  String get discoveryFilterByLanguage => 'Filtrează după limbă';
+
+  @override
+  String get discoveryAllLanguages => 'Toate limbile';
+
+  @override
+  String get discoveryAllCategories => 'Toate';
+
+  @override
+  String get discoveryCategoryGaming => 'Jocuri';
+
+  @override
+  String get discoveryCategoryMusic => 'Muzică';
+
+  @override
+  String get discoveryCategoryEntertainment => 'Divertisment';
+
+  @override
+  String get discoveryCategoryEducation => 'Educație';
+
+  @override
+  String get discoveryCategoryScienceAndTechnology => 'Știință și tehnologie';
+
+  @override
+  String get discoveryCategoryContentCreator => 'Creator de conținut';
+
+  @override
+  String get discoveryCategoryAnimeAndManga => 'Anime și manga';
+
+  @override
+  String get discoveryCategoryMoviesAndTv => 'Filme și TV';
+
+  @override
+  String get discoveryCategoryOther => 'Altele';
+
+  @override
+  String get discoveryNoCommunitiesMatch =>
+      'Nicio comunitate nu se potrivește.';
+
+  @override
+  String get discoveryJoinCommunity => 'Alătură-te comunității';
+
+  @override
+  String get discoveryJoined => 'Alăturat';
+
+  @override
+  String discoveryOnlineCount(String count) {
+    return '$count online';
+  }
+
+  @override
+  String discoveryMemberCount(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString membri',
+      one: '1 membru',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get discoveryNoDescription => 'Fără descriere.';
+
+  @override
+  String get discoveryCommunities => 'Comunități';
+
+  @override
+  String get discoveryApps => 'Aplicații';
+
+  @override
+  String get discoveryJoinErrorGenericTitle =>
+      'Nu te-ai putut alătura acestei comunități';
+
+  @override
+  String get discoveryJoinErrorGenericMessage =>
+      'Ceva nu a mers bine. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get discoveryJoinErrorFullTitle => 'Această comunitate este plină';
+
+  @override
+  String get discoveryJoinErrorFullMessage =>
+      'Această comunitate a atins limita de membri, așa că nu te poți alătura acum.';
+
+  @override
+  String get discoveryJoinErrorMaxGuildsTitle =>
+      'Ai atins limita de comunități';
+
+  @override
+  String get discoveryJoinErrorMaxGuildsMessage =>
+      'Ai atins numărul maxim de comunități. Părăsește una și încearcă din nou.';
+
+  @override
+  String get discoveryJoinErrorBannedTitle =>
+      'Nu te poți alătura acestei comunități';
+
+  @override
+  String get discoveryJoinErrorBannedMessage =>
+      'Ai interdicție în această comunitate.';
+
+  @override
+  String get discoveryJoinErrorNotAvailableTitle =>
+      'Această comunitate nu mai este disponibilă';
+
+  @override
+  String get discoveryJoinErrorNotAvailableMessage =>
+      'Este posibil să fi părăsit secțiunea „Explorează” sau să fi dezactivat înscrierile noi. Reîmprospătează pagina și nu o vei mai vedea.';
+
+  @override
+  String get discoveryJoinErrorRateLimitTitle => 'Mergi prea repede';
+
+  @override
+  String get discoveryJoinErrorRateLimitMessage =>
+      'Te rugăm să aștepți un moment și să încerci din nou.';
+
+  @override
+  String get guildNavbarAddCommunity => 'Adaugă o comunitate';
+
+  @override
+  String get guildNavbarHelp => 'Ajutor';
+
+  @override
+  String get scrollIndicatorNew => 'Nou';
+
+  @override
+  String get scrollIndicatorNewMessages => 'Mesaje noi';
+
+  @override
+  String guildNavbarCollapseFolder(String folderName) {
+    return 'Restrânge $folderName';
+  }
+
+  @override
+  String get guildNavbarGuildSelected => 'selectat';
+
+  @override
+  String get guildNavbarGuildUnread => 'necitite';
+
+  @override
+  String guildNavbarGuildMentions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mențiuni',
+      one: '1 mențiune',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get navigationItemMuted => 'pe silențios';
+
+  @override
+  String get authShowPassword => 'Afișează parola';
+
+  @override
+  String get authHidePassword => 'Ascunde parola';
+
+  @override
+  String get authCheckStillWorking => 'Încă procesăm…';
+
+  @override
+  String get authVerificationFailed =>
+      'Verificarea nu a putut fi finalizată. Încearcă din nou.';
+
+  @override
+  String get chatLoadingMessages => 'Se încarcă mesajele';
+
+  @override
+  String get friendsMessageFriend => 'Trimite mesaj';
+
+  @override
+  String get friendsFriendActions => 'Acțiuni prieten';
+
+  @override
+  String get friendsAcceptRequest => 'Acceptă cererea de prietenie';
+
+  @override
+  String get friendsDeclineRequest => 'Respinge cererea de prietenie';
+
+  @override
+  String get friendsCancelRequest => 'Anulează cererea de prietenie';
+
+  @override
+  String get friendsOpenInbox => 'Mesaje primite';
+
+  @override
+  String get profileRemoveFriend => 'Elimină prietenul';
+
+  @override
+  String get profileUnblockUser => 'Deblochează utilizatorul';
+
+  @override
+  String get profileAcceptFriendRequest => 'Acceptă cererea de prietenie';
+
+  @override
+  String get profileCancelFriendRequest => 'Anulează cererea de prietenie';
+
+  @override
+  String get profileSendFriendRequest => 'Adaugă prieten';
+
+  @override
+  String get accountOverflowMenu => 'Opțiuni cont';
+
+  @override
+  String get navHome => 'Acasă';
+
+  @override
+  String get navNotifications => 'Notificări';
+
+  @override
+  String get navYou => 'Tu';
+
+  @override
+  String get guildFolderSettingsTitle => 'Setări dosar';
+
+  @override
+  String get guildFolderNameLabel => 'Numele dosarului';
+
+  @override
+  String get guildFolderColorLabel => 'Culoare dosar';
+
+  @override
+  String get guildFolderShowIconWhenCollapsed =>
+      'Afișează pictograma când este restrâns';
+
+  @override
+  String get guildFolderIconLabel => 'Pictogramă dosar';
+
+  @override
+  String get guildFolderDelete => 'Șterge dosarul';
+
+  @override
+  String get guildFolderIconFolder => 'Dosar';
+
+  @override
+  String get guildFolderIconStar => 'Stea';
+
+  @override
+  String get guildFolderIconHeart => 'Inimă';
+
+  @override
+  String get guildFolderIconBookmark => 'Semn de carte';
+
+  @override
+  String get guildFolderIconGameController => 'Controler de joc';
+
+  @override
+  String get guildFolderIconShield => 'Scut';
+
+  @override
+  String get guildFolderIconMusicNote => 'Notă muzicală';
+
+  @override
+  String get guildFolderMarkAsRead => 'Marchează dosarul ca citit';
+
+  @override
+  String get guildBulkMuteCommunities => 'Pune comunitățile pe silențios';
+
+  @override
+  String get guildBulkUnmuteCommunities =>
+      'Scoate comunitățile de pe silențios';
+
+  @override
+  String get guildBulkCommunityNotificationSettings =>
+      'Setări notificări comunitate';
+
+  @override
+  String get guildBulkCommunityPrivacySettings =>
+      'Setări de confidențialitate pentru comunitate';
+
+  @override
+  String get guildBulkAllowEveryoneAndHere => 'Permite @everyone și @here';
+
+  @override
+  String get guildBulkAllowRoleMentions => 'Permite menționarea rolurilor';
+
+  @override
+  String get guildBulkEnableMobilePush =>
+      'Activează notificările push pe mobil';
+
+  @override
+  String get guildBulkDisableMobilePush =>
+      'Dezactivează notificările push pe mobil';
+
+  @override
+  String get guildBulkAllowDirectMessages => 'Permite mesaje directe';
+
+  @override
+  String get guildBulkBlockDirectMessages => 'Blochează mesajele directe';
+
+  @override
+  String get guildBulkAllowBotDirectMessages =>
+      'Permite mesaje directe de la boți';
+
+  @override
+  String get guildBulkBlockBotDirectMessages =>
+      'Blochează mesajele directe de la boți';
+
+  @override
+  String get guildNavbarGroupDm => 'DM de grup';
+
+  @override
+  String get guildNavbarCreateChannel => 'Creează canal';
+
+  @override
+  String get guildNavbarChannelType => 'Tip canal';
+
+  @override
+  String get guildNavbarTextChannel => 'Canal text';
+
+  @override
+  String get guildNavbarTextChannelDescription =>
+      'Trimite mesaje, imagini, GIF-uri și emoji';
+
+  @override
+  String get guildNavbarVoiceChannel => 'Canal vocal';
+
+  @override
+  String get guildNavbarVoiceChannelDescription =>
+      'Petreceți timp împreună cu voce, video și partajare de ecran';
+
+  @override
+  String get guildNavbarLinkChannel => 'Canal legat';
+
+  @override
+  String get guildNavbarLinkChannelDescription =>
+      'Acces rapid la un site web sau o resursă externă';
+
+  @override
+  String get guildNavbarNameLabel => 'Nume';
+
+  @override
+  String get guildNavbarNewChannelHint => 'canal-nou';
+
+  @override
+  String get guildNavbarUrlLabel => 'URL';
+
+  @override
+  String get guildNavbarUrlHint => 'https://exemplu.ro';
+
+  @override
+  String get guildNavbarChannelTypeSelection => 'Selectare tip canal';
+
+  @override
+  String get guildNavbarPrivateChannel => 'Canal privat';
+
+  @override
+  String get guildNavbarPrivateChannelDescription =>
+      'Doar membrii și rolurile selectate vor putea vedea acest canal.';
+
+  @override
+  String get guildNavbarAddMembersOrRoles => 'Adaugă membri sau roluri';
+
+  @override
+  String get guildNavbarAddMembersOrRolesHint => 'Caută membri sau roluri';
+
+  @override
+  String get guildNavbarCreateCategory => 'Creează categorie';
+
+  @override
+  String get guildNavbarNewCategoryHint => 'Categorie nouă';
+
+  @override
+  String guildNavbarInviteFriendsTo(String communityName) {
+    return 'Invită prieteni în $communityName';
+  }
+
+  @override
+  String guildNavbarInviteRecipientsChannel(String channelName) {
+    return 'Destinatarii vor fi direcționați către #$channelName';
+  }
+
+  @override
+  String get guildNavbarSearchFriends => 'Caută prieteni';
+
+  @override
+  String get guildNavbarNoFriendsYet => 'Încă nu ai prieteni';
+
+  @override
+  String get guildNavbarNoResults => 'Niciun rezultat';
+
+  @override
+  String get guildNavbarInviteLinkPrompt =>
+      'Sau trimite un link de invitație unui prieten:';
+
+  @override
+  String get guildNavbarInviteLink => 'Link de invitație';
+
+  @override
+  String get guildNavbarCopy => 'Copiază';
+
+  @override
+  String get guildNavbarCopied => 'Copiat!';
+
+  @override
+  String get guildNavbarInviteExpiresSevenDays =>
+      'Linkul tău de invitație expiră în 7 zile.';
+
+  @override
+  String get guildNavbarInviteNeverExpires =>
+      'Acest link de invitație nu expiră niciodată.';
+
+  @override
+  String guildNavbarInviteExpiresIn(String duration) {
+    return 'Linkul tău de invitație expiră în $duration.';
+  }
+
+  @override
+  String get guildNavbarEditInviteLink => 'Editează linkul de invitație';
+
+  @override
+  String get guildNavbarInviteLinkSettings =>
+      'Setări pentru linkul de invitație';
+
+  @override
+  String get guildNavbarExpireAfter => 'Expiră după';
+
+  @override
+  String get guildNavbarMaxUses => 'Număr maxim de utilizări';
+
+  @override
+  String get guildNavbarGrantTemporaryMembership =>
+      'Acordă apartenență temporară';
+
+  @override
+  String get guildNavbarTemporaryMembershipDescription =>
+      'Membrii vor fi eliminați când devin offline, cu excepția cazului în care li se atribuie un rol';
+
+  @override
+  String get guildNavbarCreateNewLink => 'Creează un link nou';
+
+  @override
+  String get guildNavbarSent => 'Trimis';
+
+  @override
+  String get guildNavbarInvite => 'Invită';
+
+  @override
+  String get guildNavbarLeaveCommunityTitle => 'Părăsește comunitatea';
+
+  @override
+  String get guildNavbarLeaveCommunityDescription =>
+      'Ești sigur că vrei să părăsești această comunitate? Nu vei mai putea vedea niciun mesaj.';
+
+  @override
+  String get guildNavbarLeaveCommunityConfirm => 'Părăsește comunitatea';
+
+  @override
+  String get guildNavbarDeleteMyMessagesTitle =>
+      'Ștergi mesajele tale din această comunitate?';
+
+  @override
+  String get guildNavbarDeleteMyMessagesDescription =>
+      'Șterge permanent toate mesajele pe care le-ai trimis aici, în toate canalele. Nu poate fi anulat.';
+
+  @override
+  String get guildNavbarDeleteMyMessagesConfirm => 'Șterge-mi mesajele';
+
+  @override
+  String get guildNavbarDeletedYourMessages => 'Ai șters mesajele tale';
+
+  @override
+  String get guildNavbarCouldNotDeleteYourMessages =>
+      'Nu s-au putut șterge mesajele tale';
+
+  @override
+  String get guildNavbarRemoveOverride => 'Elimină suprascrierea';
+
+  @override
+  String guildNavbarMutedUntil(String formattedDate) {
+    return 'Dezactivat până la $formattedDate';
+  }
+
+  @override
+  String guildNavbarStaffOnlyAccessible(String productName) {
+    return 'Accesibil doar personalului $productName';
+  }
+
+  @override
+  String get guildNavbarInvitesPaused =>
+      'Invitațiile sunt momentan întrerupte în această comunitate';
+
+  @override
+  String get guildNavbarDurationNever => 'niciodată';
+
+  @override
+  String get guildNavbarDuration30Minutes => '30 de minute';
+
+  @override
+  String get guildNavbarDuration1Hour => '1 oră';
+
+  @override
+  String get guildNavbarDuration6Hours => '6 ore';
+
+  @override
+  String get guildNavbarDuration12Hours => '12 ore';
+
+  @override
+  String get guildNavbarDuration1Day => '1 zi';
+
+  @override
+  String get guildNavbarDuration7Days => '7 zile';
+
+  @override
+  String guildNavbarDurationSeconds(int count) {
+    return '$count secunde';
+  }
+
+  @override
+  String get guildNavbarNever => 'Niciodată';
+
+  @override
+  String get guildNavbarNoLimit => 'Fără limită';
+
+  @override
+  String get guildNavbarOneUse => '1 utilizare';
+
+  @override
+  String guildNavbarUses(int count) {
+    return '$count utilizări';
+  }
+
+  @override
+  String get guildMenuMarkAsRead => 'Marchează ca citit';
+
+  @override
+  String get guildMenuInviteMembers => 'Invită membri';
+
+  @override
+  String get guildMenuCommunitySettings => 'Setări comunitate';
+
+  @override
+  String get guildMenuEditCommunityProfile => 'Editează profilul comunității';
+
+  @override
+  String get guildMenuUnmuteCommunity => 'Scoate comunitatea de pe silențios';
+
+  @override
+  String get guildMenuMuteCommunity => 'Pune comunitatea pe silențios';
+
+  @override
+  String get guildMenuHideMutedChannels => 'Ascunde canalele puse pe silențios';
+
+  @override
+  String get guildMenuDebugCommunity => 'Depanare comunitate';
+
+  @override
+  String get guildMenuCopyCommunityId => 'Copiază ID-ul comunității';
+
+  @override
+  String guildMenuMutedUntil(String formattedTime) {
+    return 'Până la $formattedTime';
+  }
+
+  @override
+  String get guildMenuSettingsGeneral => 'General';
+
+  @override
+  String get guildMenuSettingsRoles => 'Roluri și permisiuni';
+
+  @override
+  String get guildMenuSettingsEmoji => 'Emoji';
+
+  @override
+  String get guildMenuSettingsStickers => 'Stickere';
+
+  @override
+  String get guildMenuSettingsSafetyModeration => 'Siguranță și moderare';
+
+  @override
+  String get guildMenuSettingsActivityLog => 'Jurnal de activitate';
+
+  @override
+  String get guildMenuSettingsWebhooks => 'Webhook-uri';
+
+  @override
+  String get guildMenuSettingsDiscovery => 'Explorează';
+
+  @override
+  String get guildMenuSettingsMembers => 'Membri';
+
+  @override
+  String get guildMenuSettingsInviteLinks => 'Invitații';
+
+  @override
+  String get guildMenuSettingsBans => 'Interdicții';
+
+  @override
+  String get guildMenuSettingsChannels => 'Canale';
+
+  @override
+  String get guildSettingsNoPermission =>
+      'Nu ai permisiunea de a vizualiza această filă de setări.';
+
+  @override
+  String get guildSettingsOverviewIconTitle => 'Pictogramă';
+
+  @override
+  String get guildSettingsOverviewBannerTitle => 'Banner';
+
+  @override
+  String get guildSettingsOverviewNameTitle => 'Nume';
+
+  @override
+  String get guildSettingsOverviewNameHint => 'Comunitatea mea minunată';
+
+  @override
+  String get guildSettingsCreateRole => 'Creează rol';
+
+  @override
+  String get guildSettingsRolesListTitle => 'Roluri';
+
+  @override
+  String get guildSettingsRolesNewRole => 'Rol nou';
+
+  @override
+  String get guildSettingsRolesDeleteRole => 'Șterge rolul';
+
+  @override
+  String get guildSettingsRolesBackToRoles => 'Înapoi la roluri';
+
+  @override
+  String get guildSettingsBackToSettings => 'Înapoi la setări';
+
+  @override
+  String guildSettingsRolesEditTitle(String name) {
+    return 'Editează \"$name\"';
+  }
+
+  @override
+  String get guildSettingsRolesEditSubtitle =>
+      'Configurează setările și permisiunile rolului';
+
+  @override
+  String get guildSettingsRolesDisplaySection => 'Afișare';
+
+  @override
+  String get guildSettingsRolesRoleName => 'Nume rol';
+
+  @override
+  String get guildSettingsRolesRoleColor => 'Culoarea rolului';
+
+  @override
+  String get guildSettingsRolesRoleColorHelper =>
+      'Introdu o culoare (hex, rgb(), hsl() sau nume) sau folosește selectorul.';
+
+  @override
+  String get guildSettingsRolesShowSeparately => 'Afișează acest rol separat';
+
+  @override
+  String get guildSettingsRolesShowSeparatelyHelper =>
+      'Listează membrii cu acest rol în propria secțiune din lista de membri.';
+
+  @override
+  String get guildSettingsRolesAllowMentions =>
+      'Permite menționări pentru acest rol';
+
+  @override
+  String guildSettingsRolesAllowMentionsHelper(String permission) {
+    return 'Membrii cu permisiunea „$permission” pot menționa întotdeauna roluri, indiferent de această setare.';
+  }
+
+  @override
+  String get guildSettingsRolesClearPermissionsHelp =>
+      'Folosește acest buton pentru a șterge rapid toate permisiunile.';
+
+  @override
+  String get guildSettingsRolesClearPermissions => 'Șterge permisiunile';
+
+  @override
+  String get guildSettingsRolesPermissionsSection => 'Permisiuni';
+
+  @override
+  String get guildSettingsRolesSearchPermissions => 'Caută permisiuni';
+
+  @override
+  String get guildSettingsRolesDenseLayout => 'Aspect compact';
+
+  @override
+  String get guildSettingsRolesComfyLayout => 'Aspect confortabil';
+
+  @override
+  String get guildSettingsRolesSingleColumn => 'O singură coloană';
+
+  @override
+  String get guildSettingsRolesTwoColumns => 'Două coloane';
+
+  @override
+  String get guildSettingsRolesNoPermissionsFound => 'Nu s-au găsit permisiuni';
+
+  @override
+  String get guildSettingsRolesHoistOrder => 'Ordine de afișare';
+
+  @override
+  String get guildSettingsRolesResetHoistOrder =>
+      'Resetare la valorile implicite';
+
+  @override
+  String get guildSettingsRolesHoistOrderHelp =>
+      'Trage rolurile pentru a personaliza ordinea în care apar în lista de membri.';
+
+  @override
+  String get guildSettingsRolesNoHoistedRoles =>
+      'Nu există roluri afișate separat. Activează „Afișează acest rol separat” pentru un rol ca să-l vezi aici.';
+
+  @override
+  String guildSettingsRolesNeedManageRolesPermission(String permission) {
+    return 'Ai nevoie de permisiunea „$permission” pentru a edita aceste permisiuni';
+  }
+
+  @override
+  String get guildSettingsRolesCannotEditHigherRole =>
+      'Nu poți edita un rol egal sau superior celui mai înalt rol al tău';
+
+  @override
+  String get guildSettingsRolesCannotGrantPermission =>
+      'Nu poți acorda o permisiune pe care nu o ai';
+
+  @override
+  String get guildSettingsRolesCannotRemoveOwnPermission =>
+      'Nu poți elimina această permisiune, deoarece te-ar elimina și pe tine';
+
+  @override
+  String get guildSettingsRolesUpdatedSuccess => 'Roluri actualizate cu succes';
+
+  @override
+  String get guildSettingsRolesCreatedSuccess => 'Rol creat cu succes';
+
+  @override
+  String get guildSettingsRolesDeletedSuccess => 'Rol șters cu succes';
+
+  @override
+  String get guildSettingsRolesHoistResetSuccess =>
+      'Ordinea de afișare a fost resetată la cea implicită';
+
+  @override
+  String get guildSettingsRolesNameRequiredTitle =>
+      'Numele rolului este obligatoriu';
+
+  @override
+  String get guildSettingsRolesNameRequiredBody =>
+      'Dă un nume rolului înainte de a salva.';
+
+  @override
+  String get guildSettingsRolesCreateFailedTitle => 'Nu s-a putut crea rolul';
+
+  @override
+  String get guildSettingsRolesUpdateFailedTitle =>
+      'Nu s-au putut actualiza rolurile';
+
+  @override
+  String get guildSettingsRolesDeleteFailedTitle => 'Nu s-a putut șterge rolul';
+
+  @override
+  String guildSettingsRolesDeleteFailedBody(String name) {
+    return '„$name” nu a putut fi șters. Încearcă din nou.';
+  }
+
+  @override
+  String get guildSettingsRolesResetHoistFailedTitle =>
+      'Nu s-a putut reseta ordinea de afișare';
+
+  @override
+  String get guildSettingsRolesTryAgainInAMoment =>
+      'Încearcă din nou peste un moment.';
+
+  @override
+  String guildSettingsRolesDeleteConfirm(String name) {
+    return 'Ești sigur că vrei să ștergi rolul $name? Membrii care au acest rol nu îl vor mai avea.';
+  }
+
+  @override
+  String get permissionCategoryCommunityWide => 'Întreaga comunitate';
+
+  @override
+  String get permissionCategoryMessagesMedia => 'Mesaje și media';
+
+  @override
+  String get permissionCategoryModeration => 'Moderare';
+
+  @override
+  String get permissionCategoryChannelAccess => 'Acces la canal';
+
+  @override
+  String get permissionCategoryChannelManagement => 'Gestionare canale';
+
+  @override
+  String get permissionCategoryAudioVideo => 'Audio și video';
+
+  @override
+  String get permissionAdministrator => 'Administrator';
+
+  @override
+  String get permissionAdministratorDescription =>
+      'Acordă toate permisiunile și ocolește restricțiile canalului. Foarte sensibil.';
+
+  @override
+  String get permissionViewActivityLog => 'Vizualizează jurnalul de activitate';
+
+  @override
+  String get permissionViewActivityLogDescription =>
+      'Citește jurnalul de activitate al comunității, cu modificări și acțiuni de moderare.';
+
+  @override
+  String get permissionManageCommunity => 'Gestionează comunitatea';
+
+  @override
+  String get permissionManageCommunityDescription =>
+      'Editează setările globale, cum ar fi numele, descrierea și pictograma.';
+
+  @override
+  String get permissionManageRoles => 'Gestionează rolurile';
+
+  @override
+  String get permissionManageRolesDescription =>
+      'Creează, editează sau șterge roluri sub rolul tău cel mai înalt. Permite, de asemenea, editarea suprascrierilor de permisiuni ale canalului.';
+
+  @override
+  String get permissionManageChannels => 'Gestionează canalele';
+
+  @override
+  String get permissionManageChannel => 'Gestionează canalul';
+
+  @override
+  String get permissionManageChannelDescription =>
+      'Redenumește și editează setările acestui canal.';
+
+  @override
+  String get permissionManagePermissions => 'Gestionează permisiunile';
+
+  @override
+  String get permissionManagePermissionsDescription =>
+      'Editează suprascrierile pentru roluri și membri în acest canal.';
+
+  @override
+  String get permissionManageWebhooksChannelDescription =>
+      'Creează, editează sau șterge webhook-uri pentru acest canal.';
+
+  @override
+  String get permissionViewChannelMembersChannelDescription =>
+      'Vezi lista de membri a acestui canal.';
+
+  @override
+  String get permissionCreateInviteLinksChannelDescription =>
+      'Gestionează linkurile de invitație pentru acest canal.';
+
+  @override
+  String get permissionOverwriteDeny => 'Refuză';
+
+  @override
+  String get permissionOverwriteInherit => 'Neutru (moștenit)';
+
+  @override
+  String get permissionOverwriteAllow => 'Permite';
+
+  @override
+  String get permissionOverwriteSetAllHelp =>
+      'Folosește aceste butoane pentru a seta rapid toate permisiunile.';
+
+  @override
+  String get permissionManageChannelsDescription =>
+      'Creează, editează sau șterge canale și categorii.';
+
+  @override
+  String get permissionKickMembers => 'Elimină membri';
+
+  @override
+  String get permissionBanMembers => 'Banează membri';
+
+  @override
+  String get permissionCreateInviteLinks => 'Creează linkuri de invitație';
+
+  @override
+  String get permissionChangeOwnNickname => 'Schimbă-ți propriul pseudonim';
+
+  @override
+  String get permissionChangeOwnNicknameDescription =>
+      'Actualizează-ți propriul pseudonim.';
+
+  @override
+  String get permissionManageNicknames => 'Gestionează pseudonimele';
+
+  @override
+  String get permissionManageNicknamesDescription =>
+      'Schimbă pseudonimele altor membri.';
+
+  @override
+  String get permissionCreateEmojiStickers => 'Creează emoji și stickere';
+
+  @override
+  String get permissionCreateEmojiStickersDescription =>
+      'Încarcă emoji și stickere noi și gestionează-ți propriile creații.';
+
+  @override
+  String get permissionManageEmojiStickers => 'Gestionează emoji și stickere';
+
+  @override
+  String get permissionManageEmojiStickersDescription =>
+      'Editează sau șterge emoji și stickere create de alți membri.';
+
+  @override
+  String get permissionManageWebhooks => 'Gestionează webhook-urile';
+
+  @override
+  String get permissionManageWebhooksDescription =>
+      'Creează, editează sau șterge webhook-uri.';
+
+  @override
+  String get permissionSendMessages => 'Trimite mesaje';
+
+  @override
+  String get permissionSendTtsMessages => 'Trimite mesaje TTS';
+
+  @override
+  String get permissionSendTtsMessagesDescription =>
+      'Trimite mesaje text-to-speech.';
+
+  @override
+  String get permissionManageMessages => 'Gestionează mesajele';
+
+  @override
+  String get permissionManageMessagesDescription =>
+      'Șterge mesajele altor membri. Fixarea este controlată separat.';
+
+  @override
+  String get permissionPinMessages => 'Fixare mesaje';
+
+  @override
+  String get permissionEmbedLinks => 'Încorporează linkuri';
+
+  @override
+  String get permissionAttachFiles => 'Atașează fișiere';
+
+  @override
+  String get permissionMentionEveryone => 'Folosește @everyone/@here și @rol';
+
+  @override
+  String get permissionMentionEveryoneDescription =>
+      'Menționează pe toată lumea sau orice rol (chiar dacă rolul nu este setat ca menționabil).';
+
+  @override
+  String get permissionUseExternalEmoji => 'Folosește emoji externe';
+
+  @override
+  String get permissionUseExternalEmojiDescription =>
+      'Folosește emoji din alte comunități.';
+
+  @override
+  String get permissionUseExternalStickers => 'Folosește stickere externe';
+
+  @override
+  String get permissionAddReactions => 'Adaugă reacții';
+
+  @override
+  String get permissionAddReactionsDescription =>
+      'Adaugă reacții noi la mesaje.';
+
+  @override
+  String get permissionBypassSlowmode => 'Ocolire mod lent';
+
+  @override
+  String get permissionBypassSlowmodeDescription =>
+      'Ignoră limitele de frecvență a mesajelor pe canal.';
+
+  @override
+  String get permissionTimeOutMembers => 'Aplică timeout membrilor';
+
+  @override
+  String get permissionTimeOutMembersDescription =>
+      'Împiedică membrii să trimită mesaje, să reacționeze și să se alăture canalelor vocale pentru o anumită perioadă.';
+
+  @override
+  String get permissionViewChannel => 'Vizualizare canal';
+
+  @override
+  String get permissionViewChannelMembers => 'Vizualizează membrii canalului';
+
+  @override
+  String get permissionViewChannelMembersDescription =>
+      'Vezi lista de membri pentru canalele din această comunitate.';
+
+  @override
+  String get permissionConnect => 'Conectare';
+
+  @override
+  String get permissionSpeak => 'Vorbește';
+
+  @override
+  String get permissionStreamVideo => 'Transmite video';
+
+  @override
+  String get permissionUseVoiceActivity => 'Folosește activitatea vocală';
+
+  @override
+  String get permissionUseVoiceActivityDescription =>
+      'Fără această permisiune, este necesar push-to-talk.';
+
+  @override
+  String get permissionPrioritySpeaker => 'Vorbitor prioritar';
+
+  @override
+  String get permissionMuteMembers => 'Dezactivează microfonul membrilor';
+
+  @override
+  String get permissionDeafenMembers => 'Dezactivează sunetul membrilor';
+
+  @override
+  String get permissionMoveMembers => 'Mută membri';
+
+  @override
+  String get permissionMoveMembersDescription =>
+      'Mută membrii între canalele la care au acces.';
+
+  @override
+  String get permissionSetVoiceRegion => 'Setează regiunea vocală';
+
+  @override
+  String get permissionManageThreads => 'Gestionează firele de discuție';
+
+  @override
+  String get permissionManageThreadsDescription =>
+      'Redenumește, arhivează, blochează și șterge fire de discuție, setează modul lent al acestora și vizualizează firele private.';
+
+  @override
+  String get permissionCreatePublicThreads =>
+      'Creează fire de discuție publice';
+
+  @override
+  String get permissionCreatePublicThreadsDescription =>
+      'Creează fire de discuție vizibile pentru toți cei care pot vedea canalul.';
+
+  @override
+  String get permissionCreatePrivateThreads =>
+      'Creează fire de discuție private';
+
+  @override
+  String get permissionCreatePrivateThreadsDescription =>
+      'Creează fire de discuție doar pe bază de invitație.';
+
+  @override
+  String get permissionSendMessagesInThreads =>
+      'Trimite mesaje în firele de discuție';
+
+  @override
+  String get permissionSendMessagesInThreadsDescription =>
+      'Trimite mesaje în fire de discuție și postări de forum.';
+
+  @override
+  String get threadErrorArchived => 'Acest fir de discuție este arhivat.';
+
+  @override
+  String get threadErrorLocked =>
+      'Acest fir de discuție este blocat. Doar moderatorii pot posta în el sau îl pot redeschide.';
+
+  @override
+  String get threadErrorAlreadyCreated =>
+      'Există deja un fir de discuție pentru acest mesaj.';
+
+  @override
+  String get threadErrorMaxActiveThreads =>
+      'Această comunitate a atins limita de fire de discuție active.';
+
+  @override
+  String get threadErrorMaxMembers =>
+      'Acest fir de discuție a atins limita de membri.';
+
+  @override
+  String get threadErrorMaxPinnedPosts =>
+      'Doar o postare poate fi fixată în acest forum.';
+
+  @override
+  String get threadErrorMaxForumTags =>
+      'Un forum poate avea cel mult 20 de etichete.';
+
+  @override
+  String get threadErrorTagNamesUnique =>
+      'Numele etichetelor trebuie să fie unice.';
+
+  @override
+  String get threadErrorNoTagsForEveryone =>
+      'Adaugă o etichetă pe care o poate folosi oricine înainte să faci etichetele obligatorii.';
+
+  @override
+  String get threadErrorTagRequired =>
+      'Alege cel puțin o etichetă pentru această postare.';
+
+  @override
+  String get threadErrorUnknownTag =>
+      'Una dintre etichetele selectate nu mai există.';
+
+  @override
+  String get threadErrorInvalidNotificationSettings =>
+      'Aceste setări de notificări nu sunt valide pentru un fir de discuție.';
+
+  @override
+  String get threadErrorSearchIndexNotReady =>
+      'Postările sunt încă indexate. Încearcă din nou peste câteva momente.';
+
+  @override
+  String get threadErrorInvalidChannelType =>
+      'Această acțiune nu este disponibilă în acest canal.';
+
+  @override
+  String get threadCreate => 'Creează un fir de discuție';
+
+  @override
+  String get threadName => 'Numele firului';
+
+  @override
+  String get threadNameRequired => 'Dă un nume firului de discuție.';
+
+  @override
+  String get threadNewThreadPlaceholder => 'Fir de discuție nou';
+
+  @override
+  String get threadPrivate => 'Fir de discuție privat';
+
+  @override
+  String get threadPrivateDescription =>
+      'Doar persoanele pe care le inviți și moderatorii pot vedea acest fir.';
+
+  @override
+  String get threadStarterMessage => 'Mesaj';
+
+  @override
+  String get threadStarterMessagePlaceholder =>
+      'Scrie un mesaj pentru a începe conversația!';
+
+  @override
+  String threadCreateCooldown(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: 'Poți începe un alt fir de discuție peste $seconds de secunde.',
+      few: 'Poți începe un alt fir de discuție peste $seconds secunde.',
+      one: 'Poți începe un alt fir de discuție peste o secundă.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String threadCreateFailed(String detail) {
+    return 'Nu am putut porni firul: $detail';
+  }
+
+  @override
+  String get threadBrowserTitle => 'Fire de discuție';
+
+  @override
+  String get threadBrowserActive => 'Active';
+
+  @override
+  String get threadBrowserArchived => 'Închise';
+
+  @override
+  String get threadBrowserJoined => 'Urmărite';
+
+  @override
+  String get threadBrowserOtherActive => 'Alte fire active';
+
+  @override
+  String get threadBrowserPublic => 'Fire de discuție publice';
+
+  @override
+  String get threadBrowserPrivate => 'Fire de discuție private';
+
+  @override
+  String get threadBrowserEmpty =>
+      'Nu există fire de discuție. Rămâi concentrat pe o conversație cu un fir de discuție, un canal text temporar.';
+
+  @override
+  String get threadBrowserArchivedEmpty =>
+      'Nu există fire de discuție închise.';
+
+  @override
+  String get threadBrowserLoadMore => 'Încarcă mai multe';
+
+  @override
+  String get threadBrowserSearch => 'Caută fire de discuție';
+
+  @override
+  String get threadBrowserSearchEmpty => 'Niciun fir de discuție nu corespunde';
+
+  @override
+  String get threadBrowserSearchEmptyHint =>
+      'Încearcă un alt nume sau verifică fila cealaltă.';
+
+  @override
+  String get threadBrowserSearchFailed =>
+      'Nu am putut căuta firele. Încearcă din nou mai târziu.';
+
+  @override
+  String get threadBrowserSearchIndexing =>
+      'Căutarea se pregătește pentru această comunitate. Reîncercăm în scurt timp...';
+
+  @override
+  String threadMessageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de mesaje',
+      few: '$count mesaje',
+      one: '1 mesaj',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get threadFailedToMentionSomeRoles =>
+      'Unele roluri menționate nu au fost adăugate în acest fir de discuție.';
+
+  @override
+  String get threadMembers => 'Membrii firului';
+
+  @override
+  String threadMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de membri',
+      few: '$count membri',
+      one: '1 membru',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get threadMembersEmpty =>
+      'Nimeni nu s-a alăturat încă acestui fir de discuție.';
+
+  @override
+  String threadRemoveMember(String name) {
+    return 'Elimină $name din firul de discuție';
+  }
+
+  @override
+  String get threadJoin => 'Alătură-te firului';
+
+  @override
+  String get threadLeave => 'Părăsește firul';
+
+  @override
+  String get threadJoinNotice =>
+      'Alătură-te acestui fir pentru a-l urmări în lista ta de canale și a primi notificări.';
+
+  @override
+  String get threadArchivedNotice =>
+      'Acest fir este închis. Trimiterea unui mesaj îl va redeschide.';
+
+  @override
+  String get threadLockedNotice =>
+      'Acest fir de discuție este blocat. Doar moderatorii pot trimite mesaje.';
+
+  @override
+  String get threadArchive => 'Închide firul';
+
+  @override
+  String get threadUnarchive => 'Redeschide firul';
+
+  @override
+  String get threadLock => 'Blochează firul';
+
+  @override
+  String get threadUnlock => 'Deblochează firul';
+
+  @override
+  String get threadDelete => 'Șterge firul';
+
+  @override
+  String threadDeleteConfirm(String threadName) {
+    return 'Sigur vrei să ștergi $threadName? Această acțiune nu poate fi anulată.';
+  }
+
+  @override
+  String get threadDeleted => 'Fir șters';
+
+  @override
+  String get threadMarkAsRead => 'Marchează ca citit';
+
+  @override
+  String get threadMute => 'Pune firul pe silențios';
+
+  @override
+  String get threadUnmute => 'Scoate firul de pe silențios';
+
+  @override
+  String get threadMuted => 'Firul a fost pus pe silențios';
+
+  @override
+  String get threadUnmuted => 'Firul a fost scos de pe silențios';
+
+  @override
+  String get threadNotificationSettings => 'Setări notificări';
+
+  @override
+  String get threadNotificationParentDefault =>
+      'Folosește setarea implicită a canalului';
+
+  @override
+  String get threadCopyLink => 'Copiază linkul';
+
+  @override
+  String get threadCopyId => 'Copiază ID-ul firului';
+
+  @override
+  String get threadMoreOptions => 'Mai multe opțiuni';
+
+  @override
+  String get threadSettings => 'Setările firului';
+
+  @override
+  String get threadSettingsSaved =>
+      'Setările firului de discuție au fost salvate';
+
+  @override
+  String get threadAutoArchive => 'Ascunde după inactivitate';
+
+  @override
+  String get threadAutoArchiveDescription =>
+      'Firul de discuție nu mai apare în lista de canale după această perioadă de inactivitate.';
+
+  @override
+  String get threadDefaultAutoArchive => 'Ascunde implicit după inactivitate';
+
+  @override
+  String get threadDefaultAutoArchiveDescription =>
+      'Firele de discuție noi nu mai apar în lista de canale după această perioadă de inactivitate.';
+
+  @override
+  String get threadDefaultSlowmode => 'Mod lent implicit pentru fire';
+
+  @override
+  String get threadAutoArchiveOneHour => '1 oră';
+
+  @override
+  String get threadAutoArchiveOneDay => '24 de ore';
+
+  @override
+  String get threadAutoArchiveThreeDays => '3 zile';
+
+  @override
+  String get threadAutoArchiveOneWeek => '1 săptămână';
+
+  @override
+  String get threadInvitable => 'Permite oricui să invite';
+
+  @override
+  String get threadInvitableDescription =>
+      'Membrii acestui fir de discuție privat pot adăuga alte persoane.';
+
+  @override
+  String threadStartedBy(String name) {
+    return 'Început de $name';
+  }
+
+  @override
+  String get threadStarterDeleted => 'Mesajul original a fost șters.';
+
+  @override
+  String systemThreadCreated(
+    String username,
+    String threadLink,
+    String allThreadsLink,
+  ) {
+    return '$username a început un fir de discuție: $threadLink. Vezi $allThreadsLink.';
+  }
+
+  @override
+  String get systemThreadCreatedAllThreadsLink => 'toate firele de discuție';
+
+  @override
+  String get systemThreadCreatedThreadFallback => 'un fir de discuție';
+
+  @override
+  String systemPreviewThreadCreated(String username) {
+    return '$username a început un fir de discuție.';
+  }
+
+  @override
+  String get guildSettingsEmojiEmpty => 'Încă nu există emoji personalizate.';
+
+  @override
+  String get guildSettingsStickersEmpty =>
+      'Încă nu există stickere personalizate.';
+
+  @override
+  String get guildSettingsModerationVerificationTitle =>
+      'Verificarea membrilor';
+
+  @override
+  String get guildSettingsModerationVerificationDescription =>
+      'Alege ce trebuie să aibă membrii înainte de a putea posta sau de a trimite DM-uri membrilor comunității.';
+
+  @override
+  String get guildSettingsModerationVerificationRolesBypass =>
+      'Membrii cu roluri pot ocoli aceste verificări. Pentru spațiile publice, recomandăm activarea verificării.';
+
+  @override
+  String get guildSettingsModerationVerificationDiscoveryNote =>
+      'Comunitățile listate în secțiunea „Explorează” au nevoie cel puțin de verificarea adresei de e-mail. Nu poți alege „Niciunul” cât timp comunitatea ta este listată în secțiunea „Explorează”.';
+
+  @override
+  String get guildSettingsModerationMatureTitle =>
+      'Conținut matur și avertismente de conținut';
+
+  @override
+  String get guildSettingsModerationMatureSectionDescription =>
+      'Configurează etichetarea conținutului matur și avertismentele opționale de conținut pentru membri.';
+
+  @override
+  String get guildSettingsModerationMatureToggle => 'Conținut matur';
+
+  @override
+  String get guildSettingsModerationMatureToggleDescription =>
+      'Marchează această comunitate ca având conținut pentru adulți.';
+
+  @override
+  String get guildSettingsVerificationNone => 'Niciunul';
+
+  @override
+  String get guildSettingsVerificationNoneDescription =>
+      'Nu este necesară verificarea.';
+
+  @override
+  String get guildSettingsVerificationLow => 'Scăzut';
+
+  @override
+  String get guildSettingsVerificationLowDescription =>
+      'Necesită o adresă de e-mail verificată.';
+
+  @override
+  String get guildSettingsVerificationMedium => 'Mediu';
+
+  @override
+  String get guildSettingsVerificationMediumDescription =>
+      'Necesită o adresă de e-mail verificată și un cont vechi de cel puțin 5 minute.';
+
+  @override
+  String get guildSettingsVerificationHigh => 'Ridicat';
+
+  @override
+  String get guildSettingsVerificationHighDescription =>
+      'Necesită totul la nivel mediu, plus să fii membru al comunității de cel puțin 10 minute.';
+
+  @override
+  String get guildSettingsAuditLogDescription =>
+      'Urmărește acțiunile moderatorilor în comunitate.';
+
+  @override
+  String get guildSettingsAuditLogEmpty => 'Încă nu există jurnale';
+
+  @override
+  String get guildSettingsAuditLogEmptyDescription =>
+      'Acțiunile de moderare și modificările comunității vor apărea aici.';
+
+  @override
+  String get guildSettingsAuditLogFilterAllUsers => 'Toți utilizatorii';
+
+  @override
+  String get guildSettingsAuditLogFilterAllActions => 'Toate acțiunile';
+
+  @override
+  String get guildSettingsAuditLogNoReason =>
+      'Nu a fost furnizat niciun motiv.';
+
+  @override
+  String get guildSettingsAuditLogUnknownUser => 'Utilizator necunoscut';
+
+  @override
+  String get guildSettingsAuditLogReason => 'Motiv';
+
+  @override
+  String get guildSettingsAuditLogSomeone => 'cineva';
+
+  @override
+  String get guildSettingsAuditLogSomething => 'ceva';
+
+  @override
+  String get guildSettingsAuditLogUnknownEntity => 'entitate necunoscută';
+
+  @override
+  String get guildSettingsAuditLogNothing => 'nimic';
+
+  @override
+  String get guildSettingsAuditLogUnknownTarget => 'Țintă necunoscută';
+
+  @override
+  String get auditLogActionGuildUpdate => 'Comunitate actualizată';
+
+  @override
+  String get auditLogActionChannelCreate => 'Canal creat';
+
+  @override
+  String get auditLogActionChannelUpdate => 'Canal actualizat';
+
+  @override
+  String get auditLogActionChannelDelete => 'Canal șters';
+
+  @override
+  String get auditLogActionThreadCreate => 'Fir creat';
+
+  @override
+  String get auditLogActionThreadUpdate => 'Fir actualizat';
+
+  @override
+  String get auditLogActionThreadDelete => 'Fir șters';
+
+  @override
+  String get auditLogActionChannelOverwriteCreate =>
+      'Suprascriere canal adăugată';
+
+  @override
+  String get auditLogActionChannelOverwriteUpdate =>
+      'Permisiunile canalului au fost actualizate';
+
+  @override
+  String get auditLogActionChannelOverwriteDelete =>
+      'Suprascrierea canalului a fost eliminată';
+
+  @override
+  String get auditLogActionMemberKick => 'Membru eliminat';
+
+  @override
+  String get auditLogActionMemberPrune => 'Membri eliminați';
+
+  @override
+  String get auditLogActionMemberBanAdd => 'Membru banat';
+
+  @override
+  String get auditLogActionMemberBanRemove =>
+      'Interdicție anulată pentru membru';
+
+  @override
+  String get auditLogActionMemberUpdate => 'Membru actualizat';
+
+  @override
+  String get auditLogActionMemberRoleUpdate =>
+      'Rolurile membrilor au fost actualizate';
+
+  @override
+  String get auditLogActionMemberMove => 'Membru mutat';
+
+  @override
+  String get auditLogActionMemberDisconnect => 'Membru deconectat';
+
+  @override
+  String get auditLogActionBotAdd => 'Bot adăugat';
+
+  @override
+  String get auditLogActionRoleCreate => 'Rol creat';
+
+  @override
+  String get auditLogActionRoleUpdate => 'Rol actualizat';
+
+  @override
+  String get auditLogActionRoleDelete => 'Rol șters';
+
+  @override
+  String get auditLogActionInviteCreate => 'Invitație creată';
+
+  @override
+  String get auditLogActionInviteUpdate => 'Invitație actualizată';
+
+  @override
+  String get auditLogActionInviteDelete => 'Invitație ștearsă';
+
+  @override
+  String get auditLogActionWebhookCreate => 'Webhook creat';
+
+  @override
+  String get auditLogActionWebhookUpdate => 'Webhook actualizat';
+
+  @override
+  String get auditLogActionWebhookDelete => 'Webhook șters';
+
+  @override
+  String get auditLogActionEmojiCreate => 'Emoji creat';
+
+  @override
+  String get auditLogActionEmojiUpdate => 'Emoji actualizat';
+
+  @override
+  String get auditLogActionEmojiDelete => 'Emoji șters';
+
+  @override
+  String get auditLogActionStickerCreate => 'Sticker creat';
+
+  @override
+  String get auditLogActionStickerUpdate => 'Sticker actualizat';
+
+  @override
+  String get auditLogActionStickerDelete => 'Sticker șters';
+
+  @override
+  String get auditLogActionMessageDelete => 'Mesaj șters';
+
+  @override
+  String get auditLogActionMessageBulkDelete => 'Mesaje șterse';
+
+  @override
+  String get auditLogActionMessagePin => 'Mesaj fixat';
+
+  @override
+  String get auditLogActionMessageUnpin => 'Fixare mesaj anulată';
+
+  @override
+  String auditLogSummaryGuildUpdate(String actor) {
+    return '$actor a actualizat setările comunității.';
+  }
+
+  @override
+  String auditLogSummaryChannelCreate(String actor, String target) {
+    return '$actor a creat canalul $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelUpdate(String actor, String target) {
+    return '$actor a actualizat canalul $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelDelete(String actor, String target) {
+    return '$actor a șters canalul $target.';
+  }
+
+  @override
+  String auditLogSummaryThreadCreate(String actor, String target) {
+    return '$actor a început firul de discuție $target.';
+  }
+
+  @override
+  String auditLogSummaryThreadUpdate(String actor, String target) {
+    return '$actor a actualizat firul de discuție $target.';
+  }
+
+  @override
+  String auditLogSummaryThreadDelete(String actor, String target) {
+    return '$actor a șters firul de discuție $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteCreate(String actor, String target) {
+    return '$actor a adăugat permisiuni pentru canalul $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteCreateInChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a adăugat permisiuni pentru canal pentru $target în $channel.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteUpdate(String actor, String target) {
+    return '$actor a actualizat permisiunile canalului pentru $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteUpdateInChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a actualizat permisiunile canalului pentru $target în $channel.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteDelete(String actor, String target) {
+    return '$actor a eliminat permisiunile canalului pentru $target.';
+  }
+
+  @override
+  String auditLogSummaryChannelOverwriteDeleteInChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a eliminat permisiunile canalului pentru $target în $channel.';
+  }
+
+  @override
+  String auditLogSummaryMemberKick(String actor, String target) {
+    return '$actor a eliminat $target.';
+  }
+
+  @override
+  String auditLogSummaryMemberBanAdd(String actor, String target) {
+    return '$actor a banat $target.';
+  }
+
+  @override
+  String auditLogSummaryMemberBanRemove(String actor, String target) {
+    return '$actor a deblocat $target.';
+  }
+
+  @override
+  String auditLogSummaryMemberUpdate(String actor, String target) {
+    return '$actor a actualizat $target.';
+  }
+
+  @override
+  String auditLogSummaryMemberRoleUpdate(String actor, String target) {
+    return '$actor a actualizat rolurile pentru $target.';
+  }
+
+  @override
+  String auditLogSummaryMemberPrune(String actor) {
+    return '$actor a eliminat membrii inactivi.';
+  }
+
+  @override
+  String auditLogSummaryMemberPruneDays(String actor, int days) {
+    return '$actor a eliminat membrii inactivi de peste $days zile.';
+  }
+
+  @override
+  String auditLogSummaryMemberMove(String actor, String target) {
+    return '$actor a mutat $target într-un alt canal vocal.';
+  }
+
+  @override
+  String auditLogSummaryMemberMoveToChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a mutat $target în $channel.';
+  }
+
+  @override
+  String auditLogSummaryMemberDisconnect(String actor, String target) {
+    return '$actor a deconectat $target de la voce.';
+  }
+
+  @override
+  String auditLogSummaryBotAdd(String actor, String target) {
+    return '$actor a adăugat botul $target.';
+  }
+
+  @override
+  String auditLogSummaryRoleCreate(String actor, String target) {
+    return '$actor a creat rolul $target.';
+  }
+
+  @override
+  String auditLogSummaryRoleUpdate(String actor, String target) {
+    return '$actor a actualizat rolul $target.';
+  }
+
+  @override
+  String auditLogSummaryRoleDelete(String actor, String target) {
+    return '$actor a șters rolul $target.';
+  }
+
+  @override
+  String auditLogSummaryInviteCreate(String actor, String target) {
+    return '$actor a creat invitația $target.';
+  }
+
+  @override
+  String auditLogSummaryInviteCreateForChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a creat invitația $target pentru $channel.';
+  }
+
+  @override
+  String auditLogSummaryInviteUpdate(String actor, String target) {
+    return '$actor a actualizat invitația $target.';
+  }
+
+  @override
+  String auditLogSummaryInviteUpdateForChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a actualizat invitația $target pentru $channel.';
+  }
+
+  @override
+  String auditLogSummaryInviteDelete(String actor, String target) {
+    return '$actor a șters invitația $target.';
+  }
+
+  @override
+  String auditLogSummaryInviteDeleteForChannel(
+    String actor,
+    String target,
+    String channel,
+  ) {
+    return '$actor a șters invitația $target pentru $channel.';
+  }
+
+  @override
+  String auditLogSummaryWebhookCreate(String actor, String target) {
+    return '$actor a creat webhook-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryWebhookUpdate(String actor, String target) {
+    return '$actor a actualizat webhook-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryWebhookDelete(String actor, String target) {
+    return '$actor a șters webhook-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryEmojiCreate(String actor, String target) {
+    return '$actor a adăugat emoji-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryEmojiUpdate(String actor, String target) {
+    return '$actor a actualizat emoji-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryEmojiDelete(String actor, String target) {
+    return '$actor a șters emoji-ul $target.';
+  }
+
+  @override
+  String auditLogSummaryStickerCreate(String actor, String target) {
+    return '$actor a adăugat stickerul $target.';
+  }
+
+  @override
+  String auditLogSummaryStickerUpdate(String actor, String target) {
+    return '$actor a actualizat pachetul de stickere $target.';
+  }
+
+  @override
+  String auditLogSummaryStickerDelete(String actor, String target) {
+    return '$actor a șters stickerul $target.';
+  }
+
+  @override
+  String auditLogSummaryMessageDelete(String actor) {
+    return '$actor a șters un mesaj.';
+  }
+
+  @override
+  String auditLogSummaryMessageDeleteInChannel(String actor, String channel) {
+    return '$actor a șters un mesaj în $channel.';
+  }
+
+  @override
+  String auditLogSummaryMessageBulkDelete(String actor) {
+    return '$actor a șters mai multe mesaje.';
+  }
+
+  @override
+  String auditLogSummaryMessageBulkDeleteCount(String actor, int count) {
+    return '$actor a șters $count mesaje.';
+  }
+
+  @override
+  String auditLogSummaryMessageBulkDeleteInChannel(
+    String actor,
+    String channel,
+  ) {
+    return '$actor a șters mai multe mesaje din $channel.';
+  }
+
+  @override
+  String auditLogSummaryMessageBulkDeleteCountInChannel(
+    String actor,
+    int count,
+    String channel,
+  ) {
+    return '$actor a șters $count mesaje din $channel.';
+  }
+
+  @override
+  String auditLogSummaryMessagePin(String actor) {
+    return '$actor a afișat o postare.';
+  }
+
+  @override
+  String auditLogSummaryMessagePinInChannel(String actor, String channel) {
+    return '$actor a afișat un mesaj în $channel.';
+  }
+
+  @override
+  String auditLogSummaryMessageUnpin(String actor) {
+    return '$actor a demontat un mesaj.';
+  }
+
+  @override
+  String auditLogSummaryMessageUnpinInChannel(String actor, String channel) {
+    return '$actor a demontat un mesaj în $channel.';
+  }
+
+  @override
+  String auditLogSummaryDefault(String actor, String target) {
+    return '$actor a efectuat o acțiune de audit asupra lui $target.';
+  }
+
+  @override
+  String auditLogChangeUpdatedFromTo(
+    String field,
+    String oldValue,
+    String newValue,
+  ) {
+    return 'Ați actualizat $field de la $oldValue la $newValue.';
+  }
+
+  @override
+  String auditLogChangeSetTo(String field, String newValue) {
+    return 'Set $field la $newValue.';
+  }
+
+  @override
+  String auditLogChangeCleared(String field, String oldValue) {
+    return 'Ați șters $field (era $oldValue).';
+  }
+
+  @override
+  String auditLogChangeUpdated(String field) {
+    return 'Ați actualizat $field.';
+  }
+
+  @override
+  String auditLogChangeRenamedCommunity(String name) {
+    return 'Am redenumit comunitatea în $name.';
+  }
+
+  @override
+  String get auditLogChangeUpdatedCommunityIcon =>
+      'A actualizat pictograma comunității.';
+
+  @override
+  String get auditLogChangePausedInvites => 'A întrerupt invitațiile.';
+
+  @override
+  String get auditLogChangeResumedInvites => 'A reluat invitațiile.';
+
+  @override
+  String get auditLogChangeTurnedOnDetachedBanner =>
+      'A activat bannerul detașat.';
+
+  @override
+  String get auditLogChangeTurnedOffDetachedBanner =>
+      'A dezactivat bannerul detașat.';
+
+  @override
+  String get auditLogChangeAllowedFlexibleChannelNames =>
+      'A permis nume flexibile pentru canalele text.';
+
+  @override
+  String get auditLogChangeDisallowedFlexibleChannelNames =>
+      'Nu a mai permis nume flexibile pentru canalele text.';
+
+  @override
+  String get auditLogChangeHidOwnerCrown =>
+      'A ascuns coroana proprietarului comunității.';
+
+  @override
+  String get auditLogChangeShowedOwnerCrown =>
+      'Nu a mai ascuns coroana proprietarului comunității.';
+
+  @override
+  String get auditLogChangeAllowedEmojiCloning =>
+      'A permis altora să cloneze emoji-urile acestei comunități.';
+
+  @override
+  String get auditLogChangeStoppedEmojiCloning =>
+      'Nu a mai permis altora să cloneze emoji-urile acestei comunități.';
+
+  @override
+  String get auditLogChangeAllowedStickerCloning =>
+      'A permis altora să cloneze stickerele acestei comunități.';
+
+  @override
+  String get auditLogChangeStoppedStickerCloning =>
+      'Nu a mai permis altora să cloneze stickerele acestei comunități.';
+
+  @override
+  String auditLogChangeRenamedChannel(String name) {
+    return 'A redenumit canalul în $name.';
+  }
+
+  @override
+  String get auditLogChangeClearedTopic => 'A șters subiectul.';
+
+  @override
+  String auditLogChangeUpdatedTopic(String topic) {
+    return 'Am actualizat subiectul la $topic.';
+  }
+
+  @override
+  String get auditLogChangeEnabledMatureContent => 'Conținut matur activat.';
+
+  @override
+  String get auditLogChangeDisabledMatureContent =>
+      'Conținut matur dezactivat.';
+
+  @override
+  String auditLogChangeSetNickname(String nickname) {
+    return 'A set porecla la $nickname.';
+  }
+
+  @override
+  String auditLogChangeRemovedNickname(String nickname) {
+    return 'A eliminat porecla $nickname.';
+  }
+
+  @override
+  String get auditLogChangeMutedMember => 'Ați dezactivat sunetul membrului.';
+
+  @override
+  String get auditLogChangeUnmutedMember => 'A dezactivat sunetul membrului.';
+
+  @override
+  String get auditLogChangeDeafenedMember =>
+      'Ați dezactivat sunetul membrului.';
+
+  @override
+  String get auditLogChangeUndeafenedMember =>
+      'A dezactivat sunetul membrului.';
+
+  @override
+  String auditLogChangeAddedRoles(String roles) {
+    return 'A adăugat $roles.';
+  }
+
+  @override
+  String auditLogChangeRemovedRoles(String roles) {
+    return 'A eliminat $roles.';
+  }
+
+  @override
+  String auditLogOptionChannel(String value) {
+    return 'Canal: $value.';
+  }
+
+  @override
+  String auditLogOptionMessage(String value) {
+    return 'Mesaj: $value.';
+  }
+
+  @override
+  String auditLogOptionInvitedBy(String value) {
+    return 'Invitat de $value.';
+  }
+
+  @override
+  String auditLogOptionDeletedMessages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Au șters $count mesaje.',
+      one: 'A șters $count mesaj.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String auditLogOptionRemovedMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Au fost eliminați $count membri.',
+      one: 'A eliminat $count membru.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get auditLogOptionInviteNeverExpires =>
+      'Această invitație nu expiră niciodată.';
+
+  @override
+  String get auditLogOptionTemporaryMembership =>
+      'Acordă calitatea de membru temporar.';
+
+  @override
+  String get auditLogOptionPermanentMembership =>
+      'Acordă calitatea de membru permanent.';
+
+  @override
+  String get guildSettingsWebhooksDescription =>
+      'Vezi și gestionează fiecare webhook configurat în comunitatea ta.';
+
+  @override
+  String get guildSettingsWebhooksEmpty => 'Niciun webhook';
+
+  @override
+  String guildSettingsWebhooksEmptyDescription(String channelSettingsPath) {
+    return 'Comunitatea nu are încă nicio integrare webhook. Accesează $channelSettingsPath pentru a crea una.';
+  }
+
+  @override
+  String guildSettingsWebhooksPermissionRequired(String permission) {
+    return 'Ai nevoie de permisiunea „$permission” pentru a vizualiza și edita webhook-urile acestei comunități.';
+  }
+
+  @override
+  String get guildSettingsWebhooksLoadFailedTitle =>
+      'Nu s-au putut încărca webhook-urile';
+
+  @override
+  String get guildSettingsWebhooksLoadFailedDescription =>
+      'A apărut o eroare la încărcarea webhook-urilor. Încearcă din nou.';
+
+  @override
+  String get guildSettingsWebhooksUpdated => 'Webhook-uri actualizate';
+
+  @override
+  String get guildSettingsWebhooksUpdateFailed =>
+      'Nu s-au putut actualiza webhook-urile';
+
+  @override
+  String get guildSettingsUnknownChannel => 'Canal necunoscut';
+
+  @override
+  String get guildSettingsCopiedUrl => 'URL copiat în clipboard';
+
+  @override
+  String get guildSettingsDiscoveryDescription =>
+      'Listează-ți comunitatea în secțiunea „Explorează”, ca alții să o poată găsi și să i se alăture.';
+
+  @override
+  String get guildSettingsDiscoveryNotEnoughMembersTitle =>
+      'Nu sunt suficienți membri';
+
+  @override
+  String guildSettingsDiscoveryNotEligible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de membri',
+      few: '$count membri',
+      one: '$count membru',
+    );
+    return 'Comunitatea ta are nevoie de cel puțin $_temp0 pentru a putea fi listată în secțiunea „Explorează”.';
+  }
+
+  @override
+  String get guildSettingsDiscoveryStatusLabel => 'Stare:';
+
+  @override
+  String get guildSettingsDiscoveryStatusPending => 'În așteptare';
+
+  @override
+  String get guildSettingsDiscoveryStatusApproved => 'Aprobat';
+
+  @override
+  String get guildSettingsDiscoveryStatusRejected => 'Respins';
+
+  @override
+  String get guildSettingsDiscoveryStatusRemoved => 'Eliminat';
+
+  @override
+  String guildSettingsDiscoveryReason(String reason) {
+    return 'Motiv: $reason';
+  }
+
+  @override
+  String get guildSettingsDiscoveryApprovedInfo =>
+      'Comunitatea ta este listată în secțiunea „Explorează”. Poți actualiza detaliile listării mai jos sau o poți retrage pentru a o elimina.';
+
+  @override
+  String get guildSettingsDiscoveryPendingInfo =>
+      'Cererea ta este în curs de examinare. Poți actualiza în continuare detaliile listării sau poți retrage cererea.';
+
+  @override
+  String get guildSettingsDiscoveryCategory => 'Categorie';
+
+  @override
+  String get guildSettingsDiscoveryCategoryHelp =>
+      'Alege categoria care descrie cel mai bine comunitatea ta. O poți schimba oricând.';
+
+  @override
+  String get guildSettingsDiscoveryPrimaryLanguage => 'Limba principală';
+
+  @override
+  String get guildSettingsDiscoveryPrimaryLanguageHelp =>
+      'Limba vorbită de majoritatea membrilor comunității tale. Este folosită pentru a filtra rezultatele din secțiunea „Explorează”.';
+
+  @override
+  String get guildSettingsDiscoveryDescriptionField => 'Descriere';
+
+  @override
+  String get guildSettingsDiscoveryDescriptionPlaceholder =>
+      'Descrie despre ce este vorba în comunitatea ta';
+
+  @override
+  String get guildSettingsDiscoveryDescriptionRequired =>
+      'Este necesară o descriere.';
+
+  @override
+  String guildSettingsDiscoveryDescriptionMinLength(int minLength) {
+    return 'Descrierea trebuie să aibă cel puțin $minLength caractere.';
+  }
+
+  @override
+  String guildSettingsDiscoveryDescriptionMaxLength(int maxLength) {
+    return 'Descrierea nu poate depăși $maxLength de caractere.';
+  }
+
+  @override
+  String get guildSettingsDiscoveryTags => 'Etichete personalizate';
+
+  @override
+  String guildSettingsDiscoveryTagsHelp(int maxTags) {
+    return 'Până la $maxTags etichete îi ajută pe oameni să-ți găsească comunitatea. Acestea apar când oamenii caută în secțiunea „Explorează”.';
+  }
+
+  @override
+  String get guildSettingsDiscoveryTagsHint =>
+      'Adaugă o etichetă și apasă Enter';
+
+  @override
+  String get guildSettingsDiscoveryAddTag => 'Adaugă';
+
+  @override
+  String guildSettingsDiscoveryRemoveTag(String tag) {
+    return 'Elimină eticheta $tag';
+  }
+
+  @override
+  String get guildSettingsDiscoveryTagErrorTitle =>
+      'Nu s-a putut adăuga eticheta';
+
+  @override
+  String guildSettingsDiscoveryTagRequirements(int maxLength) {
+    return 'Etichetele trebuie să aibă între 2 și $maxLength caractere și să fie alfanumerice.';
+  }
+
+  @override
+  String guildSettingsDiscoveryTagLimit(int maxTags) {
+    return 'Poți adăuga maximum $maxTags etichete.';
+  }
+
+  @override
+  String get guildSettingsDiscoveryApply => 'Aplică';
+
+  @override
+  String get guildSettingsDiscoverySave => 'Salvează';
+
+  @override
+  String get guildSettingsDiscoveryWithdraw => 'Retrage';
+
+  @override
+  String get guildSettingsDiscoveryApplicationSent =>
+      'Cererea pentru secțiunea „Explorează” a fost trimisă';
+
+  @override
+  String get guildSettingsDiscoveryListingUpdated =>
+      'Listarea din secțiunea „Explorează” a fost actualizată';
+
+  @override
+  String get guildSettingsDiscoveryApplicationWithdrawn =>
+      'Cererea pentru secțiunea „Explorează” a fost retrasă';
+
+  @override
+  String get guildSettingsDiscoveryWithdrawErrorTitle =>
+      'Nu s-a putut retrage cererea';
+
+  @override
+  String get guildSettingsDiscoveryWithdrawErrorDescription =>
+      'Încearcă din nou peste un moment.';
+
+  @override
+  String get guildSettingsMembersSearchHint =>
+      'Caută după nume de utilizator sau ID';
+
+  @override
+  String guildSettingsMembersResultsTitle(int count) {
+    return '$count membri';
+  }
+
+  @override
+  String get guildMembersRecentTitle => 'Membri recenți';
+
+  @override
+  String guildMembersShowingCount(int displayedCount, int totalCount) {
+    return 'Se afișează $displayedCount din $totalCount membri în total';
+  }
+
+  @override
+  String get guildMembersSort => 'Sortare';
+
+  @override
+  String get guildSettingsMembersSortNewest => 'Cele mai noi mai întâi';
+
+  @override
+  String get guildMembersSortOldest => 'Cele mai vechi mai întâi';
+
+  @override
+  String get guildMembersColumnName => 'Nume';
+
+  @override
+  String get guildMembersColumnMemberSince => 'Membru din';
+
+  @override
+  String guildMembersColumnJoinedProduct(String productName) {
+    return 'Înscris pe $productName';
+  }
+
+  @override
+  String get guildMembersColumnJoinMethod => 'Metodă de alăturare';
+
+  @override
+  String get guildMembersColumnRoles => 'Roluri';
+
+  @override
+  String get guildMembersFilterMemberSince => 'Filtrează după data alăturării';
+
+  @override
+  String get guildMembersFilterJoinedProduct =>
+      'Filtrează după data creării contului';
+
+  @override
+  String get guildMembersFilterJoinMethod =>
+      'Filtrează după metoda de alăturare';
+
+  @override
+  String get guildMembersFilterRoles => 'Filtrează după roluri';
+
+  @override
+  String get guildMembersFilterAll => 'Toate';
+
+  @override
+  String get guildMembersFilterPast1Hour => 'Ultima oră';
+
+  @override
+  String get guildMembersFilterPast24Hours => 'Ultimele 24 de ore';
+
+  @override
+  String get guildMembersFilterPast7Days => 'Ultimele 7 zile';
+
+  @override
+  String get guildMembersFilterPast2Weeks => 'Ultimele 2 săptămâni';
+
+  @override
+  String get guildMembersFilterPast3Weeks => 'Ultimele 3 săptămâni';
+
+  @override
+  String get guildMembersFilterPast4Weeks => 'Ultimele 4 săptămâni';
+
+  @override
+  String get guildMembersFilterPast3Months => 'Ultimele 3 luni';
+
+  @override
+  String get guildMembersFilterCustomRange => 'Interval personalizat...';
+
+  @override
+  String get guildMembersDateRangeTitle => 'Interval de date personalizat';
+
+  @override
+  String get guildMembersDateAfter => 'După data de';
+
+  @override
+  String get guildMembersDateBefore => 'Înainte de data de';
+
+  @override
+  String get guildMembersClearAll => 'Șterge tot';
+
+  @override
+  String get guildMembersRowsPerPage => 'Rânduri pe pagină';
+
+  @override
+  String get guildMembersEmptySearch => 'Nimeni nu corespunde căutării.';
+
+  @override
+  String get guildMembersLoadError =>
+      'A apărut o eroare la încărcarea membrilor. Încearcă din nou mai târziu.';
+
+  @override
+  String get guildMembersIndexing => 'Se indexează membrii…';
+
+  @override
+  String get guildMembersJoinSourceCreator => 'Creatorul comunității';
+
+  @override
+  String get guildMembersJoinSourceInvite => 'Invită';
+
+  @override
+  String guildMembersJoinSourceInviteCode(String code) {
+    return 'Invitație ($code)';
+  }
+
+  @override
+  String guildMembersJoinSourceInvitedBy(String name) {
+    return 'Invitat de $name';
+  }
+
+  @override
+  String get guildMembersJoinSourceVanityUrl => 'URL personalizat';
+
+  @override
+  String get guildMembersJoinSourceBotInvite => 'Invitație bot';
+
+  @override
+  String get guildMembersJoinSourcePlatformAdmin => 'Administrator platformă';
+
+  @override
+  String get guildMembersJoinSourceDiscovery => 'Explorează';
+
+  @override
+  String get guildMembersJoinMethodUnknown => 'Necunoscut';
+
+  @override
+  String get guildMembersCommunityOwner => 'Proprietar comunitate';
+
+  @override
+  String get guildMembersViewAllRoles => 'Vezi toate rolurile';
+
+  @override
+  String get guildMembersJoinedJustNow => 'Chiar acum';
+
+  @override
+  String guildMembersJoinedMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count minute',
+      one: 'acum 1 minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String guildMembersJoinedHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Acum $count ore',
+      one: 'Acum 1 oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get guildMembersChannelListLabel => 'Membri';
+
+  @override
+  String get guildSettingsInvitesTitle => 'Invitații';
+
+  @override
+  String get guildSettingsInvitesDescription =>
+      'Vezi toate invitațiile pentru această comunitate. Pentru a crea o invitație nouă, accesează un canal și folosește butonul de invitare.';
+
+  @override
+  String get guildSettingsInvitesEmpty => 'Nu există linkuri de invitație';
+
+  @override
+  String get guildSettingsInvitesEmptyDescription =>
+      'Această comunitate nu are încă linkuri de invitație. Accesează un canal și creează o invitație pentru a invita persoane.';
+
+  @override
+  String get guildSettingsInvitesLoadFailedTitle =>
+      'Nu s-au putut încărca invitațiile';
+
+  @override
+  String get guildSettingsInvitesLoadFailedDescription =>
+      'A apărut o eroare la încărcarea invitațiilor. Încearcă din nou.';
+
+  @override
+  String get guildSettingsInvitesTryAgain => 'Încearcă din nou';
+
+  @override
+  String get guildSettingsInvitesShowCreatedDate =>
+      'Afișează data creării în loc de data expirării';
+
+  @override
+  String get guildSettingsInvitesPauseInvites => 'Întrerupe invitațiile';
+
+  @override
+  String get guildSettingsInvitesEnableInvites => 'Activează invitațiile';
+
+  @override
+  String get guildSettingsInvitesPauseForCommunityTitle =>
+      'Întrerupe invitațiile pentru această comunitate';
+
+  @override
+  String get guildSettingsInvitesEnableForCommunityTitle =>
+      'Activează invitațiile pentru această comunitate';
+
+  @override
+  String get guildSettingsInvitesPauseConfirmDescription =>
+      'Întrerupi invitațiile? Utilizatorii noi nu se vor putea alătura prin linkuri de invitație până când nu le reactivezi. Membrii existenți nu vor fi afectați.';
+
+  @override
+  String get guildSettingsInvitesEnableConfirmDescription =>
+      'Activezi invitațiile? Utilizatorii se vor putea alătura din nou acestei comunități prin linkuri de invitație.';
+
+  @override
+  String get guildSettingsInvitesPause => 'Pauză';
+
+  @override
+  String get guildSettingsInvitesPausedForCommunity =>
+      'Invitațiile sunt întrerupte pentru această comunitate.';
+
+  @override
+  String guildSettingsInvitesPausedBecauseRaid(String productName) {
+    return 'Invitațiile sunt întrerupte deoarece $productName a detectat un potențial raid. Utilizatorii noi nu se pot alătura acum.';
+  }
+
+  @override
+  String get guildSettingsInvitesLabelInviter => 'Invitat de:';
+
+  @override
+  String get guildSettingsInvitesLabelChannel => 'Canal:';
+
+  @override
+  String get guildSettingsInvitesLabelCode => 'Cod:';
+
+  @override
+  String get guildSettingsInvitesLabelUses => 'Utilizări:';
+
+  @override
+  String get guildSettingsInvitesLabelCreated => 'Creată:';
+
+  @override
+  String get guildSettingsInvitesLabelExpires => 'Expiră:';
+
+  @override
+  String get guildSettingsInvitesUnknown => 'Necunoscut';
+
+  @override
+  String get guildSettingsInvitesNoCategory => 'Fără categorie';
+
+  @override
+  String get guildSettingsInvitesExpired => 'Expirat';
+
+  @override
+  String get guildSettingsInvitesNever => 'Niciodată';
+
+  @override
+  String get guildSettingsInvitesCopyLink => 'Copiază linkul de invitație';
+
+  @override
+  String get guildSettingsInvitesRevoke => 'Revocă invitația';
+
+  @override
+  String get guildSettingsInvitesRevokeFailedTitle =>
+      'Nu s-a putut revoca invitația';
+
+  @override
+  String get guildSettingsInvitesRevokeFailedDescription =>
+      'Linkul ar putea fi încă activ. Încearcă din nou mai târziu.';
+
+  @override
+  String get guildSettingsBansDescription =>
+      'Vizualizează și gestionează utilizatorii banați.';
+
+  @override
+  String get guildSettingsBansSearchHint => 'Caută interdicții';
+
+  @override
+  String get guildSettingsBansEmpty => 'Niciun utilizator blocat.';
+
+  @override
+  String get guildSettingsBanExpiresLabel => 'Expiră';
+
+  @override
+  String get guildSettingsBansNoSearchResults =>
+      'Nu s-au găsit interdicții care să corespundă căutării tale.';
+
+  @override
+  String get guildSettingsBanDetailsTitle => 'Detalii interdicție';
+
+  @override
+  String get guildSettingsBanViewDetails => 'Vezi detalii';
+
+  @override
+  String get guildSettingsBannedOn => 'Data interdicției';
+
+  @override
+  String get guildSettingsBannedBy => 'Banat de';
+
+  @override
+  String get guildSettingsRevokeBanTitle => 'Revocă interdicția';
+
+  @override
+  String guildSettingsRevokeBanDescription(String displayName) {
+    return 'Ești sigur că vrei să anulezi banarea pentru $displayName? Va putea să se alăture din nou comunității.';
+  }
+
+  @override
+  String guildSettingsRevokeBanSuccess(String displayName) {
+    return 'A anulat interdicția pentru $displayName';
+  }
+
+  @override
+  String get guildSettingsCommunitySettings => 'Setări comunitate';
+
+  @override
+  String get guildSettingsDeleteCommunity => 'Șterge comunitatea';
+
+  @override
+  String get guildSettingsDeleteCommunityConfirm =>
+      'Sigur dorești să ștergi această comunitate? Această acțiune nu poate fi anulată. Toate canalele, mesajele și setările vor fi șterse definitiv.';
+
+  @override
+  String get guildSettingsCommunityDeleted => 'Comunitate ștearsă';
+
+  @override
+  String get guildSettingsDeleteCommunityFailed =>
+      'Nu s-a putut șterge această comunitate';
+
+  @override
+  String get guildSettingsCategoryExpressions => 'Expresii';
+
+  @override
+  String get guildSettingsCategoryCommunity => 'Comunitate';
+
+  @override
+  String get guildSettingsCategoryIntegrations => 'Integrări';
+
+  @override
+  String get guildSettingsCategoryPeople => 'Persoane';
+
+  @override
+  String get guildSettingsOverviewBrandingTitle => 'Identitate vizuală';
+
+  @override
+  String get guildSettingsOverviewBrandingDescription =>
+      'Actualizează-ți pictograma, numele, bannerul și fundalul invitației';
+
+  @override
+  String get guildSettingsOverviewBannerUpload => 'Încarcă bannerul';
+
+  @override
+  String get guildSettingsOverviewIdleTitle => 'Setări de inactivitate';
+
+  @override
+  String get guildSettingsOverviewIdleDescription =>
+      'Configurează canalul AFK și timpul de inactivitate';
+
+  @override
+  String get guildSettingsOverviewSystemTitle => 'Sistem și bun venit';
+
+  @override
+  String get guildSettingsOverviewSystemDescription =>
+      'Alege destinația pentru mesajele de sistem și de bun venit';
+
+  @override
+  String get guildSettingsOverviewNotificationsTitle => 'Notificări implicite';
+
+  @override
+  String get guildSettingsOverviewNotificationsLargeGuild =>
+      'Comunitățile cu peste 250 de persoane sunt forțate să utilizeze setarea „doar mențiuni”. Setarea ta inițială este păstrată și va fi restabilită dacă numărul membrilor comunității scade sub 250.';
+
+  @override
+  String get guildSettingsOverviewFlexibleNames =>
+      'Permite nume flexibile pentru canalele text';
+
+  @override
+  String get guildSettingsOverviewHideOwnerCrown =>
+      'Ascunde coroana proprietarului comunității';
+
+  @override
+  String get guildSettingsOverviewDetachedBanner => 'Banner detașat';
+
+  @override
+  String get guildSettingsOverviewDetachedBannerHint =>
+      'Afișează bannerul în propria secțiune, sub antetul comunității.';
+
+  @override
+  String get guildSettingsOverviewUploadIcon => 'Încarcă pictogramă';
+
+  @override
+  String get guildSettingsOverviewRemoveImage => 'Elimină';
+
+  @override
+  String get guildSettingsOverviewSplashTitle => 'Fundalul invitației';
+
+  @override
+  String get guildSettingsOverviewEmbedSplashTitle =>
+      'Fundalul încorporării din chat';
+
+  @override
+  String get guildSettingsOverviewUploadBackground =>
+      'Încarcă imaginea de fundal';
+
+  @override
+  String get guildSettingsOverviewNoCommunityBanner =>
+      'Fără banner de comunitate';
+
+  @override
+  String get guildSettingsOverviewNoInviteBackground =>
+      'Fără fundal de invitație';
+
+  @override
+  String get guildSettingsOverviewInvitePreviewTitle => 'Previzualizare';
+
+  @override
+  String get guildSettingsOverviewInvitePreviewHint =>
+      'Vezi cum arată invitația ta pentru vizitatori.';
+
+  @override
+  String get guildSettingsOverviewTextChannelNamesTitle =>
+      'Numele canalelor text';
+
+  @override
+  String get guildSettingsOverviewOwnerCrownTitle =>
+      'Coroana proprietarului comunității';
+
+  @override
+  String get guildSettingsOverviewOwnerCrownDescription =>
+      'Configurează dacă pictograma coroană este afișată lângă proprietarul comunității';
+
+  @override
+  String get guildSettingsSplashCardAlignment => 'Aliniere card';
+
+  @override
+  String get guildSettingsSplashAlignmentCenter => 'Centru';
+
+  @override
+  String get guildSettingsSplashAlignmentLeft => 'Stânga';
+
+  @override
+  String get guildSettingsSplashAlignmentRight => 'Dreapta';
+
+  @override
+  String get guildSettingsSplashAlignmentHint =>
+      'Se aplică doar pe ecrane late.';
+
+  @override
+  String get permissionReadMessageHistory => 'Citește istoricul mesajelor';
+
+  @override
+  String guildSettingsOverviewMessageHistoryTitle(String permission) {
+    return 'Modifică ce pot vedea utilizatorii fără $permission';
+  }
+
+  @override
+  String guildSettingsOverviewMessageHistoryDescription(String permission) {
+    return 'Folosește o fereastră dedicată pentru a seta o dată limită pentru istoricul mesajelor membrilor care nu au permisiunea $permission.';
+  }
+
+  @override
+  String get guildSettingsOverviewMessageHistoryOpen =>
+      'Deschide pragul istoricului mesajelor';
+
+  @override
+  String get guildSettingsMessageHistoryThresholdTitle => 'Prag istoric mesaje';
+
+  @override
+  String get guildSettingsMessageHistoryThresholdEnable =>
+      'Activează pragul istoricului mesajelor';
+
+  @override
+  String get guildSettingsMessageHistoryThresholdDate => 'Data limită';
+
+  @override
+  String get guildSettingsMessageHistoryThresholdDateHint =>
+      'Membrii fără Istoric mesaje citite pot vedea mesajele trimise după această dată.';
+
+  @override
+  String get guildSettingsMessageHistoryThresholdUpdated =>
+      'Pragul istoricului mesajelor a fost actualizat';
+
+  @override
+  String get guildSettingsOverviewFlexibleNamesHint =>
+      'Permite litere mari și spații în numele canalelor text. Dezactivarea restricționează numele la litere mici, cu cratime și liniuțe de subliniere.';
+
+  @override
+  String get guildSettingsOverviewHideOwnerCrownHint =>
+      'Ascunde pictograma coroanei de lângă proprietarul comunității pe toate suprafețele.';
+
+  @override
+  String get guildSettingsAnimatedIconRequiresFeature =>
+      'Antipodele animate necesită funcționalitatea comunității Antipode Animate.';
+
+  @override
+  String get guildSettingsAnimatedBannerRequiresFeature =>
+      'Banner-ele animate necesită funcționalitatea de comunitate Banner animat.';
+
+  @override
+  String get guildSettingsAfkChannel => 'Canal AFK / inactiv';
+
+  @override
+  String get guildSettingsAfkChannelHint =>
+      'Mută membrii în acest canal când sunt inactivi.';
+
+  @override
+  String get guildSettingsNoAfkChannel => 'Fără canal AFK';
+
+  @override
+  String get guildSettingsAfkTimeout => 'Timp de inactivitate';
+
+  @override
+  String get guildSettingsAfkTimeout1Min => '1 minut';
+
+  @override
+  String get guildSettingsAfkTimeout5Min => '5 minute';
+
+  @override
+  String get guildSettingsAfkTimeout15Min => '15 minute';
+
+  @override
+  String get guildSettingsAfkTimeout30Min => '30 de minute';
+
+  @override
+  String get guildSettingsAfkTimeout1Hour => '1 oră';
+
+  @override
+  String guildSettingsAfkTimeoutSeconds(int seconds) {
+    return '$seconds secunde';
+  }
+
+  @override
+  String get guildSettingsSystemChannel => 'Canal de destinație';
+
+  @override
+  String get guildSettingsSystemChannelHint =>
+      'Mesajele de bun venit și de sistem vor apărea aici.';
+
+  @override
+  String get guildSettingsNoSystemChannel => 'Fără canal de sistem';
+
+  @override
+  String get guildSettingsHideJoinMessages => 'Ascunde mesajele de alăturare';
+
+  @override
+  String get guildSettingsHideJoinMessagesHint =>
+      'Suprimă mesajele de intrare în canalul de destinație.';
+
+  @override
+  String get guildSettingsDefaultNotifications =>
+      'Setări implicite de notificare';
+
+  @override
+  String get guildSettingsNotificationsAll => 'Toate mesajele';
+
+  @override
+  String get guildSettingsNotificationsAllDescription =>
+      'Notifică la toate mesajele';
+
+  @override
+  String get guildSettingsNotificationsMentions => 'Doar mențiuni';
+
+  @override
+  String get guildSettingsNotificationsMentionsDescription =>
+      'Notifică doar la mențiuni';
+
+  @override
+  String get guildSettingsOverviewSplashUploadHint =>
+      'JPEG, PNG, WebP, AVIF. Maxim 10 MB. Minim: 960×540px (16:9)';
+
+  @override
+  String get guildSettingsOverviewEmbedSplashUploadHint =>
+      'JPEG, PNG, WebP, AVIF. Max. 10 MB. Minim: 960×540px (16:9). Afișat în previzualizările invitațiilor în chat.';
+
+  @override
+  String get guildSettingsModerationContentFilterTitle =>
+      'Filtrarea conținutului';
+
+  @override
+  String get guildSettingsModerationContentFilterDescription =>
+      'Filtrează automat mesajele cu conținut explicit în canalele care nu sunt marcate pentru conținut matur.';
+
+  @override
+  String get guildSettingsModerationContentFilterDiscoveryNote =>
+      'Comunitățile listate în secțiunea „Explorează” trebuie să scaneze mesajele tuturor membrilor. Nu poți modifica această setare cât timp comunitatea ta este listată în secțiunea „Explorează”.';
+
+  @override
+  String get guildSettingsContentFilterOff => 'Dezactivat';
+
+  @override
+  String get guildSettingsContentFilterOffDescription =>
+      'Permite comunității să se automodereze';
+
+  @override
+  String get guildSettingsContentFilterNoRole =>
+      'Filtrează membrii fără roluri';
+
+  @override
+  String get guildSettingsContentFilterNoRoleDescription =>
+      'Sugerat pentru majoritatea comunităților';
+
+  @override
+  String get guildSettingsContentFilterAll => 'Filtrează pe toată lumea';
+
+  @override
+  String get guildSettingsContentFilterAllDescription =>
+      'Protecție maximă pentru spații potrivite familiilor';
+
+  @override
+  String get guildSettingsContentWarningToggle =>
+      'Afișează un avertisment de conținut';
+
+  @override
+  String get guildSettingsContentWarningToggleDescription =>
+      'Activează o solicitare de consimțământ înainte de a intra în orice canal.';
+
+  @override
+  String get guildSettingsContentWarningText =>
+      'Text de avertizare personalizat';
+
+  @override
+  String get guildSettingsContentWarningTextPlaceholder =>
+      'Acest conținut este sensibil.';
+
+  @override
+  String get guildSettingsModeration2faTitle => 'Cerință 2FA';
+
+  @override
+  String get guildSettingsModeration2faDescription =>
+      'Solicită autentificarea în doi pași pentru moderatori înainte ca aceștia să poată bana, elimina, suspenda sau șterge mesaje.';
+
+  @override
+  String get guildSettingsModeration2faSwitchLabel =>
+      'Solicită 2FA pentru acțiunile de moderare';
+
+  @override
+  String get guildSettingsModeration2faEnableFirstTooltip =>
+      'Activează autentificarea în doi pași pentru a schimba această setare';
+
+  @override
+  String get guildSettingsEmojiSearchHint => 'Caută emoji';
+
+  @override
+  String get guildSettingsEmojiUploadTitle => 'Încarcă emoji';
+
+  @override
+  String get guildSettingsEmojiSlotsTitle => 'Sloturi emoji';
+
+  @override
+  String get guildSettingsEmojiDropZone =>
+      'Trage și plasează fișierele emoji aici';
+
+  @override
+  String get guildSettingsEmojiLoadFailed =>
+      'Nu s-au putut încărca emoji-urile. Încearcă din nou mai târziu.';
+
+  @override
+  String get guildSettingsEmojiSearchEmpty =>
+      'Nu s-au găsit emoji-uri care să corespundă căutării tale.';
+
+  @override
+  String get guildSettingsEmojiSlotsFull =>
+      'Ai atins numărul maxim de emoji-uri. Șterge câteva emoji-uri existente pentru a face loc.';
+
+  @override
+  String guildSettingsEmojiUploadRequirements(String maxSize) {
+    return 'Numele emoji-urilor trebuie să aibă cel puțin 2 caractere și pot conține litere, numere și liniuțe de subliniere. Emoji-urile trebuie să aibă mai puțin de $maxSize. Imaginile statice sunt redimensionate automat la 128x128 pixeli și sunt comprimate. Emoji-urile animate și SVG-urile trebuie să respecte deja limita.';
+  }
+
+  @override
+  String get guildSettingsEmojiSomeFailedTitle =>
+      'Unele emoji-uri nu au putut fi adăugate';
+
+  @override
+  String get guildSettingsEmojiRenameTitle => 'Redenumește emoji-ul';
+
+  @override
+  String get guildSettingsEmojiRenameHint =>
+      '2-32 caractere, litere, cifre, cratime de subliniere.';
+
+  @override
+  String get guildSettingsEmojiColumnName => 'Nume';
+
+  @override
+  String get guildSettingsEmojiColumnUploader => 'Încărcat de';
+
+  @override
+  String get guildSettingsEmojiDeleteTitle => 'Șterge emoji';
+
+  @override
+  String guildSettingsEmojiDeleteBody(String name) {
+    return 'Ștergi :$name:? Nu poate fi anulat.';
+  }
+
+  @override
+  String get guildSettingsEmojiPurgeLabel =>
+      'Șterge acest emoji din stocare și CDN';
+
+  @override
+  String get guildSettingsEmojiNameTooShort =>
+      'Numele emojiului trebuie să aibă cel puțin 2 caractere';
+
+  @override
+  String get guildSettingsEmojiNameTooLong =>
+      'Numele emojiului trebuie să aibă maximum 32 de caractere';
+
+  @override
+  String get guildSettingsEmojiInvalidNameTitle => 'Nume emoji nevalid';
+
+  @override
+  String get guildSettingsEmojiRenameFailedTitle =>
+      'Nu s-a putut redenumi acest emoji';
+
+  @override
+  String get guildSettingsEmojiDeleteFailedTitle =>
+      'Nu s-a putut șterge acest emoji';
+
+  @override
+  String get guildSettingsCloneEmojiTitle =>
+      'Permite altora să-ți cloneze emoji-urile';
+
+  @override
+  String get guildSettingsCloneEmojiDescription =>
+      'Când este activată, membrii altor comunități pot folosi scurtătura \"Clonare\" cu un singur clic din aplicație pentru emoji-urile tale personalizate. Acest lucru nu îi împiedică să salveze imaginea și să o încarce ei înșiși.';
+
+  @override
+  String get guildSettingsCloneStickerTitle =>
+      'Permite altora să-ți cloneze stickerele';
+
+  @override
+  String get guildSettingsCloneStickerDescription =>
+      'Când este activată, membrii altor comunități pot folosi scurtătura \"Clonare\" cu un singur clic din aplicație pentru stickerele tale personalizate. Acest lucru nu îi împiedică să salveze imaginea și să o încarce ei înșiși.';
+
+  @override
+  String guildSettingsClonePermissionHint(String permission) {
+    return 'Doar membrii cu permisiunea „$permission” pot modifica acest lucru.';
+  }
+
+  @override
+  String get guildSettingsCloneEmojiUpdateFailed =>
+      'Nu s-a putut actualiza clonarea emoji-urilor';
+
+  @override
+  String get guildSettingsCloneStickerUpdateFailed =>
+      'Nu s-a putut actualiza clonarea stickerelor';
+
+  @override
+  String guildSettingsNonAnimatedEmoji(int count) {
+    return 'Emoji non-animate ($count)';
+  }
+
+  @override
+  String guildSettingsAnimatedEmoji(int count) {
+    return 'Emoji animate ($count)';
+  }
+
+  @override
+  String get guildSettingsStickersSearchHint => 'Caută stickere';
+
+  @override
+  String get guildSettingsStickerSlotsTitle => 'Sloturi pentru stickere';
+
+  @override
+  String get guildSettingsStickerUploadTitle => 'Încarcă un sticker';
+
+  @override
+  String get guildSettingsStickerDropZone =>
+      'Trage și plasează un fișier sticker aici (unul pe rând)';
+
+  @override
+  String get guildSettingsStickerDensity => 'Densitatea stickerelor';
+
+  @override
+  String get guildSettingsStickerDensityCozy => 'Confortabil';
+
+  @override
+  String get guildSettingsStickerDensityCompact => 'Compact';
+
+  @override
+  String get guildSettingsStickersLoadFailedTitle =>
+      'Nu s-au putut încărca stickerele';
+
+  @override
+  String get guildSettingsStickersLoadFailedBody =>
+      'A apărut o eroare la încărcarea stickerelor. Încearcă din nou.';
+
+  @override
+  String get guildSettingsStickersSearchEmpty =>
+      'Nu s-au găsit stickere care să se potrivească căutării tale.';
+
+  @override
+  String get guildSettingsStickerSlotsFull =>
+      'Ai atins numărul maxim de stickere. Șterge câteva stickere existente pentru a face loc.';
+
+  @override
+  String guildSettingsStickerUploadRequirements(String maxSize) {
+    return 'Stickerele sunt salvate la 320x320 pixeli și trebuie să aibă mai puțin de $maxSize. Imaginile statice sunt redimensionate și comprimate automat. Stickerele animate și SVG-urile trebuie să respecte deja limita.';
+  }
+
+  @override
+  String get guildSettingsStickerAddTitle => 'Adaugă sticker';
+
+  @override
+  String get guildSettingsStickerEditTitle => 'Editează stickerul';
+
+  @override
+  String get guildSettingsStickerNameLabel => 'Nume';
+
+  @override
+  String get guildSettingsStickerNameHint => 'Stickerul meu minunat';
+
+  @override
+  String get guildSettingsStickerDescriptionLabel => 'Descriere';
+
+  @override
+  String get guildSettingsStickerDescriptionHint => 'Descrie stickerul';
+
+  @override
+  String guildSettingsStickerTagsLabel(int count, int limit) {
+    return 'Etichete ($count/$limit)';
+  }
+
+  @override
+  String get guildSettingsStickerTagHint => 'Adaugă o etichetă';
+
+  @override
+  String get guildSettingsStickerTagAdd => 'Adaugă';
+
+  @override
+  String get guildSettingsStickerNameRequired => 'Numele este obligatoriu';
+
+  @override
+  String get guildSettingsStickerNameTooShort =>
+      'Numele trebuie să aibă cel puțin 2 caractere';
+
+  @override
+  String get guildSettingsStickerNameTooLong =>
+      'Numele trebuie să aibă maximum 30 de caractere';
+
+  @override
+  String get guildSettingsStickerDescriptionTooLong =>
+      'Descrierea trebuie să aibă maximum 500 de caractere';
+
+  @override
+  String get guildSettingsStickerCreateFailedTitle =>
+      'Nu s-a putut crea acest sticker';
+
+  @override
+  String get guildSettingsStickerDeleteTitle => 'Șterge stickerul';
+
+  @override
+  String guildSettingsStickerDeleteBody(String name) {
+    return 'Ștergi „$name”? Nu poate fi anulat.';
+  }
+
+  @override
+  String get guildSettingsStickerPurgeLabel =>
+      'Șterge acest sticker din stocare și CDN';
+
+  @override
+  String get guildSettingsStickerDeleteFailedTitle =>
+      'Nu s-a putut șterge acest sticker';
+
+  @override
+  String guildSettingsWebhooksInfo(String channelSettingsPath) {
+    return 'Pentru a crea un webhook, deschide $channelSettingsPath. Poți edita și organiza în continuare toți webhook-urile existente aici.';
+  }
+
+  @override
+  String get guildSettingsBannedUsersTitle => 'Utilizatori banați';
+
+  @override
+  String get guildSettingsInvitesTableInviter => 'Invitat de';
+
+  @override
+  String get guildSettingsInvitesTableChannel => 'Canal';
+
+  @override
+  String get guildSettingsInvitesTableCode => 'Cod';
+
+  @override
+  String get guildSettingsInvitesTableUses => 'Utilizări';
+
+  @override
+  String get guildSettingsInvitesTableCreated => 'Creată';
+
+  @override
+  String get guildSettingsInvitesTableExpires => 'Expiră';
+
+  @override
+  String get guildSettingsAuditLogFilterUser => 'Filtrează după utilizator';
+
+  @override
+  String get guildSettingsAuditLogFilterAction => 'Filtrează după acțiune';
+
+  @override
+  String get createDm => 'Creează un DM';
+
+  @override
+  String get createGroupDm => 'Creează un DM de grup';
+
+  @override
+  String get createDmNewMessage => 'Mesaj nou';
+
+  @override
+  String get createDmSelectFriends => 'Selectează prieteni';
+
+  @override
+  String get createDmChooseFriendsSubtitle =>
+      'Alege prieteni cărora să le trimiți mesaje.';
+
+  @override
+  String get createDmSearchFriends => 'Caută prieteni';
+
+  @override
+  String get createDmNoFriendsFound => 'Niciun prieten găsit';
+
+  @override
+  String get createDmNoFriendsYet => 'Nu ai încă prieteni';
+
+  @override
+  String get createDmClaimToStartDms =>
+      'Revendică-ți contul pentru a începe DM-uri.';
+
+  @override
+  String get createDmVerifyToStartDms =>
+      'Verifică-ți adresa de e-mail pentru a începe DM-uri.';
+
+  @override
+  String get createDmVerifyYourEmail => 'Verifică-ți adresa de e-mail';
+
+  @override
+  String get createDmNewGroup => 'Grup nou';
+
+  @override
+  String createDmCreateGroupWithRecipient(String userName) {
+    return 'Creează un grup nou cu $userName';
+  }
+
+  @override
+  String get createDmConfirmNewGroup => 'Confirmă grupul nou';
+
+  @override
+  String get createDmCreateNewGroup => 'Creează un grup nou';
+
+  @override
+  String createDmRemoveFriend(String displayName) {
+    return 'Elimină $displayName';
+  }
+
+  @override
+  String get createDmDuplicateGroupDescription =>
+      'Ai deja un grup cu acești utilizatori. Chiar vrei să creezi unul nou? E în regulă și așa!';
+
+  @override
+  String get createDmNoActivityYet => 'Încă nicio activitate';
+
+  @override
+  String get createDmSomeUsersCantBeAdded =>
+      'Unii utilizatori nu pot fi adăugați';
+
+  @override
+  String get createDmCreateWithoutThem => 'Creează fără ei';
+
+  @override
+  String get createDmUnaddableIntro =>
+      'Următoarele persoane nu pot fi adăugate la acest DM de grup:';
+
+  @override
+  String createDmUnaddableProceed(int count) {
+    return 'Creezi grupul de mesaje directe cu ceilalți $count participanți și îi sari pe ceilalți?';
+  }
+
+  @override
+  String get createDmUnaddableNoneRemaining =>
+      'Nu mai sunt destinatari cu care să creezi un DM de grup.';
+
+  @override
+  String get createDmUnaddableUserNotFound => 'Utilizatorul nu a fost găsit';
+
+  @override
+  String get createDmUnaddableBlocked =>
+      'Nu poți trimite mesaje acestui utilizator';
+
+  @override
+  String get createDmUnaddableNotFriends => 'Nu e în lista ta de prieteni';
+
+  @override
+  String get createDmUnaddableGroupDisabled =>
+      'Nu permite adăugarea la DM-uri de grup';
+
+  @override
+  String get dmListMessagesTitle => 'Mesaje';
+
+  @override
+  String get dmListDirectMessagesTitle => 'Mesaje directe';
+
+  @override
+  String get keybindsSearchShortcuts => 'Caută scurtături';
+
+  @override
+  String get keybindSectionDefaults => 'Implicit';
+
+  @override
+  String get keybindSectionMessages => 'Mesaje';
+
+  @override
+  String get keybindSectionNavigation => 'Navigare';
+
+  @override
+  String get keybindSectionDragAndDrop => 'Trage și plasează';
+
+  @override
+  String get keybindSectionChat => 'Chat';
+
+  @override
+  String get keybindSectionVoiceAndVideo => 'Voce și video';
+
+  @override
+  String get keybindSectionMisc => 'Diverse';
+
+  @override
+  String get keybindActionShowShortcutsList =>
+      'Afișează lista de comenzi rapide de la tastatură';
+
+  @override
+  String get keybindActionCopyText => 'Copiază textul';
+
+  @override
+  String get keybindActionMarkUnread => 'Marchează ca necitit';
+
+  @override
+  String get keybindActionFocusTextarea => 'Focalizează zona de text';
+
+  @override
+  String get keybindActionSwitchCommunities => 'Comută între comunități';
+
+  @override
+  String get keybindActionSwitchChannels => 'Comută între canale';
+
+  @override
+  String get keybindActionHistoryBack =>
+      'Înapoi în istoricul canalelor vizualizate';
+
+  @override
+  String get keybindActionHistoryForward =>
+      'Înainte în istoricul canalelor vizualizate';
+
+  @override
+  String get keybindActionJumpUnreadChannels => 'Salt între canalele necitite';
+
+  @override
+  String get keybindActionJumpMentionChannels =>
+      'Salt între canalele necitite cu mențiuni';
+
+  @override
+  String get keybindActionJumpCurrentCall => 'Salt la apelul curent';
+
+  @override
+  String get keybindActionToggleLastGuildDms =>
+      'Comută între ultima comunitate și DM-uri';
+
+  @override
+  String get keybindActionPreviousCommunityOrDms =>
+      'Comută la comunitatea anterioară sau la DM-uri';
+
+  @override
+  String get keybindActionNextCommunityOrDms =>
+      'Comută la comunitatea următoare sau la DM-uri';
+
+  @override
+  String get keybindActionGoToDms => 'Mergi la mesaje directe';
+
+  @override
+  String get keybindActionGoToFirstCommunity => 'Mergi la prima comunitate';
+
+  @override
+  String get keybindActionGoToSecondCommunity => 'Mergi la a doua comunitate';
+
+  @override
+  String get keybindActionGoToThirdCommunity => 'Mergi la a treia comunitate';
+
+  @override
+  String get keybindActionGoToFourthCommunity => 'Mergi la a patra comunitate';
+
+  @override
+  String get keybindActionGoToFifthCommunity => 'Mergi la a cincea comunitate';
+
+  @override
+  String get keybindActionGoToSixthCommunity => 'Mergi la a șasea comunitate';
+
+  @override
+  String get keybindActionGoToSeventhCommunity =>
+      'Mergi la a șaptea comunitate';
+
+  @override
+  String get keybindActionGoToEighthCommunity => 'Mergi la a opta comunitate';
+
+  @override
+  String get keybindActionToggleQuickSwitcher => 'Comută comutatorul rapid';
+
+  @override
+  String get keybindActionCreateOrJoinCommunity =>
+      'Creează sau alătură-te unei comunități';
+
+  @override
+  String get keybindActionStartDragAndDrop => 'Începe glisarea și fixarea';
+
+  @override
+  String get keybindActionMove => 'Mută';
+
+  @override
+  String get keybindActionDropItem => 'Plasează elementul';
+
+  @override
+  String get keybindActionCancel => 'Anulează';
+
+  @override
+  String get keybindActionMarkCommunityRead =>
+      'Marchează comunitatea ca citită';
+
+  @override
+  String get keybindActionMarkChannelRead => 'Marchează canalul ca citit';
+
+  @override
+  String get keybindActionStartGroupDm => 'Începe un DM de grup';
+
+  @override
+  String get keybindActionTogglePinnedMessages => 'Comută mesajele fixate';
+
+  @override
+  String get keybindActionToggleInbox => 'Comută mesajele primite';
+
+  @override
+  String get keybindActionMarkTopInboxRead =>
+      'Marchează primul canal din inbox ca citit';
+
+  @override
+  String get keybindActionMarkAllInboxRead =>
+      'Marchează toate canalele din inbox ca citite';
+
+  @override
+  String get keybindActionToggleMemberList =>
+      'Comută lista de membri sau chatul vocal';
+
+  @override
+  String get keybindActionToggleEmojiPicker => 'Comută selectorul de emoji';
+
+  @override
+  String get keybindActionToggleGifPicker => 'Comută selectorul de GIF-uri';
+
+  @override
+  String get keybindActionToggleStickerPicker =>
+      'Comută selectorul de stickere';
+
+  @override
+  String get keybindActionScrollChatUp => 'Derulează chatul în sus';
+
+  @override
+  String get keybindActionScrollChatDown => 'Derulează chatul în jos';
+
+  @override
+  String get keybindActionJumpOldestUnread =>
+      'Salt la cel mai vechi mesaj necitit';
+
+  @override
+  String get keybindActionFocusComposer => 'Focalizează zona de text';
+
+  @override
+  String get keybindActionUploadFile => 'Încarcă un fișier';
+
+  @override
+  String get keybindActionCopyChannelLink => 'Copiază linkul canalului';
+
+  @override
+  String get keybindActionToggleSavedMedia => 'Comută media salvată';
+
+  @override
+  String get keybindActionSendVoiceMessage => 'Trimite mesaj vocal';
+
+  @override
+  String get keybindActionAnswerCall => 'Răspunde la apelul primit';
+
+  @override
+  String get keybindActionDeclineCall => 'Refuză apelul primit';
+
+  @override
+  String get keybindActionStartDmCall => 'Inițiază un apel într-un DM sau grup';
+
+  @override
+  String get keybindActionToggleSoundboard => 'Comută panoul de sunete';
+
+  @override
+  String get keybindActionToggleCompactCallView =>
+      'Extinde sau restrânge vizualizarea compactă a apelului';
+
+  @override
+  String get keybindActionPushToTalkPriority => 'Push-to-talk (prioritate)';
+
+  @override
+  String get keybindActionVoiceActivityPriority =>
+      'Prioritate pentru activitatea vocală';
+
+  @override
+  String get keybindActionOpenHelp => 'Deschide Ajutor';
+
+  @override
+  String get keybindActionSearchMessages => 'Caută mesaje';
+
+  @override
+  String get keybindActionOpenContextMenu => 'Deschide meniul contextual';
+
+  @override
+  String get keybindActionOpenSettings => 'Deschide setările';
+
+  @override
+  String get keybindActionOpenThemeStudio =>
+      'Deschide fereastra pop-out a studioului de teme';
+
+  @override
+  String get keybindActionZoomIn => 'Mărire';
+
+  @override
+  String get keybindActionZoomOut => 'Micșorare';
+
+  @override
+  String get keybindActionZoomReset => 'Resetare zoom';
+
+  @override
+  String get clipboardPasteFailed =>
+      'Nu am putut lipi. Clipboardul era gol sau blocat pentru această aplicație.';
+
+  @override
+  String get homeQuickActionDms => 'Mesaje directe';
+
+  @override
+  String get assistantNeedsLogin =>
+      'Deschide Fluxer și conectează-te mai întâi.';
+
+  @override
+  String get assistantNotInVoice => 'Nu ești într-un apel.';
+
+  @override
+  String get assistantNotFound => 'Fluxer nu a putut găsi asta.';
+
+  @override
+  String get assistantDmsDisabled =>
+      'Mesajele directe sunt dezactivate pe această instanță.';
+
+  @override
+  String get assistantFailed => 'Fluxer nu a putut finaliza asta.';
+
+  @override
+  String get assistantOkMuted => 'Microfon dezactivat.';
+
+  @override
+  String get assistantOkUnmuted => 'Microfon activat.';
+
+  @override
+  String get assistantOkLeftVoice => 'Ai părăsit canalul vocal.';
+
+  @override
+  String get assistantOkJoinedVoice => 'Mă alătur canalului vocal.';
+
+  @override
+  String get assistantOkStartedCall => 'Pornesc apelul.';
+
+  @override
+  String assistantOkStatusSet(String status) {
+    return 'Status setat la $status.';
+  }
+
+  @override
+  String get assistantOkOpened => 'Deschid Fluxer.';
+
+  @override
+  String get assistantOkMessageSent => 'Mesaj trimis.';
+
+  @override
+  String get assistantOkCustomStatusSet => 'Stare personalizată actualizată.';
+
+  @override
+  String get assistantOkCustomStatusCleared => 'Stare personalizată ștearsă.';
+
+  @override
+  String get guildNavbarAnnouncementChannel => 'Canal de anunțuri';
+
+  @override
+  String get guildNavbarAnnouncementChannelDescription =>
+      'Postează actualizări pe care alte comunități le pot urmări în propriile lor canale';
+
+  @override
+  String get channelDetailsAnnouncementChannel => 'Canal de anunțuri';
+
+  @override
+  String get channelSettingsAnnouncementChannel => 'Canal de anunțuri';
+
+  @override
+  String get channelSettingsAnnouncementChannelDescription =>
+      'Permite altor comunități să urmărească acest canal și să primească copii ale celor publicate.';
+
+  @override
+  String get channelSettingsStopAnnouncementTitle =>
+      'Renunți la canalul de anunțuri?';
+
+  @override
+  String channelSettingsStopAnnouncementBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count de canale urmăresc acest canal. Dacă îl convertești în canal text, aceste urmăriri vor fi eliminate.',
+      few:
+          '$count canale urmăresc acest canal. Dacă îl convertești în canal text, aceste urmăriri vor fi eliminate.',
+      one:
+          '$count canal urmărește acest canal. Dacă îl convertești în canal text, această urmărire va fi eliminată.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get channelSettingsStopAnnouncementUnknown =>
+      'Dacă convertești acest canal în canal text, niciun canal nu îl va mai urmări.';
+
+  @override
+  String get channelSettingsConvertChannel => 'Convertește';
+
+  @override
+  String get channelSettingsConvertFailed => 'Nu am putut converti acest canal';
+
+  @override
+  String get channelSettingsChannelHasFollowers =>
+      'Alte canale încă urmăresc acest canal. Elimină aceste urmăriri înainte de a-l converti.';
+
+  @override
+  String get channelMenuFollow => 'Urmărește canalul';
+
+  @override
+  String get channelFollowTitle => 'Urmărește acest canal';
+
+  @override
+  String get channelFollowBody =>
+      'Alege unde să apară mesajele publicate. Poți renunța oricând la urmărire din Setări comunitate → Webhook-uri.';
+
+  @override
+  String get channelFollowCommunity => 'Comunitate';
+
+  @override
+  String get channelFollowChannel => 'Canal';
+
+  @override
+  String get channelFollowAgeWarning =>
+      'Acesta este un canal cu restricție de vârstă. Actualizările pot merge doar către canale cu restricție de vârstă.';
+
+  @override
+  String get channelFollowContentWarning =>
+      'Acest canal are un avertisment de conținut. Actualizările pot fi trimise doar către canale cu un avertisment de conținut sau o restricție de vârstă.';
+
+  @override
+  String get channelFollowHiddenHint =>
+      'Comunitățile și canalele unde nu poți gestiona webhook-uri sunt ascunse.';
+
+  @override
+  String get channelFollowEmpty =>
+      'Nu poți gestiona webhook-uri în nicio comunitate. Cere unui administrator să urmărească acest canal.';
+
+  @override
+  String get channelFollowSubmit => 'Urmărește';
+
+  @override
+  String get channelFollowFailed => 'Nu s-a putut urmări acest canal.';
+
+  @override
+  String get channelFollowSuccessTitle => 'Actualizări pe drum!';
+
+  @override
+  String channelFollowSuccessBody(String sourceName, String targetName) {
+    return 'Mesajele publicate în $sourceName vor apărea în #$targetName.';
+  }
+
+  @override
+  String get channelFollowSuccessDismiss => 'Am înțeles!';
+
+  @override
+  String get channelFollowBarrier =>
+      'Urmărește acest canal pentru a primi aceste anunțuri într-un canal ales de tine.';
+
+  @override
+  String get channelHeaderFollow => 'Urmărește canalul';
+
+  @override
+  String get chatMessagePublish => 'Publică';
+
+  @override
+  String get chatMessagePublished => 'Publicat';
+
+  @override
+  String get chatMessagePublishConfirmTitle => 'Publici mesajul?';
+
+  @override
+  String get chatMessagePublishConfirmBody =>
+      'Aceasta trimite o copie către fiecare canal care îl urmărește pe acesta.';
+
+  @override
+  String get chatMessagePublishedToast => 'Mesaj publicat';
+
+  @override
+  String get chatMessageAlreadyPublished => 'Acest mesaj este deja publicat.';
+
+  @override
+  String get chatMessagePublishFailedTitle => 'Nu am putut publica acest mesaj';
+
+  @override
+  String get chatMessagePublishFailedBody =>
+      'Ceva nu a mers bine. Încearcă din nou într-un moment.';
+
+  @override
+  String get chatMessagePublishLimitTitle => 'Mai încet';
+
+  @override
+  String chatMessagePublishLimitBody(String duration) {
+    return 'Poți publica din nou în $duration.';
+  }
+
+  @override
+  String get chatMessagePublishLimitUnknown =>
+      'Publici prea repede. Încearcă din nou într-un moment.';
+
+  @override
+  String get chatMessageDeletePublished =>
+      'Aceasta elimină și copiile trimise către canalele care urmăresc acest canal.';
+
+  @override
+  String get chatMessageEditPublishedTitle => 'Editezi mesajul publicat?';
+
+  @override
+  String get chatMessageEditPublishedBody =>
+      'Aceasta actualizează copiile trimise către canalele care urmăresc acest canal.';
+
+  @override
+  String get chatMessageEditPublishedSave => 'Salvează';
+
+  @override
+  String get chatMessageEditLimitTitle => 'Mai încet';
+
+  @override
+  String chatMessageEditLimitBody(String duration) {
+    return 'Poți edita din nou acest mesaj publicat în $duration.';
+  }
+
+  @override
+  String get chatMessageEditLimitUnknown =>
+      'Editezi acest mesaj publicat prea repede. Încearcă din nou într-o clipă.';
+
+  @override
+  String get chatMessageOriginalDeleted => '[Mesajul original a fost șters]';
+
+  @override
+  String get userTagCommunity => 'Comunitate';
+
+  @override
+  String systemFollowAdd(String username, String source) {
+    return '$username a setat acest canal să urmărească $source. Mesajele publicate acolo vor apărea aici.';
+  }
+
+  @override
+  String systemPreviewFollowAdd(String username, String source) {
+    return '$username a setat acest canal să urmărească $source.';
+  }
+
+  @override
+  String get publishNudgeNotSent => 'Încă nu a fost trimis urmăritorilor.';
+
+  @override
+  String get publishNudgeHideForever => 'Nu mai afișa';
+
+  @override
+  String get publishNudgeDismiss => 'Închide';
+
+  @override
+  String get channelSettingsFollowedChannels => 'Canale urmărite';
+
+  @override
+  String get channelSettingsFollowedChannelsDescription =>
+      'Canale de anunțuri pe care le urmărește acest canal. Nu mai urmări pentru a nu mai primi copii.';
+
+  @override
+  String get guildSettingsFollowedChannelsDescription =>
+      'Canale de anunțuri urmărite de canalele din această comunitate.';
+
+  @override
+  String channelSettingsFollowedFrom(String guildName, String channelName) {
+    return 'De la $guildName #$channelName';
+  }
+
+  @override
+  String get channelSettingsFollowedPaused =>
+      'Actualizările sunt întrerupte deoarece canalul sursă nu mai este disponibil.';
+
+  @override
+  String channelSettingsUnfollowTitle(String name) {
+    return 'Nu mai urmări $name?';
+  }
+
+  @override
+  String get channelSettingsUnfollowBody =>
+      'Acest canal nu va mai primi copii de la acel canal de anunțuri.';
+
+  @override
+  String get channelSettingsUnfollow => 'Nu mai urmări';
+
+  @override
+  String get crosspostCommunityTitle => 'Comunitate';
+
+  @override
+  String get crosspostGoToCommunity => 'Mergi la comunitate';
+
+  @override
+  String get crosspostJoinCommunity => 'Alătură-te comunității';
+
+  @override
+  String get crosspostSourceFailed =>
+      'Nu am putut încărca această comunitate. Încearcă din nou peste o clipă.';
+
+  @override
+  String crosspostMembers(int count) {
+    return '$count membri';
+  }
+
+  @override
+  String crosspostOnline(int count) {
+    return '$count online';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de minute',
+      few: '$count minute',
+      one: '$count minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de secunde',
+      few: '$count secunde',
+      one: '$count secundă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get channelUnsupportedTitle => 'Tip de canal neacceptat';
+
+  @override
+  String get channelUnsupportedBody =>
+      'Această versiune a aplicației nu acceptă acest tip de canal.';
+
+  @override
+  String get channelDetailsUnsupportedChannel => 'Canal neacceptat';
+
+  @override
+  String get forumChannelTypeForum => 'Forum';
+
+  @override
+  String get forumChannelTypeForumDescription =>
+      'Postări organizate pe subiecte și etichete';
+
+  @override
+  String get forumChannelTypeMedia => 'Media';
+
+  @override
+  String get forumChannelTypeMediaDescription =>
+      'Postări construite în jurul imaginilor și videoclipurilor';
+
+  @override
+  String get forumNewPost => 'Postare nouă';
+
+  @override
+  String get forumNewMediaPost => 'Postare media nouă';
+
+  @override
+  String get forumSearchPosts => 'Caută postări';
+
+  @override
+  String get forumViewOptions => 'Sortare și afișare';
+
+  @override
+  String get forumSearchIndexing =>
+      'Căutarea este încă în pregătire pentru această comunitate. Postările vor apărea aici imediat ce este gata.';
+
+  @override
+  String get forumNoPosts => 'Încă nu există postări';
+
+  @override
+  String get forumNoPostsHint => 'Fii primul care pornește o conversație aici.';
+
+  @override
+  String get forumNoSearchResults =>
+      'Nicio postare nu corespunde căutării tale';
+
+  @override
+  String get forumNoSearchResultsHint =>
+      'Încearcă alte cuvinte sau șterge filtrul de etichetă.';
+
+  @override
+  String get forumCreateFirstPost => 'Creează prima postare';
+
+  @override
+  String get forumOlderPosts => 'Postări mai vechi';
+
+  @override
+  String get forumPostsLoadFailed => 'Postările nu au putut fi încărcate.';
+
+  @override
+  String get forumRetry => 'Încearcă din nou';
+
+  @override
+  String get forumPostPinned => 'Fixat';
+
+  @override
+  String get forumPostLocked => 'Blocată';
+
+  @override
+  String get forumPostArchived => 'Arhivată';
+
+  @override
+  String get forumPostNewBadge => 'Nou';
+
+  @override
+  String get forumPostStarterDeleted => 'Mesajul original a fost șters.';
+
+  @override
+  String forumPostSnippet(String author, String content) {
+    return '$author: $content';
+  }
+
+  @override
+  String forumPostNewMessages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesaje noi',
+      one: '$count mesaj nou',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get forumPostReact => 'Adaugă reacția implicită';
+
+  @override
+  String get forumOpenPost => 'Deschide postarea';
+
+  @override
+  String get forumEditTags => 'Editează etichetele';
+
+  @override
+  String get forumSaveTags => 'Salvează etichetele';
+
+  @override
+  String forumTagsLimitHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Alege cel mult $count de etichete.',
+      few: 'Alege cel mult $count etichete.',
+      one: 'Alege cel mult o etichetă.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get forumPinPost => 'Fixează postarea';
+
+  @override
+  String get forumUnpinPost => 'Anulează fixarea postării';
+
+  @override
+  String get forumMarkPostRead => 'Marchează ca citit';
+
+  @override
+  String get forumCopyPostLink => 'Copiază linkul';
+
+  @override
+  String get forumPostGuidelines => 'Reguli de postare';
+
+  @override
+  String get forumGuidelinesPlaceholder =>
+      'Spune-le oamenilor ce să posteze aici și cum să posteze.';
+
+  @override
+  String get forumPostTitle => 'Titlu';
+
+  @override
+  String get forumPostMessage => 'Mesaj';
+
+  @override
+  String get forumPostMessagePlaceholder =>
+      'Scrie primul mesaj al postării tale';
+
+  @override
+  String get forumPostMediaPlaceholder => 'Adaugă o descriere';
+
+  @override
+  String get forumPostTags => 'Etichete';
+
+  @override
+  String get forumPostTagsRequired => 'Etichete (obligatorii)';
+
+  @override
+  String get forumPostAddMedia => 'Adaugă media';
+
+  @override
+  String get forumPostAddFile => 'Adaugă fișier';
+
+  @override
+  String get forumPostRemoveAttachment => 'Elimină atașamentul';
+
+  @override
+  String get forumPostSubmit => 'Publică';
+
+  @override
+  String get forumPostTitleRequired => 'Dă un titlu postării tale.';
+
+  @override
+  String get forumPostMediaRequired =>
+      'Adaugă cel puțin o imagine sau un videoclip pentru a posta aici.';
+
+  @override
+  String get forumPostContentRequired => 'Scrie un mesaj sau adaugă un fișier.';
+
+  @override
+  String get forumSortLatestActivity => 'Activitate recentă';
+
+  @override
+  String get forumSortCreationTime => 'Data postării';
+
+  @override
+  String get forumLayoutList => 'Vizualizare listă';
+
+  @override
+  String get forumLayoutGallery => 'Vizualizare galerie';
+
+  @override
+  String get forumNewPostsUnread => 'Afișează postările noi ca necitite';
+
+  @override
+  String get forumNewPostsUnreadDescription =>
+      'Marchează acest canal ca necitit când cineva creează o postare.';
+
+  @override
+  String get forumPostSlowmode => 'Mod lent pentru postări';
+
+  @override
+  String forumPostSlowmodeDescription(String bypassSlowmodePermissionLabel) {
+    return 'Așteaptă între crearea postărilor. „$bypassSlowmodePermissionLabel” poate să ocolească această limită.';
+  }
+
+  @override
+  String get forumMessageSlowmode => 'Mod lent pentru mesajele din postări';
+
+  @override
+  String get forumMessageSlowmodeDescription =>
+      'Modul lent aplicat mesajelor din postările noi.';
+
+  @override
+  String get forumDefaultAutoArchive => 'Ascunde după inactivitate';
+
+  @override
+  String get forumDefaultAutoArchiveDescription =>
+      'Postările noi sunt arhivate după această perioadă fără activitate.';
+
+  @override
+  String get forumDefaultReaction => 'Reacție implicită';
+
+  @override
+  String get forumSetDefaultReaction => 'Alege un emoji';
+
+  @override
+  String get forumChangeDefaultReaction => 'Schimbă';
+
+  @override
+  String get forumRemoveDefaultReaction => 'Elimină';
+
+  @override
+  String get forumDefaultSortOrder => 'Ordine implicită de sortare';
+
+  @override
+  String get forumDefaultLayout => 'Aspect implicit';
+
+  @override
+  String get forumTagMatchSetting => 'Filtru de etichete';
+
+  @override
+  String get forumTagMatchSome =>
+      'Potrivește oricare dintre etichetele selectate';
+
+  @override
+  String get forumTagMatchAll => 'Potrivește toate etichetele selectate';
+
+  @override
+  String get forumRequireTag => 'Etichete obligatorii';
+
+  @override
+  String get forumRequireTagDescription =>
+      'Oamenii trebuie să aleagă cel puțin o etichetă când creează o postare.';
+
+  @override
+  String get forumHideMediaDownloads => 'Ascunde opțiunile de descărcare media';
+
+  @override
+  String get forumHideMediaDownloadsDescription =>
+      'Ascunde opțiunile de descărcare, deschidere în browser și copiere a linkului pentru imaginile și videoclipurile din postări.';
+
+  @override
+  String forumTagsTitle(int count, int max) {
+    return 'Etichete ($count/$max)';
+  }
+
+  @override
+  String get forumTagsDescription =>
+      'Etichetele îi ajută pe oameni să găsească și să filtreze postările. Doar moderatorii pot aplica etichetele moderate.';
+
+  @override
+  String get forumCreateTag => 'Creează etichetă';
+
+  @override
+  String get forumEditTag => 'Editează eticheta';
+
+  @override
+  String get forumSaveTag => 'Salvează eticheta';
+
+  @override
+  String get forumDeleteTag => 'Șterge eticheta';
+
+  @override
+  String get forumTagName => 'Nume etichetă';
+
+  @override
+  String get forumTagEmoji => 'Emoji';
+
+  @override
+  String get forumTagRemoveEmoji => 'Elimină emoji-ul';
+
+  @override
+  String get forumTagModerated => 'Doar moderatorii o pot aplica';
+
+  @override
+  String get forumTagModeratedDescription =>
+      'Doar membrii care pot gestiona firele de discuție pot aplica sau elimina această etichetă.';
+
+  @override
+  String get forumTagModeratedBadge => 'Moderată';
+
+  @override
+  String forumPostCooldown(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: 'Poți posta din nou peste $seconds de secunde.',
+      few: 'Poți posta din nou peste $seconds secunde.',
+      one: 'Poți posta din nou peste o secundă.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get voiceP2pStartTitle => 'Începe în modul P2P?';
+
+  @override
+  String voiceP2pStartDescription(int maxParticipants) {
+    return 'Audio și video circulă direct între participanți, cu o latență mai mică. Ceilalți participanți îți pot vedea adresa IP. Pot participa până la $maxParticipants persoane. Cine nu se poate conecta direct nu poate participa până când cineva trece la un apel standard.';
+  }
+
+  @override
+  String get voiceP2pStartConfirm => 'Pornește în modul P2P';
+
+  @override
+  String get voiceP2pStartStandard => 'Pornește apel standard';
+
+  @override
+  String get voiceP2pJoinTitle => 'Participi la un apel P2P?';
+
+  @override
+  String voiceP2pJoinDescription(int maxParticipants) {
+    return 'Acest apel conectează participanții direct. Ceilalți participanți îți pot vedea adresa IP. Pot participa până la $maxParticipants persoane. Dacă nu te poți conecta direct, nu poți participa până când cineva trece la un apel standard.';
+  }
+
+  @override
+  String voiceP2pPinnedJoinDescription(int maxParticipants) {
+    return 'Acest canal permite doar apeluri P2P. Participanții se conectează direct și îți pot vedea adresa IP. Pot participa până la $maxParticipants persoane. Dacă nu te poți conecta direct, nu poți participa.';
+  }
+
+  @override
+  String get voiceP2pJoinConfirm => 'Alătură-te';
+
+  @override
+  String get voiceP2pAlwaysAgreeLabel => 'Nu mai întreba, acceptă întotdeauna';
+
+  @override
+  String get voiceP2pAlwaysAgreeSettingLabel =>
+      'Acceptă întotdeauna să te alături apelurilor P2P';
+
+  @override
+  String get voiceP2pAlwaysAgreeSettingDescription =>
+      'Alătură-te apelurilor P2P fără confirmare. Ceilalți participanți îți pot vedea adresa IP.';
+
+  @override
+  String get voiceP2pIndicatorLabel => 'P2P';
+
+  @override
+  String get voiceP2pIndicatorDescription =>
+      'Conexiune directă. Media este criptată între participanți.';
+
+  @override
+  String get voiceP2pSwitchToStandard => 'Comută la apel standard';
+
+  @override
+  String get voiceP2pSwitchToStandardDescription =>
+      'Toți cei din apel trec la un apel standard prin server.';
+
+  @override
+  String get voiceP2pPeerFailedDescription =>
+      'Nu s-a putut stabili o conexiune directă. Părăsește apelul sau trece-i pe toți la un apel standard.';
+
+  @override
+  String get voiceP2pUnavailableError =>
+      'Apelurile P2P nu sunt disponibile momentan.';
+
+  @override
+  String get voiceP2pConsentRequiredError =>
+      'Acest apel este P2P și are nevoie de acordul tău ca să te alături.';
+
+  @override
+  String get voiceChannelFullError => 'Acest apel este plin.';
+
+  @override
+  String get voiceP2pScreenShareUnavailable =>
+      'Partajarea ecranului de pe acest dispozitiv nu este disponibilă în apelurile P2P.';
+
+  @override
+  String get channelMenuJoinP2p => 'Pornește apel P2P';
+
+  @override
+  String get channelSettingsRtcP2pLabel => 'Doar apeluri P2P';
+
+  @override
+  String channelSettingsRtcP2pDescription(int maxParticipants) {
+    return 'Participanții se conectează direct și își pot vedea unii altora adresele IP. Toată lumea trebuie să fie de acord înainte de a se alătura. Pot participa până la $maxParticipants persoane.';
+  }
+
+  @override
+  String voiceP2pPeerFailedTitle(String name) {
+    return 'Nu se poate stabili o conexiune directă cu $name';
+  }
+
+  @override
+  String get favoritesRenameCategory => 'Redenumește categoria';
+
+  @override
+  String get friendAcceptFailedTitle =>
+      'Nu s-a putut accepta cererea de prietenie';
+
+  @override
+  String get friendAcceptUnavailable =>
+      'Această cerere de prietenie nu mai este disponibilă. Reîmprospătează și încearcă din nou.';
+
+  @override
+  String get friendAcceptClaimToAccept =>
+      'Finalizează înregistrarea pentru a accepta cererile de prietenie.';
+
+  @override
+  String get friendAcceptFailedMessage =>
+      'Nu s-a putut accepta cererea de prietenie. Încearcă din nou.';
+
+  @override
+  String get friendCancelFailedTitle =>
+      'Nu s-a putut anula cererea de prietenie';
+
+  @override
+  String get friendIgnoreFailedTitle =>
+      'Nu s-a putut ignora cererea de prietenie';
+
+  @override
+  String get friendIgnoreFailedMessage =>
+      'Nu s-a putut ignora cererea de prietenie. Încearcă din nou.';
+
+  @override
+  String get friendRemoveFailedTitle => 'Nu s-a putut elimina prietenul';
+
+  @override
+  String get friendRemoveFailedMessage =>
+      'Nu s-a putut elimina acest prieten. Încearcă din nou.';
+
+  @override
+  String get userBlockFailedTitle => 'Nu s-a putut bloca utilizatorul';
+
+  @override
+  String get userBlockSystemAccount => 'Acest cont nu poate fi blocat.';
+
+  @override
+  String get userBlockFailedMessage =>
+      'Nu s-a putut bloca acest utilizator. Încearcă din nou.';
+
+  @override
+  String get userUnblockFailedTitle => 'Nu s-a putut debloca utilizatorul';
+
+  @override
+  String get userUnblockFailedMessage =>
+      'Nu s-a putut debloca acest utilizator. Încearcă din nou.';
+
+  @override
+  String friendCancelRequestConfirmDescription(String userName) {
+    return 'Anulezi cererea de prietenie către $userName?';
+  }
+
+  @override
+  String get errorSomethingWentWrongTitle => 'Ceva nu a mers bine';
+
+  @override
+  String get errorUnexpectedTryAgain =>
+      'A apărut o eroare neașteptată. Încearcă din nou.';
+
+  @override
+  String get errorMessagingPausedTitle => 'Trimiterea de mesaje este în pauză';
+
+  @override
+  String get errorMessagingPausedMessage =>
+      'Trimiterea de mesaje este în pauză pentru contul tău. Uită-te în e-mail: te așteaptă un pas rapid ca să poți continua.';
+
+  @override
+  String get errorFeatureDisabledTitle => 'Funcție dezactivată temporar';
+
+  @override
+  String get errorFeatureDisabledMessage =>
+      'Această funcție este întreruptă. Încearcă din nou mai târziu.';
+
+  @override
+  String get dmErrorStartConversationTitle =>
+      'Nu s-a putut începe această conversație';
+
+  @override
+  String get dmErrorCannotMessageMessage =>
+      'Este posibil să nu accepte mesaje de la tine sau să nu mai aveți o comunitate în comun.';
+
+  @override
+  String get dmErrorUnknownUserMessage =>
+      'Acest utilizator nu mai există. Reîmprospătează și încearcă din nou.';
+
+  @override
+  String get dmErrorClaimMessage =>
+      'Trebuie să-ți revendici contul înainte de a putea începe un mesaj direct.';
+
+  @override
+  String get dmErrorVerifyEmailMessage =>
+      'Trebuie să-ți verifici adresa de e-mail înainte de a putea începe un mesaj direct.';
+
+  @override
+  String get dmErrorTooManyRecipientsTitle =>
+      'Acest grup are prea multe persoane';
+
+  @override
+  String get dmErrorTooManyRecipientsMessage =>
+      'Ai adăugat mai multe persoane decât permite un DM de grup. Elimină câteva și încearcă din nou.';
+
+  @override
+  String get dmErrorMaxGroupDmsTitle => 'Ai atins limita de DM-uri de grup';
+
+  @override
+  String get dmErrorMaxGroupDmsMessage =>
+      'Tu sau cineva pe care îl adaugi a atins deja numărul maxim de DM-uri de grup deschise. Părăsește unul și încearcă din nou.';
+
+  @override
+  String get groupDmAddFailedTitle => 'Nu s-a putut adăuga în grup';
+
+  @override
+  String get groupDmInviteFailedTitle =>
+      'Nu s-a putut crea linkul de invitație';
+
+  @override
+  String get dmCloseFailedTitle => 'Nu s-a putut închide DM-ul';
+
+  @override
+  String get groupDmLeaveFailedTitle => 'Nu s-a putut părăsi grupul';
+
+  @override
+  String get inviteJoinFailedTitle => 'Nu te-ai putut alătura comunității';
+
+  @override
+  String get inviteErrorPausedMessage =>
+      'Administratorii au întrerupt invitațiile, așa că nu te poți alătura acum.';
+
+  @override
+  String get inviteErrorAtCapacityTitle =>
+      'Comunitatea a atins capacitatea maximă';
+
+  @override
+  String get inviteErrorAtCapacityMessage =>
+      'Această comunitate a atins numărul maxim de membri și nu mai acceptă alți membri în acest moment.';
+
+  @override
+  String get inviteErrorPresenceTitle => 'Este necesară o conexiune la gateway';
+
+  @override
+  String get inviteErrorPresenceMessage =>
+      'Invitațiile temporare necesită o conexiune activă. Verifică-ți conexiunea și încearcă din nou.';
+
+  @override
+  String get inviteErrorBannedTitle => 'Ai interdicție';
+
+  @override
+  String get inviteErrorBannedMessage =>
+      'Ai interdicție în această comunitate și nu te poți alătura.';
+
+  @override
+  String get inviteErrorIpBannedTitle => 'IP-ul tău are interdicție';
+
+  @override
+  String get inviteErrorIpBannedMessage =>
+      'Adresa ta IP are interdicție în această comunitate și nu te poți alătura.';
+
+  @override
+  String get inviteErrorClaimTitle => 'Verificarea contului este necesară';
+
+  @override
+  String get inviteErrorClaimMessage =>
+      'Adaugă mai întâi o adresă de e-mail și o parolă la contul tău.';
+
+  @override
+  String get leaveCommunityFailedTitle => 'Nu s-a putut părăsi comunitatea';
+
+  @override
+  String get leaveCommunityFailedMessage =>
+      'Nu s-a putut părăsi comunitatea acum. Încearcă din nou mai târziu.';
+
+  @override
+  String get chatSendFailedTitle => 'Mesajul tău nu a fost trimis';
+
+  @override
+  String get chatSendFailedMessage => 'Încearcă să trimiți din nou mesajul.';
+
+  @override
+  String get chatSendTooQuickTitle => 'Trimiți mesaje prea repede';
+
+  @override
+  String get chatRateLimitedMessage =>
+      'Mai încet – așteaptă un moment înainte de a încerca din nou.';
+
+  @override
+  String get chatMatureContentTitle => 'Conținutul matur nu este permis';
+
+  @override
+  String get chatMatureContentGuildMessage =>
+      'Acest canal nu este marcat pentru conținut matur. Conținutul matur poate fi trimis doar în canalele marcate pentru conținut matur. Roagă un moderator să actualizeze acest canal, dacă este cazul.';
+
+  @override
+  String chatMatureContentDmMessage(String settingsPath) {
+    return 'Tu sau persoana căreia îi scrii ați ales să blocați conținutul sensibil în mesajele directe. Fiecare dintre voi poate modifica acest lucru în $settingsPath.';
+  }
+
+  @override
+  String get chatMatureContentGroupDmMessage =>
+      'Acest grup nu este marcat pentru conținut matur. Proprietarul grupului poate activa „Conținut matur” în setările grupului dacă toți membrii grupului au cel puțin 18 ani.';
+
+  @override
+  String get chatFileTooLargeTitle => 'Fișierul este prea mare';
+
+  @override
+  String chatFileTooLargeMessage(String maxSize) {
+    return 'Unul sau mai multe fișiere pe care încerci să le încarci depășesc dimensiunea maximă de $maxSize per fișier.';
+  }
+
+  @override
+  String get chatHeavyTitle => 'Uau, e prea mult';
+
+  @override
+  String get chatReactionsHeavyMessage =>
+      'Acesta este un mesaj foarte încărcat. Unele reacții trebuie eliminate înainte de a putea adăuga altele.';
+
+  @override
+  String get chatReactionTimedOut =>
+      'Nu poți adăuga reacții noi cât timp ești în timeout.';
+
+  @override
+  String chatTooManyAttachmentsMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de fișiere',
+      few: '$count fișiere',
+      one: '$count fișier',
+    );
+    return 'Poți încărca doar $_temp0 o dată. Încearcă din nou cu mai puține fișiere.';
+  }
+
+  @override
+  String get chatEditTooQuickTitle => 'Editezi mesajele prea repede';
+
+  @override
+  String get chatEditFailedMessage => 'Încearcă să-ți editezi din nou mesajul.';
+
+  @override
+  String get chatDeleteTooQuickTitle => 'Ștergi mesajele prea repede';
+
+  @override
+  String get chatDeleteTooQuickMessage =>
+      'Așteaptă un moment înainte să ștergi mai multe mesaje.';
+
+  @override
+  String get chatDeleteFailedTitle => 'Mesajul nu a putut fi șters';
+
+  @override
+  String get chatDeleteFailedMessage => 'Încearcă să ștergi din nou mesajul.';
+
+  @override
+  String get chatAttachmentDeleteFailedTitle =>
+      'Nu s-a putut șterge atașamentul';
+
+  @override
+  String get chatAttachmentDeleteFailedMessage =>
+      'Încearcă din nou să ștergi atașamentul.';
+
+  @override
+  String get chatAltTextFailedTitle =>
+      'Nu s-a putut actualiza textul alternativ';
+
+  @override
+  String get chatAltTextUnknownMessage => 'Acest mesaj nu mai există.';
+
+  @override
+  String get chatAltTextNoPermission => 'Nu poți edita acest mesaj.';
+
+  @override
+  String get chatAltTextUnavailable =>
+      'Editarea este temporar indisponibilă. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get chatAltTextFailedMessage =>
+      'Nu s-a putut actualiza textul alternativ. Încearcă din nou.';
+
+  @override
+  String get chatPinFailedTitle => 'Nu s-a putut fixa mesajul';
+
+  @override
+  String get chatUnpinFailedTitle => 'Nu s-a putut anula fixarea mesajului';
+
+  @override
+  String get chatPinFailedMessage =>
+      'Ceva nu a mers bine. Încearcă din nou mai târziu.';
+
+  @override
+  String get chatPinBlockedMessage =>
+      'Nu poți interacționa cu acest utilizator acum.';
+
+  @override
+  String get bookmarkLimitTitle => 'Limită de mesaje salvate atinsă';
+
+  @override
+  String bookmarkLimitMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de mesaje salvate',
+      few: '$count mesaje salvate',
+      one: '$count mesaj salvat',
+    );
+    return 'Ai ajuns la $_temp0. Elimină unul ca să adaugi altul.';
+  }
+
+  @override
+  String get savedMediaLimitTitle => 'Limita de media salvată a fost atinsă';
+
+  @override
+  String savedMediaLimitMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de elemente media salvate',
+      few: '$count elemente media salvate',
+      one: '$count element media salvat',
+    );
+    return 'Ai ajuns la limita de $_temp0. Elimină unul ca să adaugi altul.';
+  }
+
+  @override
+  String get errorContentBlockedTitle => 'Conținut blocat';
+
+  @override
+  String get errorContentBlockedMessage =>
+      'Acțiunea ta nu a putut fi finalizată deoarece a fost semnalată de sistemele noastre de siguranță. Dacă crezi că este o greșeală, te rugăm să contactezi asistența.';
+
+  @override
+  String get errorContentBlockedSelfHostedMessage =>
+      'Acțiunea ta nu a putut fi finalizată deoarece a fost semnalată de sistemele noastre de siguranță. Dacă crezi că este o greșeală, te rugăm să contactezi administratorii acestei instanțe.';
+
+  @override
+  String get channelDeletedToast => 'Canal șters';
+
+  @override
+  String get categoryDeletedToast => 'Categorie ștearsă';
+
+  @override
+  String get channelDeleteNoPermissionTitle => 'Nu poți șterge asta';
+
+  @override
+  String get channelDeleteNoPermissionChannel =>
+      'Nu ai permisiunea de a șterge acest canal.';
+
+  @override
+  String get channelDeleteNoPermissionCategory =>
+      'Nu ai permisiunea de a șterge această categorie.';
+
+  @override
+  String get channelDeleteAlreadyDeletedTitle => 'Deja șters';
+
+  @override
+  String get channelDeleteAlreadyDeletedChannel =>
+      'Acest canal nu mai există. Este posibil să fi fost deja șters.';
+
+  @override
+  String get channelDeleteAlreadyDeletedCategory =>
+      'Această categorie nu mai există. Este posibil să fi fost deja ștearsă.';
+
+  @override
+  String get channelDeleteFailedChannelTitle =>
+      'Nu s-a putut șterge acest canal';
+
+  @override
+  String get channelDeleteFailedCategoryTitle =>
+      'Nu s-a putut șterge această categorie';
+
+  @override
+  String get channelPermissionsUpdateFailedTitle =>
+      'Nu s-au putut actualiza permisiunile canalului';
+
+  @override
+  String get channelSettingsSaveFailedTitle =>
+      'Nu am putut salva setările canalului';
+
+  @override
+  String get emojiSlotsFullTitle =>
+      'Nu sunt sloturi disponibile pentru emoji-uri';
+
+  @override
+  String get stickerSlotsFullTitle =>
+      'Nu sunt sloturi disponibile pentru stickere';
+
+  @override
+  String get emojiSomeFailedMessage =>
+      'Revizuiește aceste fișiere și încearcă din nou cu imagini mai mici sau mai simple.';
+
+  @override
+  String get emojiNameInvalidCharacters =>
+      'Numele emoji-urilor pot conține doar litere, cifre și underscore.';
+
+  @override
+  String get emojiErrorGoneTitle => 'Acest emoji nu mai există';
+
+  @override
+  String get emojiRenameGoneMessage =>
+      'Este posibil să fi fost șters. Numele a revenit la cel inițial.';
+
+  @override
+  String get emojiRenameNoPermissionTitle => 'Nu poți redenumi acest emoji';
+
+  @override
+  String get emojiRenameNoPermissionMessage =>
+      'Nu ai permisiunea de a redenumi acest emoji. Numele a revenit la cel anterior.';
+
+  @override
+  String get emojiRenameRateLimitedMessage =>
+      'Te rugăm să aștepți un moment și să încerci să redenumești din nou.';
+
+  @override
+  String get emojiRenameFailedMessage =>
+      'Numele a revenit la cel anterior. Încearcă din nou mai târziu.';
+
+  @override
+  String get emojiDeleteGoneMessage => 'Se pare că a fost deja șters.';
+
+  @override
+  String get emojiDeleteNoPermissionTitle => 'Nu poți șterge acest emoji';
+
+  @override
+  String get emojiDeleteNoPermissionMessage =>
+      'Nu ai permisiunea de a șterge acest emoji.';
+
+  @override
+  String get emojiDeleteRateLimitedMessage =>
+      'Te rugăm să aștepți un moment și să încerci să ștergi din nou.';
+
+  @override
+  String get stickerTooLargeTitle => 'Stickerul este prea mare';
+
+  @override
+  String stickerTooLargeMessage(String maxSize) {
+    return 'Serviciul de încărcare a respins acest sticker deoarece este mai mare de $maxSize. Încearcă un fișier mai mic, o imagine mai simplă sau o animație mai scurtă.';
+  }
+
+  @override
+  String get stickerCreateFailedMessage =>
+      'A apărut o eroare la pregătirea acestui sticker. Încearcă alt fișier sau încearcă din nou mai târziu.';
+
+  @override
+  String get stickerUpdateFailedTitle => 'Nu s-a putut actualiza acest sticker';
+
+  @override
+  String get moderationTimeoutFailed =>
+      'Nu s-a putut aplica timeout membrului. Încearcă din nou.';
+
+  @override
+  String get moderationRemoveTimeoutFailed =>
+      'Nu s-a putut elimina timeoutul. Încearcă din nou.';
+
+  @override
+  String get moderationKickFailed =>
+      'Nu s-a putut elimina membrul. Încearcă din nou.';
+
+  @override
+  String get moderationBanFailed =>
+      'Nu s-a putut aplica interdicția membrului. Încearcă din nou.';
+
+  @override
+  String get transferOwnershipFailedTitle => 'Transferul proprietății a eșuat';
+
+  @override
+  String transferOwnershipFailedMessage(String username) {
+    return 'Proprietatea nu a putut fi transferată către $username momentan.';
+  }
+
+  @override
+  String get revokeBanFailedTitle => 'Nu s-a putut revoca interdicția';
+
+  @override
+  String get voiceModerationNoPermissionTitle => 'Nu poți face asta';
+
+  @override
+  String get voiceModerationNoPermissionMessage =>
+      'Nu ai permisiunea să faci asta acestui membru.';
+
+  @override
+  String get voiceModerationLeftTitle => 'A părăsit apelul';
+
+  @override
+  String get voiceModerationLeftMessage =>
+      'Acest membru nu mai este conectat la canalul vocal.';
+
+  @override
+  String get voiceModerationUnknownMemberTitle => 'Membrul nu a fost găsit';
+
+  @override
+  String get voiceModerationUnknownMemberMessage =>
+      'Acest membru nu mai este în comunitate. Reîmprospătează și încearcă din nou.';
+
+  @override
+  String get voiceJoinTimedOut =>
+      'Nu te poți alătura cât timp ești în timeout.';
+
+  @override
+  String get voiceJoinClaimAccount =>
+      'Revendică-ți contul pentru a te alătura acestui canal vocal.';
+
+  @override
+  String get voiceJoinClaimAccountDirectCall =>
+      'Revendică-ți contul pentru a iniția sau a te alătura apelurilor 1:1.';
+
+  @override
+  String get voiceJoinUserLimit =>
+      'Acest canal vocal a atins limita de utilizatori. Încearcă din nou mai târziu sau alătură-te unui alt canal.';
+
+  @override
+  String get voiceJoinConnectionLimit =>
+      'Ai atins limita de conexiuni a acestui canal vocal.';
+
+  @override
+  String get voiceJoinChannelUnavailable =>
+      'Acest canal vocal nu mai este disponibil.';
+
+  @override
+  String get avatarUploadFailedTitle => 'Nu s-a putut încărca avatarul';
+
+  @override
+  String get bannerUploadFailedTitle => 'Nu s-a putut încărca bannerul';
+
+  @override
+  String get animatedImageUseStatic => 'Încarcă în schimb o imagine statică.';
+
+  @override
+  String get passkeyDeleteFailedTitle => 'Nu s-a putut șterge cheia de acces';
+
+  @override
+  String get premiumPaymentsUnavailableTitle => 'Plățile nu sunt disponibile';
+
+  @override
+  String get premiumPaymentsUnavailableMessage =>
+      'Plățile sunt temporar indisponibile. Încearcă din nou peste câteva momente.';
+
+  @override
+  String get premiumNoSubscriptionTitle => 'Fără abonament activ';
+
+  @override
+  String get premiumNoSubscriptionMessage =>
+      'Nu am putut găsi un abonament activ pentru acest cont. Reîmprospătează și încearcă din nou.';
+
+  @override
+  String get premiumAlreadyCancelingTitle => 'Anulare deja programată';
+
+  @override
+  String get premiumAlreadyCancelingMessage =>
+      'Abonamentul tău este deja setat să se anuleze la sfârșitul perioadei de facturare.';
+
+  @override
+  String get premiumNotCancelingTitle =>
+      'Abonamentul nu este programat pentru anulare';
+
+  @override
+  String get premiumNotCancelingMessage =>
+      'Abonamentul tău nu este setat pentru anulare, așa că nu este nimic de reactivat.';
+
+  @override
+  String get premiumCancelFailedTitle => 'Nu s-a putut anula abonamentul';
+
+  @override
+  String get premiumCancelFailedMessage =>
+      'A apărut o eroare la anularea abonamentului. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get premiumReactivateFailedTitle =>
+      'Nu s-a putut reactiva abonamentul';
+
+  @override
+  String get premiumReactivateFailedMessage =>
+      'A apărut o eroare la reactivarea abonamentului. Te rugăm să încerci din nou mai târziu.';
+
+  @override
+  String get premiumRefundConfirmTitle =>
+      'Rambursezi cea mai recentă achiziție?';
+
+  @override
+  String get premiumRefundConfirmBody =>
+      'Aceasta rambursează cea mai recentă factură și anulează orice abonament asociat. Nu vei mai putea să-ți rambursezi singur banii timp de 30 de zile.';
+
+  @override
+  String get premiumRefundConfirm => 'Rambursează achiziția';
+
+  @override
+  String get premiumRefundIssuedToast =>
+      'Rambursare emisă. Poate dura câteva zile lucrătoare până apare.';
+
+  @override
+  String get premiumRefundOutsideWindowTitle =>
+      'În afara perioadei de rambursare';
+
+  @override
+  String get premiumRefundOutsideWindowMessage =>
+      'Cea mai recentă achiziție nu mai este în perioada de rambursare. Contactează asistența pentru probleme de facturare.';
+
+  @override
+  String get premiumRefundCooldownTitle => 'Ai cerut recent o rambursare';
+
+  @override
+  String get premiumRefundCooldownMessage =>
+      'Ai folosit deja recent o rambursare self-service. Poți cere din nou o rambursare după ce se încheie perioada de așteptare.';
+
+  @override
+  String get premiumRefundNothingTitle => 'Nimic de rambursat';
+
+  @override
+  String get premiumRefundNothingMessage =>
+      'Nu am putut găsi o achiziție recentă de rambursat în acest cont.';
+
+  @override
+  String get premiumRefundFailedTitle =>
+      'Nu s-a putut rambursa această achiziție';
+
+  @override
+  String get premiumRefundFailedMessage =>
+      'A apărut o eroare la emiterea rambursării. Contactează asistența dacă problema persistă.';
+
+  @override
+  String get premiumVerifyEmailTitle =>
+      'Verifică-ți mai întâi adresa de e-mail';
+
+  @override
+  String premiumVerifyEmailBody(String productName) {
+    return 'Trebuie să-ți verifici adresa de e-mail înainte de a putea achiziționa $productName.';
+  }
+
+  @override
+  String get premiumCheckoutBlockedTitle =>
+      'Finalizarea comenzii nu este disponibilă';
+
+  @override
+  String premiumCheckoutBlockedBody(String supportEmail) {
+    return 'Finalizarea comenzii este blocată pentru acest cont. Contactează $supportEmail dacă ai nevoie de ajutor.';
+  }
+
+  @override
+  String get premiumCheckoutBlockedBodySelfHosted =>
+      'Finalizarea comenzii este blocată pentru acest cont.';
+}

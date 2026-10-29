@@ -1,0 +1,501 @@
+import 'dart:async';
+import 'dart:math' show max;
+
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/api/dio_error_message.dart';
+import 'package:fluxer_app/core/experiments/experiments_provider.dart';
+import 'package:fluxer_app/core/permissions/permission.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/channels/domain/announcement_follow.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/domain/channel_overview_update.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/tabs/channel_overview_mature_content_section.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/widgets/channel_overview_voice_section.dart';
+import 'package:fluxer_app/features/channels/presentation/channel_settings/widgets/channel_slowmode_slider.dart';
+import 'package:fluxer_app/features/channels/presentation/widgets/unrecognized_channel_view.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/channels/providers/channel_settings_providers.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/pickers/expression_picker.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_providers.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/threads/presentation/thread_defaults_section.dart'
+    show ThreadDefaultsSection, showChannelThreadDefaultsSection;
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_confirm_sheet.dart';
+import 'package:fluxer_app/features/ui/emoji_picker/fluxer_emoji_picker_popout.dart';
+import 'package:fluxer_app/features/ui/emoji_picker/fluxer_emoji_picker_sheet.dart';
+import 'package:fluxer_app/features/ui/input/emoji_text_editing_controller.dart';
+import 'package:fluxer_app/features/ui/input/fluxer_input.dart';
+import 'package:fluxer_app/features/ui/settings/fluxer_settings_sheet.dart';
+import 'package:fluxer_app/features/ui/switch_group/fluxer_switch_group.dart';
+import 'package:fluxer_app/features/ui/toast/fluxer_toast.dart';
+import 'package:fluxer_app/features/ui/toast/toast_provider.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/api_error_presentation.dart';
+import 'package:fluxer_dart/export.dart' hide ChannelType;
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class ChannelOverviewWidget extends ConsumerStatefulWidget {
+  const ChannelOverviewWidget({
+    required this.channel,
+    required this.permissions,
+    this.scrollController,
+    super.key,
+  });
+
+  final Channel channel;
+  final int permissions;
+  final ScrollController? scrollController;
+
+  @override
+  ConsumerState<ChannelOverviewWidget> createState() =>
+      _ChannelOverviewWidgetState();
+}
+
+class _ChannelOverviewWidgetState extends ConsumerState<ChannelOverviewWidget> {
+  late ChannelOverviewFormState _original;
+  late ChannelOverviewFormState _current;
+  late final TextEditingController _nameController;
+  late final EmojiTextEditingController _topicController;
+  late final TextEditingController _urlController;
+  late final TextEditingController _warningTextController;
+  final FocusNode _topicFocusNode = FocusNode();
+  final GlobalKey<FluxerEmojiPickerPopoutState> _topicExpressionPickerKey =
+      GlobalKey<FluxerEmojiPickerPopoutState>();
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _original = ChannelOverviewFormState.fromChannel(widget.channel);
+    _current = _original;
+    _nameController = TextEditingController(text: _current.name);
+    _topicController = EmojiTextEditingController()
+      ..loadWithTokens(_current.topic);
+    _urlController = TextEditingController(text: _current.url);
+    _warningTextController = TextEditingController(
+      text: _current.contentWarningText,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant ChannelOverviewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.channel.id != widget.channel.id) {
+      _resetFromChannel(widget.channel);
+    } else if (oldWidget.channel != widget.channel && !_isDirty) {
+      _resetFromChannel(widget.channel);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _topicController.dispose();
+    _urlController.dispose();
+    _warningTextController.dispose();
+    _topicFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _resetFromChannel(Channel channel) {
+    _original = ChannelOverviewFormState.fromChannel(channel);
+    _current = _original;
+    _nameController.text = _current.name;
+    _topicController.loadWithTokens(_current.topic);
+    _urlController.text = _current.url;
+    _warningTextController.text = _current.contentWarningText;
+    setState(() {});
+  }
+
+  void _updateTopic(String actualTopic) {
+    _updateCurrent(_current.copyWith(topic: actualTopic));
+  }
+
+  void _onTopicEmojiTap() {
+    if (isMobileLayout(context)) {
+      final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+      unawaited(
+        FluxerEmojiPickerSheet.show(
+          context,
+          title: l10n.emojiPickerTitle,
+          visibleTabs: const <ExpressionPickerTab>[ExpressionPickerTab.emojis],
+          onEmojiSelected: (emoji) {
+            _topicController.insertEmoji(
+              emoji.name,
+              emoji.surrogates,
+              maxActualLength: kMaxChannelTopicLength,
+            );
+            _updateTopic(_topicController.actualText);
+          },
+        ),
+      );
+    } else {
+      _topicExpressionPickerKey.currentState?.toggle();
+    }
+  }
+
+  bool get _isDirty => _current.isDirtyComparedTo(_original);
+
+  bool get _canManageChannel =>
+      hasPermission(widget.permissions, Permission.manageChannels);
+
+  bool get _canUpdateRtcRegion =>
+      widget.channel.type == ChannelType.guildVoice &&
+      hasPermission(widget.permissions, Permission.updateRtcRegion);
+
+  void _updateCurrent(ChannelOverviewFormState next) {
+    setState(() => _current = next);
+  }
+
+  Future<void> _showVoiceRegionsLoadFailedModal() {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    return showErrorDialog(
+      context,
+      title: l10n.channelSettingsVoiceRegionsLoadFailed,
+      body: l10n.channelSettingsVoiceRegionsLoadFailedDescription,
+    );
+  }
+
+  Future<void> _showTopicTooLongModal() {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    return showErrorDialog(
+      context,
+      title: l10n.channelSettingsTopicTooLongTitle,
+      body: l10n.channelSettingsTopicTooLongMessage,
+    );
+  }
+
+  Future<void> _handleSave() async {
+    if (_isSaving || !_isDirty) {
+      return;
+    }
+    if (isChannelTopicTooLong(_current.topic)) {
+      await _showTopicTooLongModal();
+      return;
+    }
+    if (widget.channel.type == ChannelType.guildAnnouncement &&
+        !_current.announcement) {
+      final bool confirmed = await _confirmStopAnnouncement();
+      if (!confirmed || !mounted) {
+        return;
+      }
+    }
+    setState(() => _isSaving = true);
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    try {
+      await ref
+          .read(channelSettingsActionsProvider(widget.channel.id).notifier)
+          .updateOverview(
+            channel: widget.channel,
+            current: _current,
+            original: _original,
+            canManageChannel: _canManageChannel,
+            canUpdateRtcRegion: _canUpdateRtcRegion,
+          );
+      if (!mounted) {
+        return;
+      }
+      _original = _current;
+      ref
+          .read(toastProvider.notifier)
+          .show(
+            FluxerToast(
+              message: l10n.channelSettingsChannelUpdated,
+              variant: FluxerToastVariant.success,
+            ),
+          );
+    } on DioException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final String? code = apiErrorCodeFromDioException(error);
+      if (code == kChannelHasFollowedChannels) {
+        await _showConvertFailedModal(l10n.channelSettingsChannelHasFollowers);
+        return;
+      }
+      if (code == kChannelHasThreads) {
+        await _showConvertFailedModal(
+          userFacingErrorMessage(error, l10n.networkErrorMessage),
+        );
+        return;
+      }
+      await showApiError(context, ApiErrorAction.saveChannelSettings, error);
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await showApiError(context, ApiErrorAction.saveChannelSettings, error);
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<bool> _confirmStopAnnouncement() async {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    int? followerCount;
+    var unknown = false;
+    try {
+      final ChannelFollowerStatsResponse stats = await ref
+          .read(channelRepositoryProvider)
+          .getFollowerStats(widget.channel.id);
+      followerCount = stats.channelCount;
+    } on Object {
+      unknown = true;
+    }
+    if (!mounted) {
+      return false;
+    }
+    if (!unknown && followerCount == 0) {
+      return true;
+    }
+    final bool? confirmed = await FluxerConfirmSheet.show(
+      context,
+      title: l10n.channelSettingsStopAnnouncementTitle,
+      description: unknown
+          ? l10n.channelSettingsStopAnnouncementUnknown
+          : l10n.channelSettingsStopAnnouncementBody(followerCount ?? 0),
+      confirmLabel: l10n.channelSettingsConvertChannel,
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _showConvertFailedModal(String message) {
+    return showErrorDialog(
+      context,
+      title: FluxerLocalizations.of(context).channelSettingsConvertFailed,
+      body: message,
+    );
+  }
+
+  void _handleReset() {
+    _resetFromChannel(widget.channel);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final Channel channel = widget.channel;
+    if (channel.type == ChannelType.unknown) {
+      return const UnrecognizedChannelView();
+    }
+    final bool isCategory = channel.isCategory;
+    final bool isLink = channel.type == ChannelType.guildLink;
+    final bool isVoice = channel.type == ChannelType.guildVoice;
+    final bool showMessaging =
+        _canManageChannel && isGuildTextBasedChannelType(channel.type);
+    final bool showVoice =
+        isVoice && (_canManageChannel || _canUpdateRtcRegion);
+    final bool showSafety =
+        _canManageChannel &&
+        (isGuildTextBasedChannelType(channel.type) ||
+            isVoice ||
+            isLink ||
+            isCategory);
+    if (showVoice && _canUpdateRtcRegion) {
+      ref.listen(channelRtcRegionsProvider(channel.id), (
+        AsyncValue<List<RtcRegionResponse>>? previous,
+        AsyncValue<List<RtcRegionResponse>> next,
+      ) {
+        if (next.hasError && !next.isLoading) {
+          unawaited(_showVoiceRegionsLoadFailedModal());
+        }
+      });
+    }
+    final AsyncValue<List<RtcRegionResponse>> rtcRegionsAsync =
+        showVoice && _canUpdateRtcRegion
+        ? ref.watch(channelRtcRegionsProvider(channel.id))
+        : const AsyncValue<List<RtcRegionResponse>>.data(<RtcRegionResponse>[]);
+    final bool showRtcP2p =
+        ref.watch(voiceP2pEnabledProvider) || _original.rtcP2p;
+    final bool showThreadDefaults = showChannelThreadDefaultsSection(
+      channel: channel,
+      canManageChannel: _canManageChannel,
+    );
+    return FluxerSettingsSheet(
+      hasUnsavedChanges: _isDirty,
+      isSaving: _isSaving,
+      onReset: _handleReset,
+      onSave: _handleSave,
+      child: ListView(
+        controller: widget.scrollController,
+        padding: EdgeInsets.fromLTRB(
+          context.layout.s6,
+          context.layout.s4,
+          context.layout.s6,
+          context.layout.s20,
+        ),
+        children: <Widget>[
+          if (_canManageChannel) ...<Widget>[
+            FluxerInput(
+              label: isCategory
+                  ? l10n.channelSettingsCategoryName
+                  : l10n.channelSettingsChannelName,
+              hint: isCategory
+                  ? l10n.channelSettingsMyCategory
+                  : l10n.channelSettingsChannelNamePlaceholder,
+              controller: _nameController,
+              maxLength: kMaxChannelNameLength,
+              onChanged: (String value) {
+                _updateCurrent(_current.copyWith(name: value));
+              },
+            ),
+            if (isLink) ...<Widget>[
+              SizedBox(height: context.layout.s4),
+              FluxerInput(
+                label: l10n.channelSettingsUrl,
+                hint: l10n.channelSettingsUrlPlaceholder,
+                controller: _urlController,
+                onChanged: (String value) {
+                  _updateCurrent(_current.copyWith(url: value));
+                },
+              ),
+            ],
+          ],
+          if (showMessaging) ...<Widget>[
+            SizedBox(height: context.layout.s6),
+            ListenableBuilder(
+              listenable: _topicController,
+              builder: (BuildContext context, Widget? child) {
+                final int topicDisplayMaxLength = max(
+                  0,
+                  _topicController.text.length +
+                      kMaxChannelTopicLength -
+                      _topicController.actualTextLength,
+                );
+                return FluxerInput.multiline(
+                  label: l10n.channelSettingsTopic,
+                  hint: l10n.channelSettingsTopicPlaceholder,
+                  controller: _topicController,
+                  focusNode: _topicFocusNode,
+                  maxLines: 4,
+                  maxLength: topicDisplayMaxLength,
+                  showCounter: true,
+                  counterLength: () => _topicController.actualTextLength,
+                  counterMax: kMaxChannelTopicLength,
+                  onChanged: (_) => _updateTopic(_topicController.actualText),
+                  suffixSemanticLabel: l10n.channelSettingsInsertEmoji,
+                  suffixIcon: FluxerEmojiPickerPopout(
+                    key: _topicExpressionPickerKey,
+                    visibleTabs: const <ExpressionPickerTab>[
+                      ExpressionPickerTab.emojis,
+                    ],
+                    onEmojiSelected: (emoji) {
+                      _topicController.insertEmoji(
+                        emoji.name,
+                        emoji.surrogates,
+                        maxActualLength: kMaxChannelTopicLength,
+                      );
+                      _updateTopic(_topicController.actualText);
+                    },
+                    child: PhosphorIcon(
+                      PhosphorIconsFill.smiley,
+                      size: 20,
+                      color: context.colors.textTertiary,
+                    ),
+                  ),
+                  onSuffixTap: _onTopicEmojiTap,
+                );
+              },
+            ),
+            SizedBox(height: context.layout.s4),
+            ChannelSlowmodeSlider(
+              l10n: l10n,
+              value: _current.slowmode,
+              onChanged: (int value) {
+                _updateCurrent(_current.copyWith(slowmode: value));
+              },
+            ),
+            if (isAnnouncementConvertibleChannel(channel.type)) ...<Widget>[
+              SizedBox(height: context.layout.s4),
+              FluxerSwitchGroup(
+                children: <Widget>[
+                  FluxerSwitchGroupItem(
+                    label: l10n.channelSettingsAnnouncementChannel,
+                    description:
+                        l10n.channelSettingsAnnouncementChannelDescription,
+                    value: _current.announcement,
+                    onChanged: (bool value) {
+                      _updateCurrent(_current.copyWith(announcement: value));
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ],
+          if (showThreadDefaults) ...<Widget>[
+            SizedBox(height: context.layout.s6),
+            ThreadDefaultsSection(
+              l10n: l10n,
+              autoArchive: _current.defaultAutoArchiveDuration,
+              threadSlowmode: _current.defaultThreadRateLimitPerUser,
+              onAutoArchiveChanged: (int value) {
+                _updateCurrent(
+                  _current.copyWith(defaultAutoArchiveDuration: value),
+                );
+              },
+              onThreadSlowmodeChanged: (int value) {
+                _updateCurrent(
+                  _current.copyWith(defaultThreadRateLimitPerUser: value),
+                );
+              },
+            ),
+          ],
+          if (showVoice) ...<Widget>[
+            SizedBox(height: context.layout.s6),
+            ChannelOverviewVoiceSection(
+              l10n: l10n,
+              bitrateKbps: _current.bitrateKbps,
+              userLimit: _current.userLimit,
+              voiceConnectionLimit: _current.voiceConnectionLimit,
+              rtcRegion: _current.rtcRegion,
+              rtcP2p: _current.rtcP2p,
+              showRtcP2p: showRtcP2p,
+              p2pMaxParticipants: ref.watch(voiceP2pMaxParticipantsProvider),
+              canManageChannel: _canManageChannel,
+              canUpdateRtcRegion: _canUpdateRtcRegion,
+              rtcRegionsAsync: rtcRegionsAsync,
+              onBitrateChanged: (int value) {
+                _updateCurrent(_current.copyWith(bitrateKbps: value));
+              },
+              onUserLimitChanged: (int value) {
+                _updateCurrent(_current.copyWith(userLimit: value));
+              },
+              onVoiceConnectionLimitChanged: (int value) {
+                _updateCurrent(_current.copyWith(voiceConnectionLimit: value));
+              },
+              onRtcRegionChanged: (String? value) {
+                _updateCurrent(_current.copyWith(rtcRegion: value));
+              },
+              onRtcP2pChanged: (bool value) {
+                _updateCurrent(_current.copyWith(rtcP2p: value));
+              },
+            ),
+          ],
+          if (showSafety) ...<Widget>[
+            SizedBox(height: context.layout.s6),
+            ChannelOverviewMatureContentSection(
+              channel: channel,
+              guild: ref.watch(guildByIdProvider(channel.guildId)).value,
+              nsfwOverride: _current.nsfwOverride,
+              contentWarningLevel: _current.contentWarningLevel,
+              warningTextController: _warningTextController,
+              onNsfwOverrideChanged: (bool? value) {
+                _updateCurrent(_current.copyWith(nsfwOverride: value));
+              },
+              onContentWarningLevelChanged: (int value) {
+                _updateCurrent(_current.copyWith(contentWarningLevel: value));
+              },
+              onContentWarningTextChanged: (String value) {
+                _updateCurrent(_current.copyWith(contentWarningText: value));
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

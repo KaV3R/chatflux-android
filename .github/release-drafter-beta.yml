@@ -1,0 +1,74 @@
+name-template: "v$RESOLVED_VERSION (Beta)"
+tag-template: "v$RESOLVED_VERSION"
+tag-prefix: v
+commitish: beta
+filter-by-commitish: false
+prerelease: true
+prerelease-identifier: beta
+include-pre-releases: true
+pull-request-limit: 100
+
+exclude-contributors:
+  - dependabot
+  - dependabot[bot]
+  - renovate
+  - renovate[bot]
+  - renovate-bot
+  - github-actions
+  - github-actions[bot]
+  - fluxer-automation
+  - fluxer-automation[bot]
+
+exclude-labels:
+  - skip-changelog
+
+autolabeler:
+  - label: feature
+    title:
+      - '/^feat(\([^)]+\)|\{[^}]+\})?!?:/i'
+  - label: fix
+    title:
+      - '/^fix(\([^)]+\)|\{[^}]+\})?!?:/i'
+  - label: skip-changelog
+    title:
+      - '/^(chore|ci|build|style|refactor|test)(\([^)]+\)|\{[^}]+\})?!?:/i'
+    files:
+      - ".github/**"
+
+version-resolver:
+  major:
+    labels:
+      - breaking
+  minor:
+    labels:
+      - feature
+      - enhancement
+  patch:
+    labels:
+      - fix
+      - bug
+  default: patch
+
+categories:
+  - title: Features
+    labels:
+      - feature
+      - enhancement
+
+  - title: Fixes
+    labels:
+      - fix
+      - bug
+
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+commit-template: "- $TITLE @$AUTHOR"
+change-title-escapes: '\<*_&'
+
+template: |
+  ## What's New
+
+  > Add custom changelog notes here! (remove this text)
+
+  ## Detailed changes
+
+  $CHANGES

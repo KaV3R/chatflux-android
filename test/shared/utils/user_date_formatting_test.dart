@@ -1,0 +1,149 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/shared/utils/user_date_formatting.dart';
+import 'package:fluxer_dart/export.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+String _normalize(String value) => value.replaceAll('\u202f', ' ');
+
+void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('en_US');
+    await initializeDateFormatting('en_GB');
+    await initializeDateFormatting('de_DE');
+  });
+
+  group('localeUses12Hour', () {
+    test('returns true for en-US', () {
+      expect(localeUses12Hour('en-US'), isTrue);
+    });
+
+    test('returns false for de-DE', () {
+      expect(localeUses12Hour('de-DE'), isFalse);
+    });
+
+    test('returns false for en-GB', () {
+      expect(localeUses12Hour('en-GB'), isFalse);
+    });
+  });
+
+  group('resolveUse12Hour', () {
+    test('returns true for twelveHour', () {
+      expect(
+        resolveUse12Hour(
+          timeFormat: TimeFormatTypes.twelveHour,
+          useSystemLocaleForTimeFormat: false,
+          appLocale: 'de-DE',
+          systemLocale: 'de-DE',
+        ),
+        isTrue,
+      );
+    });
+
+    test('returns false for twentyFourHour', () {
+      expect(
+        resolveUse12Hour(
+          timeFormat: TimeFormatTypes.twentyFourHour,
+          useSystemLocaleForTimeFormat: false,
+          appLocale: 'en-US',
+          systemLocale: 'en-US',
+        ),
+        isFalse,
+      );
+    });
+
+    test('auto uses app locale when system toggle is off', () {
+      expect(
+        resolveUse12Hour(
+          timeFormat: TimeFormatTypes.auto,
+          useSystemLocaleForTimeFormat: false,
+          appLocale: 'en-US',
+          systemLocale: 'de-DE',
+        ),
+        isTrue,
+      );
+    });
+
+    test('auto uses system locale when system toggle is on', () {
+      expect(
+        resolveUse12Hour(
+          timeFormat: TimeFormatTypes.auto,
+          useSystemLocaleForTimeFormat: true,
+          appLocale: 'en-US',
+          systemLocale: 'de-DE',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('formatUserTime', () {
+    final DateTime sample = DateTime(2025, 1, 1, 14, 30);
+
+    test('formats 12-hour time', () {
+      final String formatted = formatUserTime(sample, 'en_US', use12Hour: true);
+      expect(_normalize(formatted), '2:30 PM');
+    });
+
+    test('formats 12-hour time for British English', () {
+      final String formatted = formatUserTime(sample, 'en_GB', use12Hour: true);
+      expect(_normalize(formatted), '2:30 pm');
+    });
+
+    test('formats 24-hour time', () {
+      final String formatted = formatUserTime(
+        sample,
+        'en_US',
+        use12Hour: false,
+      );
+      expect(formatted, '14:30');
+    });
+
+    test('formats 24-hour time for British English', () {
+      final String formatted = formatUserTime(
+        sample,
+        'en_GB',
+        use12Hour: false,
+      );
+      expect(formatted, '14:30');
+    });
+
+    test('follows a locale and a 12/24-hour change after a cached format', () {
+      expect(
+        _normalize(formatUserTime(sample, 'en_US', use12Hour: true)),
+        '2:30 PM',
+      );
+      expect(
+        _normalize(formatUserTime(sample, 'en_GB', use12Hour: true)),
+        '2:30 pm',
+      );
+      expect(formatUserTime(sample, 'en_GB', use12Hour: false), '14:30');
+      expect(
+        _normalize(formatUserTime(sample, 'en_US', use12Hour: true)),
+        '2:30 PM',
+      );
+    });
+
+    test('time, date-time, and seconds formats do not share a cache entry', () {
+      expect(formatUserTime(sample, 'en_US', use12Hour: false), '14:30');
+      expect(
+        formatUserTime(sample, 'en_US', use12Hour: false, withSeconds: true),
+        '14:30:00',
+      );
+      expect(
+        formatUserDateTime(sample, 'en_US', use12Hour: false),
+        '1/1/2025 14:30',
+      );
+      expect(
+        formatUserMediumDateTime(sample, 'en_US', use12Hour: false),
+        'Jan 1, 2025 14:30',
+      );
+    });
+  });
+
+  test('formatUserMediumDate uses the requested locale', () {
+    final DateTime sample = DateTime(2025);
+
+    expect(formatUserMediumDate(sample, 'en_US'), 'Jan 1, 2025');
+    expect(formatUserMediumDate(sample, 'de_DE'), '1. Jan. 2025');
+  });
+}

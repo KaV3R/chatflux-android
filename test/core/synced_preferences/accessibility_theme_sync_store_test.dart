@@ -1,0 +1,840 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/api/fluxer_client_provider.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preference_field.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preferences_store.dart';
+import 'package:fluxer_app/core/synced_preferences/generated/fluxer/user/preferences/v1/accessibility.pb.dart'
+    as accessibility_pb;
+import 'package:fluxer_app/core/synced_preferences/generated/fluxer/user/preferences/v1/preferences.pb.dart'
+    as pb;
+import 'package:fluxer_app/core/theme/fluxer_theme_mode.dart';
+import 'package:fluxer_app/core/theme/providers/theme_preference_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/sync/user_settings_sync_service.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_dart/export.dart';
+
+import '../../helpers/open_test_database.dart';
+import '../../helpers/synced_preferences_test_helpers.dart';
+
+class _NoopUserSettingsSyncService extends UserSettingsSyncService {
+  _NoopUserSettingsSyncService(super.ref);
+
+  @override
+  Future<void> pushTheme(UserThemeType theme) async {}
+
+  @override
+  Future<UserSettingsResponse> fetchCurrentSettings() async =>
+      _testUserSettings(syncedPreferences: '');
+}
+
+class _FakeUsersApi implements UsersApi {
+  _FakeUsersApi();
+
+  UserSettingsUpdateRequest? lastPushBody;
+  int pushCount = 0;
+  bool offline = false;
+
+  @override
+  Future<UserSettingsResponse> updateCurrentUserSettings({
+    UserSettingsUpdateRequest? body,
+  }) async {
+    if (offline) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/users/@me/settings'),
+        type: DioExceptionType.connectionError,
+      );
+    }
+    pushCount++;
+    lastPushBody = body;
+    return UserSettingsResponse.fromJson({
+      'status': 'online',
+      'theme': 'dark',
+      'locale': 'en-US',
+      'synced_preferences': body?.syncedPreferences.value ?? '',
+      'render_embeds': true,
+      'profile_privacy': 0,
+      'privacy_setup_version': 0,
+      'restricted_guilds': <String>[],
+      'bot_restricted_guilds': <String>[],
+      'default_guilds_restricted': false,
+      'bot_default_guilds_restricted': false,
+      'inline_attachment_media': true,
+      'inline_embed_media': true,
+      'gif_auto_play': true,
+      'render_reactions': true,
+      'animate_emoji': true,
+      'animate_stickers': 0,
+      'render_spoilers': 0,
+      'message_display_compact': false,
+      'friend_source_flags': 0,
+      'incoming_call_flags': 0,
+      'group_dm_add_permission_flags': 0,
+      'guild_folders': <Map<String, Object?>>[],
+      'afk_timeout': 600,
+      'time_format': 0,
+      'developer_mode': false,
+      'trusted_domains': <String>[],
+      'default_hide_muted_channels': false,
+      'sensitive_content_friend_dm_filter': 0,
+      'sensitive_content_non_friend_dm_filter': 0,
+      'sensitive_content_guild_filter': 0,
+      'suppress_unprivileged_self_mentions': false,
+      'suppress_unprivileged_self_mentions_bypass_user_ids': <String>[],
+      'staff_dm_access_user_ids': <String>[],
+      'default_share_voice_activity': false,
+    });
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeClient extends FluxerClient {
+  _FakeClient(this._usersApi) : super(Dio());
+
+  final UsersApi _usersApi;
+
+  @override
+  UsersApi get users => _usersApi;
+}
+
+String _settingsWithAccessibility(
+  accessibility_pb.AccessibilitySettings settings,
+) {
+  final synced = pb.SyncedPreferences(accessibility: settings);
+  return base64Encode(synced.writeToBuffer());
+}
+
+UserSettingsResponse _testUserSettings({required String syncedPreferences}) {
+  return UserSettingsResponse.fromJson({
+    'status': 'online',
+    'theme': 'dark',
+    'locale': 'en-US',
+    'synced_preferences': syncedPreferences,
+    'render_embeds': true,
+    'profile_privacy': 0,
+    'privacy_setup_version': 0,
+    'restricted_guilds': <String>[],
+    'bot_restricted_guilds': <String>[],
+    'default_guilds_restricted': false,
+    'bot_default_guilds_restricted': false,
+    'inline_attachment_media': true,
+    'inline_embed_media': true,
+    'gif_auto_play': true,
+    'render_reactions': true,
+    'animate_emoji': true,
+    'animate_stickers': 0,
+    'render_spoilers': 0,
+    'message_display_compact': false,
+    'friend_source_flags': 0,
+    'incoming_call_flags': 0,
+    'group_dm_add_permission_flags': 0,
+    'guild_folders': <Map<String, Object?>>[],
+    'afk_timeout': 600,
+    'time_format': 0,
+    'developer_mode': false,
+    'trusted_domains': <String>[],
+    'default_hide_muted_channels': false,
+    'sensitive_content_friend_dm_filter': 0,
+    'sensitive_content_non_friend_dm_filter': 0,
+    'sensitive_content_guild_filter': 0,
+    'suppress_unprivileged_self_mentions': false,
+    'suppress_unprivileged_self_mentions_bypass_user_ids': <String>[],
+    'staff_dm_access_user_ids': <String>[],
+    'default_share_voice_activity': false,
+  });
+}
+
+ProviderContainer _createContainer({
+  required db.FluxerDatabase database,
+  required _FakeUsersApi usersApi,
+}) {
+  return ProviderContainer(
+    overrides: [
+      fluxerDatabaseProvider.overrideWithValue(database),
+      fluxerClientProvider.overrideWithValue(_FakeClient(usersApi)),
+      userSettingsSyncProvider.overrideWith(_NoopUserSettingsSyncService.new),
+    ],
+  );
+}
+
+Future<void> _waitForDebounce(SyncedPreferencesStore store) async {
+  await flushSyncedPreferencesDebounce(store);
+}
+
+void main() {
+  group('SyncedPreferencesStore accessibility theme colors', () {
+    late db.FluxerDatabase database;
+    late _FakeUsersApi usersApi;
+    late ProviderContainer container;
+
+    setUp(() {
+      database = openTestDatabase();
+      usersApi = _FakeUsersApi();
+      container = _createContainer(database: database, usersApi: usersApi);
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('hydrate applies remote custom theme css and saturation', () async {
+      const css = ':root { --background-primary: #010203; }';
+      final store = container.read(syncedPreferencesStoreProvider);
+      await container.read(themePreferenceProvider.notifier).load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(
+          syncedPreferences: _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(
+              saturationFactor: 0.5,
+              customThemeCss: css,
+            ),
+          ),
+        ),
+      );
+
+      expect(container.read(themePreferenceProvider).saturationFactor, 0.5);
+      expect(container.read(themePreferenceProvider).customThemeCss, css);
+    });
+
+    test('appearance push preserves custom theme css from wire', () async {
+      const css = ':root { --background-primary: #010203; }';
+      final store = container.read(syncedPreferencesStoreProvider);
+      await container.read(themePreferenceProvider.notifier).load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(
+          syncedPreferences: _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(
+              saturationFactor: 0.75,
+              customThemeCss: css,
+            ),
+          ),
+        ),
+      );
+      await _waitForDebounce(store);
+      usersApi
+        ..pushCount = 0
+        ..lastPushBody = null;
+
+      await container
+          .read(appearancePreferencesProvider.notifier)
+          .setHideKeyboardHints(value: true);
+      await _waitForDebounce(store);
+
+      expect(usersApi.pushCount, 1);
+      final bytes = base64Decode(
+        usersApi.lastPushBody!.syncedPreferences.value!,
+      );
+      final synced = pb.SyncedPreferences.fromBuffer(bytes);
+      expect(synced.hasAccessibility(), isTrue);
+      expect(synced.accessibility.customThemeCss, css);
+      expect(synced.accessibility.saturationFactor, closeTo(0.75, 0.001));
+      expect(synced.accessibility.hideKeyboardHints, isTrue);
+    });
+
+    test('hydrate applies brand primary into color theme', () async {
+      const css = ':root { --brand-primary: #007fff; }';
+      final store = container.read(syncedPreferencesStoreProvider);
+      await container.read(themePreferenceProvider.notifier).load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(
+          syncedPreferences: _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(customThemeCss: css),
+          ),
+        ),
+      );
+
+      expect(
+        container.read(themePreferenceProvider).darkColorTheme.brandPrimary,
+        const Color(0xFF007FFF),
+      );
+    });
+
+    test(
+      'local theme color override survives hydrate with stale wire css',
+      () async {
+        const wireCss = ':root { --brand-primary: #007fff; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        final themeNotifier = container.read(themePreferenceProvider.notifier);
+        await themeNotifier.load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: wireCss),
+            ),
+          ),
+        );
+        await _waitForDebounce(store);
+
+        themeNotifier.previewThemeColorOverride(
+          editingMode: FluxerThemeMode.dark,
+          cssVariable: '--brand-primary',
+          color: const Color(0xFFFF5500),
+        );
+        await themeNotifier.flushPendingThemeColorPersist();
+
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: wireCss),
+            ),
+          ),
+        );
+
+        expect(
+          container.read(themePreferenceProvider).darkColorTheme.brandPrimary,
+          const Color(0xFFFF5500),
+        );
+      },
+    );
+
+    test(
+      'push preserves wire custom theme css when studio colors are not used',
+      () async {
+        const css = ':root { --brand-primary: #007fff; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        final themeNotifier = container.read(themePreferenceProvider.notifier);
+        await themeNotifier.load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await themeNotifier.setSyncThemeColorsFromThemeStudio(value: false);
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: css),
+            ),
+          ),
+        );
+        expect(container.read(themePreferenceProvider).customThemeCss, isNull);
+
+        await container
+            .read(appearancePreferencesProvider.notifier)
+            .setHideKeyboardHints(value: true);
+        await _waitForDebounce(store);
+
+        expect(usersApi.pushCount, 1);
+        final bytes = base64Decode(
+          usersApi.lastPushBody!.syncedPreferences.value!,
+        );
+        final synced = pb.SyncedPreferences.fromBuffer(bytes);
+        expect(synced.accessibility.customThemeCss, css);
+      },
+    );
+
+    test(
+      'protected inbound still applies remote theme customization',
+      () async {
+        const css = ':root { --brand-primary: #010203; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        await container.read(themePreferenceProvider.notifier).load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(syncedPreferences: ''),
+        );
+
+        store.markDirty(SyncedPreferenceField.accessibility);
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(
+                customThemeCss: css,
+                saturationFactor: 0.6,
+              ),
+            ),
+          ),
+        );
+
+        expect(container.read(themePreferenceProvider).customThemeCss, css);
+        expect(container.read(themePreferenceProvider).saturationFactor, 0.6);
+      },
+    );
+
+    test(
+      'hydrate without custom theme css field preserves local css',
+      () async {
+        const css = ':root { --brand-primary: #007fff; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        await container.read(themePreferenceProvider.notifier).load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: css),
+            ),
+          ),
+        );
+
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(hideKeyboardHints: true),
+            ),
+          ),
+        );
+
+        expect(container.read(themePreferenceProvider).customThemeCss, css);
+        expect(
+          container.read(themePreferenceProvider).darkColorTheme.brandPrimary,
+          const Color(0xFF007FFF),
+        );
+      },
+    );
+
+    test(
+      'hydrate with empty custom theme css field preserves local css',
+      () async {
+        const css = ':root { --brand-primary: #007fff; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        await container.read(themePreferenceProvider.notifier).load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: css),
+            ),
+          ),
+        );
+
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: ''),
+            ),
+          ),
+        );
+
+        expect(container.read(themePreferenceProvider).customThemeCss, css);
+        expect(
+          container.read(themePreferenceProvider).darkColorTheme.brandPrimary,
+          const Color(0xFF007FFF),
+        );
+      },
+    );
+
+    test('saturation change pushes updated accessibility field', () async {
+      final store = container.read(syncedPreferencesStoreProvider);
+      await container.read(themePreferenceProvider.notifier).load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: ''),
+      );
+
+      await container
+          .read(themePreferenceProvider.notifier)
+          .setSaturationFactor(0.25);
+      await _waitForDebounce(store);
+
+      expect(usersApi.pushCount, 1);
+      final bytes = base64Decode(
+        usersApi.lastPushBody!.syncedPreferences.value!,
+      );
+      final synced = pb.SyncedPreferences.fromBuffer(bytes);
+      expect(synced.accessibility.saturationFactor, closeTo(0.25, 0.001));
+    });
+
+    test(
+      'appearance push preserves show_message_send_button from wire',
+      () async {
+        final store = container.read(syncedPreferencesStoreProvider);
+        await container.read(themePreferenceProvider.notifier).load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(
+                showMessageSendButton: true,
+              ),
+            ),
+          ),
+        );
+
+        await container
+            .read(appearancePreferencesProvider.notifier)
+            .setHideKeyboardHints(value: true);
+        await _waitForDebounce(store);
+
+        expect(usersApi.pushCount, 1);
+        final bytes = base64Decode(
+          usersApi.lastPushBody!.syncedPreferences.value!,
+        );
+        final synced = pb.SyncedPreferences.fromBuffer(bytes);
+        expect(synced.accessibility.showMessageSendButton, isTrue);
+        expect(synced.accessibility.hideKeyboardHints, isTrue);
+      },
+    );
+
+    test('appearance push preserves auto_send_klipy_gifs from wire', () async {
+      final store = container.read(syncedPreferencesStoreProvider);
+      await container.read(themePreferenceProvider.notifier).load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(
+          syncedPreferences: _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(autoSendKlipyGifs: true),
+          ),
+        ),
+      );
+
+      await container
+          .read(appearancePreferencesProvider.notifier)
+          .setHideKeyboardHints(value: true);
+      await _waitForDebounce(store);
+
+      expect(usersApi.pushCount, 1);
+      final bytes = base64Decode(
+        usersApi.lastPushBody!.syncedPreferences.value!,
+      );
+      final synced = pb.SyncedPreferences.fromBuffer(bytes);
+      expect(synced.accessibility.autoSendKlipyGifs, isTrue);
+    });
+
+    test(
+      'sync from theme studio off ignores inbound custom theme css',
+      () async {
+        const localCss = '.theme-dark { --brand-primary: #111111; }';
+        const remoteCss = '.theme-dark { --brand-primary: #222222; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        final themeNotifier = container.read(themePreferenceProvider.notifier);
+        await themeNotifier.load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await themeNotifier.applySyncedThemeCustomization(
+          customThemeCss: localCss,
+          updateSaturationFactor: false,
+        );
+        await themeNotifier.setSyncThemeColorsFromThemeStudio(value: false);
+
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: remoteCss),
+            ),
+          ),
+        );
+
+        expect(
+          container.read(themePreferenceProvider).customThemeCss,
+          localCss,
+        );
+      },
+    );
+
+    test(
+      'sync to theme studio off keeps wire custom theme css on push',
+      () async {
+        const wireCss = ':root { --brand-primary: #aaaaaa; }';
+        final store = container.read(syncedPreferencesStoreProvider);
+        final themeNotifier = container.read(themePreferenceProvider.notifier);
+        await themeNotifier.load('u1');
+        await container.read(appearancePreferencesProvider.notifier).load('u1');
+        await store.hydrateFromUserSettings(
+          _testUserSettings(
+            syncedPreferences: _settingsWithAccessibility(
+              accessibility_pb.AccessibilitySettings(customThemeCss: wireCss),
+            ),
+          ),
+        );
+
+        await themeNotifier.setSyncThemeColorsToThemeStudio(value: false);
+        await themeNotifier.setThemeColorOverride(
+          editingMode: FluxerThemeMode.dark,
+          cssVariable: '--brand-primary',
+          color: const Color(0xFFBBBBBB),
+        );
+        await container
+            .read(appearancePreferencesProvider.notifier)
+            .setHideKeyboardHints(value: true);
+        await _waitForDebounce(store);
+
+        expect(usersApi.pushCount, 1);
+        final bytes = base64Decode(
+          usersApi.lastPushBody!.syncedPreferences.value!,
+        );
+        final synced = pb.SyncedPreferences.fromBuffer(bytes);
+        expect(synced.accessibility.customThemeCss, wireCss);
+      },
+    );
+
+    test('first hydrate with desktop-only diff does not auto-push', () async {
+      final store = container.read(syncedPreferencesStoreProvider);
+      await store.hydrateFromUserSettings(
+        _testUserSettings(
+          syncedPreferences: _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(
+              showMessageSendButton: true,
+              hideKeyboardHints: true,
+            ),
+          ),
+        ),
+      );
+      await _waitForDebounce(store);
+
+      expect(usersApi.pushCount, 0);
+      expect(
+        container.read(appearancePreferencesProvider).hideKeyboardHints,
+        isTrue,
+      );
+    });
+    test('resetting the last theme color clears it from the push', () async {
+      final store = container.read(syncedPreferencesStoreProvider);
+      final themeNotifier = container.read(themePreferenceProvider.notifier);
+      await themeNotifier.load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: ''),
+      );
+      await themeNotifier.setThemeColorOverride(
+        editingMode: FluxerThemeMode.dark,
+        cssVariable: '--brand-primary',
+        color: const Color(0xFFFF5500),
+      );
+      await _waitForDebounce(store);
+      final String customWire = usersApi.lastPushBody!.syncedPreferences.value!;
+      expect(
+        pb.SyncedPreferences.fromBuffer(
+          base64Decode(customWire),
+        ).accessibility.hasCustomThemeCss(),
+        isTrue,
+      );
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: customWire),
+      );
+
+      await themeNotifier.clearThemeColorOverride(
+        editingMode: FluxerThemeMode.dark,
+        cssVariable: '--brand-primary',
+      );
+      await _waitForDebounce(store);
+
+      final String resetWire = usersApi.lastPushBody!.syncedPreferences.value!;
+      expect(
+        pb.SyncedPreferences.fromBuffer(
+          base64Decode(resetWire),
+        ).accessibility.hasCustomThemeCss(),
+        isFalse,
+      );
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: resetWire),
+      );
+      expect(container.read(themePreferenceProvider).customThemeCss, isNull);
+      expect(
+        container.read(themePreferenceProvider).darkColorTheme.brandPrimary,
+        isNot(const Color(0xFFFF5500)),
+      );
+    });
+
+    test('theme color reset made offline survives reconnect', () async {
+      final store = container.read(syncedPreferencesStoreProvider);
+      final themeNotifier = container.read(themePreferenceProvider.notifier);
+      await themeNotifier.load('u1');
+      await container.read(appearancePreferencesProvider.notifier).load('u1');
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: ''),
+      );
+      await themeNotifier.setThemeColorOverride(
+        editingMode: FluxerThemeMode.dark,
+        cssVariable: '--brand-primary',
+        color: const Color(0xFFFF5500),
+      );
+      await _waitForDebounce(store);
+      final String customWire = usersApi.lastPushBody!.syncedPreferences.value!;
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: customWire),
+      );
+
+      usersApi.offline = true;
+      await themeNotifier.clearThemeColorOverride(
+        editingMode: FluxerThemeMode.dark,
+        cssVariable: '--brand-primary',
+      );
+      await _waitForDebounce(store);
+      await store.hydrateFromUserSettings(
+        _testUserSettings(syncedPreferences: customWire),
+      );
+
+      expect(container.read(themePreferenceProvider).customThemeCss, isNull);
+
+      usersApi.offline = false;
+      await flushSyncedPreferencesPushRetry(store);
+      final String resetWire = usersApi.lastPushBody!.syncedPreferences.value!;
+      expect(
+        pb.SyncedPreferences.fromBuffer(
+          base64Decode(resetWire),
+        ).accessibility.hasCustomThemeCss(),
+        isFalse,
+      );
+    });
+  });
+  group('Theme Studio toggle combinations', () {
+    const studioCss = ':root { --brand-primary: #007fff; }';
+    const custom = Color(0xFFFF5500);
+    final Color defaultBrand =
+        ThemePreferenceState().darkColorTheme.brandPrimary;
+
+    late db.FluxerDatabase database;
+    late _FakeUsersApi usersApi;
+    late ProviderContainer container;
+
+    setUp(() {
+      database = openTestDatabase();
+      usersApi = _FakeUsersApi();
+      container = _createContainer(database: database, usersApi: usersApi);
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('changing saturation keeps both Theme Studio toggles', () async {
+      final themeNotifier = container.read(themePreferenceProvider.notifier);
+      await themeNotifier.load('u1');
+      await themeNotifier.setSyncThemeColorsFromThemeStudio(value: false);
+      await themeNotifier.setSyncThemeColorsToThemeStudio(value: false);
+
+      await themeNotifier.setSaturationFactor(0.5);
+
+      final ThemePreferenceState state = container.read(
+        themePreferenceProvider,
+      );
+      expect(state.saturationFactor, 0.5);
+      expect(state.syncThemeColorsFromThemeStudio, isFalse);
+      expect(state.syncThemeColorsToThemeStudio, isFalse);
+    });
+
+    for (final bool fromStudio in <bool>[true, false]) {
+      for (final bool toStudio in <bool>[true, false]) {
+        final String combo =
+            'use from Theme Studio $fromStudio, send $toStudio';
+
+        Future<String> setUpCombo() async {
+          final store = container.read(syncedPreferencesStoreProvider);
+          final themeNotifier = container.read(
+            themePreferenceProvider.notifier,
+          );
+          await themeNotifier.load('u1');
+          await container
+              .read(appearancePreferencesProvider.notifier)
+              .load('u1');
+          final String server = _settingsWithAccessibility(
+            accessibility_pb.AccessibilitySettings(customThemeCss: studioCss),
+          );
+          await store.hydrateFromUserSettings(
+            _testUserSettings(syncedPreferences: server),
+          );
+          await themeNotifier.setSyncThemeColorsFromThemeStudio(
+            value: fromStudio,
+          );
+          await themeNotifier.setSyncThemeColorsToThemeStudio(value: toStudio);
+          return server;
+        }
+
+        Future<String> pushAndEcho(String server) async {
+          final store = container.read(syncedPreferencesStoreProvider);
+          usersApi.lastPushBody = null;
+          await _waitForDebounce(store);
+          final String next =
+              usersApi.lastPushBody?.syncedPreferences.value ?? server;
+          await store.hydrateFromUserSettings(
+            _testUserSettings(syncedPreferences: next),
+          );
+          await _waitForDebounce(store);
+          return usersApi.lastPushBody?.syncedPreferences.value ?? next;
+        }
+
+        Color brand() =>
+            container.read(themePreferenceProvider).darkColorTheme.brandPrimary;
+
+        test('$combo: changing brand primary survives the echo', () async {
+          String server = await setUpCombo();
+          server = await pushAndEcho(server);
+          await container
+              .read(themePreferenceProvider.notifier)
+              .setThemeColorOverride(
+                editingMode: FluxerThemeMode.dark,
+                cssVariable: '--brand-primary',
+                color: custom,
+              );
+          server = await pushAndEcho(server);
+          expect(brand(), custom);
+
+          container.dispose();
+          container = _createContainer(database: database, usersApi: usersApi);
+          final store = container.read(syncedPreferencesStoreProvider);
+          await container.read(themePreferenceProvider.notifier).load('u1');
+          await container
+              .read(appearancePreferencesProvider.notifier)
+              .load('u1');
+          await store.hydrateFromUserSettings(
+            _testUserSettings(syncedPreferences: server),
+            fromCache: true,
+          );
+          await store.hydrateFromUserSettings(
+            _testUserSettings(syncedPreferences: server),
+          );
+          await pushAndEcho(server);
+          expect(brand(), custom);
+        });
+
+        test('$combo: a change survives an unrelated remote update', () async {
+          String server = await setUpCombo();
+          server = await pushAndEcho(server);
+          await container
+              .read(themePreferenceProvider.notifier)
+              .setThemeColorOverride(
+                editingMode: FluxerThemeMode.dark,
+                cssVariable: '--brand-primary',
+                color: custom,
+              );
+          server = await pushAndEcho(server);
+          final pb.SyncedPreferences remote = pb.SyncedPreferences.fromBuffer(
+            base64Decode(server),
+          );
+          remote.accessibility.hideKeyboardHints =
+              !remote.accessibility.hideKeyboardHints;
+          await pushAndEcho(base64Encode(remote.writeToBuffer()));
+          await container
+              .read(syncedPreferencesStoreProvider)
+              .hydrateFromUserSettings(
+                _testUserSettings(
+                  syncedPreferences: base64Encode(remote.writeToBuffer()),
+                ),
+              );
+          expect(brand(), custom);
+        });
+
+        test('$combo: resetting brand primary survives the echo', () async {
+          String server = await setUpCombo();
+          server = await pushAndEcho(server);
+          final themeNotifier = container.read(
+            themePreferenceProvider.notifier,
+          );
+          await themeNotifier.setThemeColorOverride(
+            editingMode: FluxerThemeMode.dark,
+            cssVariable: '--brand-primary',
+            color: custom,
+          );
+          server = await pushAndEcho(server);
+          await themeNotifier.clearThemeColorOverride(
+            editingMode: FluxerThemeMode.dark,
+            cssVariable: '--brand-primary',
+          );
+          server = await pushAndEcho(server);
+          expect(brand(), defaultBrand);
+          if (toStudio) {
+            await themeNotifier.setSyncThemeColorsFromThemeStudio(value: true);
+            await pushAndEcho(server);
+            expect(brand(), defaultBrand);
+          }
+        });
+      }
+    }
+  });
+}

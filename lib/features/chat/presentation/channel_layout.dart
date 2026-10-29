@@ -1,0 +1,367 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/presentation/widgets/category_channel_route_handler.dart';
+import 'package:fluxer_app/features/channels/presentation/widgets/link_channel_route_handler.dart';
+import 'package:fluxer_app/features/channels/presentation/widgets/unrecognized_channel_view.dart';
+import 'package:fluxer_app/features/channels/providers/channel_list_view_model.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/channel/channel_chat_content.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/channel/channel_details_drawer_overlay.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/channel/channel_header.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/channel/search/channel_search_results_panel.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/wallpaper/chat_wallpaper_text_theme.dart';
+import 'package:fluxer_app/features/chat/providers/channel/channel_details_providers.dart';
+import 'package:fluxer_app/features/chat/providers/channel/channel_header_search_provider.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/bottom_input_slot_provider.dart';
+import 'package:fluxer_app/features/chat/utils/chat_shell_layout.dart';
+import 'package:fluxer_app/features/chat/utils/composer/bottom_input_slot_layout.dart';
+import 'package:fluxer_app/features/forum/presentation/forum_channel_view.dart';
+import 'package:fluxer_app/features/forum/providers/forum_header_search_provider.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/presentation/widgets/guild_unavailable_screen.dart';
+import 'package:fluxer_app/features/guilds/presentation/widgets/staff_only_guild_nagbar.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_availability_provider.dart';
+import 'package:fluxer_app/features/guilds/providers/route_guild_provider.dart';
+import 'package:fluxer_app/features/guilds/utils/guild_outage_availability.dart';
+import 'package:fluxer_app/features/mature_content/presentation/widgets/mature_content_channel_gate.dart';
+import 'package:fluxer_app/features/mature_content/providers/mature_content_agreements_provider.dart';
+import 'package:fluxer_app/features/mature_content/providers/sensitive_content_provider.dart';
+import 'package:fluxer_app/features/mature_content/utils/channel_gate_navigator.dart';
+import 'package:fluxer_app/features/members/presentation/widgets/channel_members.dart';
+import 'package:fluxer_app/features/shell/hosted_ui/hosted_ui_background_bleed.dart';
+import 'package:fluxer_app/features/shell/hosted_ui/hosted_ui_chat_scaffold.dart';
+import 'package:fluxer_app/features/shell/presentation/mobile_chat_back_scope.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/threads/presentation/thread_members_sheet.dart';
+import 'package:fluxer_app/features/voice/presentation/voice_channel_page_view.dart';
+import 'package:fluxer_app/features/voice/providers/voice_call_overlay_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_state.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/chat_context_utils.dart';
+
+class ChannelLayout extends ConsumerStatefulWidget {
+  final String guildId;
+  final String channelId;
+  final String? messageId;
+
+  const ChannelLayout({
+    required this.guildId,
+    required this.channelId,
+    this.messageId,
+    super.key,
+  });
+
+  static const _minWidthForMemberList = 600.0;
+
+  @override
+  ConsumerState<ChannelLayout> createState() => _ChannelLayoutState();
+}
+
+class _ChannelLayoutState extends ConsumerState<ChannelLayout> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncSearchContext());
+  }
+
+  @override
+  void didUpdateWidget(ChannelLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.guildId != widget.guildId ||
+        oldWidget.channelId != widget.channelId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncSearchContext());
+    }
+  }
+
+  void _syncSearchContext() {
+    if (!mounted) {
+      return;
+    }
+    ref
+        .read(channelHeaderSearchProvider.notifier)
+        .bindChannel(channelId: widget.channelId, guildId: widget.guildId);
+    ref.read(forumHeaderSearchProvider(widget.channelId).notifier).collapse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isWide = isWideLayout(context);
+    final Set<String> trackedUnavailableGuildIds = ref.watch(
+      guildAvailabilityProvider,
+    );
+    final AsyncValue<Guild?> guildAsync = ref.watch(
+      routeGuildProvider(widget.guildId),
+    );
+    final Guild? guild = guildAsync.value;
+    final bool guildOutageUnavailable = isGuildOutageUnavailable(
+      guildId: widget.guildId,
+      trackedUnavailableGuildIds: trackedUnavailableGuildIds,
+      guild: guild,
+    );
+    final bool guildNotFound = isGuildConfirmedMissingForRoute(
+      guildAsync: guildAsync,
+      guildId: widget.guildId,
+      trackedUnavailableGuildIds: trackedUnavailableGuildIds,
+    );
+    if (guildAsync.isLoading) {
+      return HostedUiChatScaffold(
+        channelId: widget.channelId,
+        child: MobileChatBackScope(
+          child: GuildRouteLoadingShell(
+            channelIdForBackUnread: widget.channelId,
+          ),
+        ),
+      );
+    }
+    if (guildOutageUnavailable || guildNotFound) {
+      return HostedUiChatScaffold(
+        channelId: widget.channelId,
+        child: MobileChatBackScope(
+          child: guildOutageUnavailable
+              ? GuildOutageUnavailableScreen(
+                  channelIdForBackUnread: widget.channelId,
+                )
+              : const GuildNotFoundScreen(),
+        ),
+      );
+    }
+    final ChannelListState channelList = ref.watch(
+      channelListViewModelProvider,
+    );
+    final Channel? channel =
+        ref.watch(channelByIdProvider(widget.channelId)).value ??
+        findChannelById(channelList, widget.channelId);
+    final bool isMemberListVisible = channelList.isMemberListVisibleForChannel(
+      channelId: widget.channelId,
+      channelType: channel?.type,
+    );
+    final bool isLinkChannel = channel?.type == ChannelType.guildLink;
+    final bool isCategoryChannel = channel?.type == ChannelType.guildCategory;
+    final bool isVoiceChannel = channel?.type == ChannelType.guildVoice;
+    final bool isUnrecognizedChannel = channel?.type == ChannelType.unknown;
+    final bool isMobile = isMobileLayout(context);
+    final AsyncValue<bool> showGateAsync = ref.watch(
+      shouldShowMatureContentGateProvider(widget.channelId),
+    );
+    final bool showMatureContentGate = showGateAsync.maybeWhen(
+      data: (bool show) => show,
+      orElse: () {
+        if (channel == null) {
+          return true;
+        }
+        return isResolvedChannelGateBlocking(
+          channel: channel,
+          channelList: channelList,
+          nsfwAllowed: ref.read(sensitiveContentProvider).nsfwAllowed,
+          agreements: ref.read(matureContentAgreementsProvider),
+        );
+      },
+    );
+    final ChannelHeaderSearchState searchState = ref.watch(
+      channelHeaderSearchProvider,
+    );
+    final bool isSearchActive =
+        !isUnrecognizedChannel &&
+        searchState.isActive &&
+        searchState.channelId == widget.channelId;
+    if (!isUnrecognizedChannel) {
+      ref.watch(channelSearchProvider(widget.channelId, widget.guildId));
+    }
+    final VoiceSessionState voice = ref.watch(voiceSessionProvider);
+    final bool forceVoiceCallStyle =
+        isVoiceChannel &&
+        voice.isInVoice &&
+        voice.channelId == widget.channelId &&
+        voice.guildId == widget.guildId;
+
+    void scheduleSearchContextSync(String? previous, String? next) {
+      if (previous == next) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncSearchContext());
+    }
+
+    ref
+      ..listen<String?>(activeGuildIdProvider, scheduleSearchContextSync)
+      ..listen<String?>(activeChannelIdProvider, scheduleSearchContextSync);
+
+    final Widget primaryContent = isUnrecognizedChannel
+        ? const UnrecognizedChannelView()
+        : showMatureContentGate
+        ? MatureContentChannelGate(
+            channelId: widget.channelId,
+            channelType: channel?.type,
+          )
+        : isLinkChannel && channel != null
+        ? LinkChannelRouteHandler(
+            guildId: widget.guildId,
+            channel: channel,
+            child: const SizedBox.shrink(),
+          )
+        : isCategoryChannel && channel != null
+        ? CategoryChannelRouteHandler(
+            guildId: widget.guildId,
+            channel: channel,
+            child: const SizedBox.shrink(),
+          )
+        : channel != null && channel.isThreadOnly
+        ? ForumChannelView(channelId: widget.channelId)
+        : isVoiceChannel
+        ? VoiceChannelPageView(
+            guildId: widget.guildId,
+            channelId: widget.channelId,
+            messageId: widget.messageId,
+          )
+        : ChannelChatContent(
+            channelId: widget.channelId,
+            targetMessageId: widget.messageId,
+            showTopBar: false,
+          );
+    final Widget header = isVoiceChannel
+        ? ChatSurfaceTheme(
+            builder: (BuildContext context) => _VoiceChannelHeader(
+              channelId: widget.channelId,
+              forceVoiceCallStyle: forceVoiceCallStyle,
+            ),
+          )
+        : _VoiceChannelHeader(
+            channelId: widget.channelId,
+            forceVoiceCallStyle: forceVoiceCallStyle,
+          );
+    final bool hideableVoiceHeader =
+        forceVoiceCallStyle && isHandheldVoiceOverlay(context);
+    final bool showsVoiceOverlay =
+        !hideableVoiceHeader ||
+        ref.watch(
+          voiceCallOverlayProvider.select(
+            (VoiceCallOverlayState state) => state.showsOverlay,
+          ),
+        );
+    final bool reserveBottomSafeArea = chatLayoutReservesBottomSafeArea(
+      isMobile: isMobile,
+      keyboardSlotOccupied:
+          !isMobile &&
+          wideLayoutKeyboardSlotOccupied(
+            bottomInputSlotHeight: ref.watch(
+              bottomInputSlotProvider.select(
+                (BottomInputSlotState state) => state.slotHeight,
+              ),
+            ),
+            keyboardInsetBottom: resolvedKeyboardInsetBottom(context),
+          ),
+    );
+
+    return HostedUiChatScaffold(
+      channelId: widget.channelId,
+      child: MobileChatBackScope(
+        child: HostedUiBackgroundBleed(
+          color: channelChatHostedUiBleedColor(context),
+          child: ColoredBox(
+            color: channelChatShellBackgroundColor(context),
+            child: SafeArea(
+              bottom: reserveBottomSafeArea,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool showMemberList =
+                          isWide &&
+                          isMemberListVisible &&
+                          !isSearchActive &&
+                          constraints.maxWidth >=
+                              ChannelLayout._minWidthForMemberList;
+                      return Column(
+                        children: [
+                          if (isGuildStaffOnlyAccessible(guild))
+                            StaffOnlyGuildNagbar(guildId: widget.guildId),
+                          if (!hideableVoiceHeader) header,
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(child: primaryContent),
+                                    if (isSearchActive)
+                                      ChannelSearchResultsPanel(
+                                        channelId: widget.channelId,
+                                        guildId: widget.guildId,
+                                        onClose: () => ref
+                                            .read(
+                                              channelHeaderSearchProvider
+                                                  .notifier,
+                                            )
+                                            .closeSearch(),
+                                      ),
+                                    if (showMemberList &&
+                                        channel != null &&
+                                        channel.isThread)
+                                      ThreadMembersPanel(
+                                        key: ValueKey<String>(widget.channelId),
+                                        thread: channel,
+                                      )
+                                    else if (showMemberList)
+                                      ChannelMembers(
+                                        key: ValueKey<String>(widget.channelId),
+                                        guildId: widget.guildId,
+                                        channelId: widget.channelId,
+                                      ),
+                                  ],
+                                ),
+                                if (hideableVoiceHeader)
+                                  Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: IgnorePointer(
+                                      ignoring: !showsVoiceOverlay,
+                                      child: AnimatedOpacity(
+                                        duration: const Duration(
+                                          milliseconds: 240,
+                                        ),
+                                        opacity: showsVoiceOverlay ? 1 : 0,
+                                        child: header,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  Positioned.fill(
+                    child: ChannelDetailsDrawerOverlay(
+                      channelId: widget.channelId,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceChannelHeader extends StatelessWidget {
+  const _VoiceChannelHeader({
+    required this.channelId,
+    required this.forceVoiceCallStyle,
+  });
+
+  final String channelId;
+  final bool forceVoiceCallStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChannelHeader(
+      channelId: channelId,
+      forceVoiceCallStyle: forceVoiceCallStyle,
+    );
+  }
+}

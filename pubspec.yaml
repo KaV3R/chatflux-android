@@ -1,0 +1,234 @@
+name: fluxer_app
+description: "Official Fluxer Mobile client built on the Flutter framework"
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+version: 2026.10.100+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  adaptive_platform_ui: ^1.0.2
+  altcha_lib: ^0.3.1
+  app_badge_plus: ^1.3.5
+  app_links: ^7.2.1
+  audio_service: ^0.18.19
+  audio_session: ^0.2.4
+  audioplayers: ^6.8.1
+  cached_network_image_ce: ^4.13.1
+  clock: ^1.1.3
+  code_assets: ^1.0.0
+  connectivity_plus: ^7.3.1
+  country_flags: ^4.1.2
+  crop_your_image: ^2.0.0
+  cross_file: ^0.3.5+5
+  cryptography: ^2.7.0
+  cupertino_ui: ^1.1.1
+  desktop_drop: ^0.8.4
+  device_info_plus: ^13.2.0
+  dio: ^5.11.1
+  drift: ^2.35.0
+  dynamic_app_icon_flutter_plus: ^2.2.1
+  ffi: ^2.2.0
+  file_picker: ^12.2.0
+  fixnum: ^1.1.1
+  flutter:
+    sdk: flutter
+  flutter_background: ^1.3.1
+  flutter_callkit_incoming: ^3.1.6
+  flutter_highlight: ^0.7.0
+  flutter_inappwebview: ^6.2.0-beta.3
+  flutter_local_notifications: ^22.3.0
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.1
+  flutter_secure_storage: ^11.2.0
+  flutter_staggered_grid_view: ^0.7.0 # Would like to replace this package at some point (only used on Desktop)
+  flutter_svg: ^2.2.4
+  flutter_thumbhash: ^0.1.0+1
+  flutter_tts: ^4.2.5
+  flutter_web_auth_2: ^5.1.0
+  flutter_webrtc: ^1.6.2+hotfix.3
+  fluxer_android_notifications:
+    path: packages/fluxer_android_notifications
+  fluxer_dart:
+    path: dart_sdk
+  fluxer_markdown:
+    path: packages/fluxer_markdown
+  fluxer_markdown_native:
+    path: packages/fluxer_markdown_native
+  foldable: ^1.0.5
+  gaimon: ^1.5.0
+  gal: ^2.3.3
+  go_router: ^18.0.1
+  highlight: ^0.7.0
+  hooks: ^1.0.3
+  http: ^1.5.0
+  image: ^4.8.0
+  image_picker: ^1.2.3
+  image_picker_android: ^0.8.13+19
+  image_picker_platform_interface: ^2.11.1
+  in_app_purchase: ^3.3.1
+  in_app_purchase_android: ^0.5.3
+  intl: ^0.20.2
+  livekit_client: ^2.13.0
+  local_translation: ^0.1.1
+  markdown: ^7.3.1
+  material_ui: ^1.5.0
+  # Temp: fluxerapp/media-kit fork (revert to pub.dev versions in the future).
+  measure_flutter: ^0.9.1
+  media_kit:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: media_kit
+  media_kit_libs_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/universal/media_kit_libs_video
+  media_kit_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: media_kit_video
+  native_toolchain_c: ^0.17.6
+  package_info_plus: ^10.2.1
+  passkeys: ^2.23.1
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  permission_handler: ^13.0.2
+  phosphor_flutter:
+    git:
+      url: https://github.com/Niural/phosphor_flutter
+  photo_manager: ^3.12.0
+  pointycastle: ^4.0.0
+  protobuf: ^6.0.0
+  qr: ^4.0.0
+  quick_actions: ^1.1.1
+  receive_sharing_intent: ^1.9.0
+  record: ^7.1.1
+  riverpod: ^3.4.3
+  riverpod_annotation: ^4.0.7
+  sensors_plus: ^7.1.0
+  shared_preferences: ^2.5.5
+  skeletonizer: ^3.0.0
+  smart_keyboard_insets: ^0.3.0
+  sqlite3: ^3.5.2
+  super_clipboard: ^0.9.1
+  talker: ^5.1.20
+  talker_dio_logger: ^5.1.20
+  talker_flutter: ^5.1.20
+  timezone: ^0.11.1
+  unifiedpush: ^6.2.0
+  unifiedpush_ui: ^0.2.0
+  url_launcher: ^6.3.2
+  uuid: ^4.5.1
+  visibility_detector: ^0.4.0+2
+  wakelock_plus: ^1.8.0
+  web_socket_channel: ^3.0.3
+  window_manager: ^0.5.2
+dependency_overrides:
+  # mockito >=5.6.5 requires analyzer ^13, incompatible with the overrides below.
+  analyzer: ^14.4.0
+  analyzer_plugin: ^0.14.0
+  dart_style: 3.1.13
+  device_info_plus: ^13.2.0
+  # Xcode 26.4+ rejects the ASWebAuthenticationPresentationContextProviding
+  # witness in flutter_inappwebview_* 1.2.0-beta.3. Remove once upstream ships
+  # https://github.com/pichillilorenzo/flutter_inappwebview/pull/2809
+  flutter_inappwebview_ios:
+    git:
+      url: https://github.com/wangqiang1588/flutter_inappwebview
+      path: flutter_inappwebview_ios
+      ref: fc33a449b9290b127a471808e22eb7b0edebad92
+  flutter_inappwebview_macos:
+    git:
+      url: https://github.com/wangqiang1588/flutter_inappwebview
+      path: flutter_inappwebview_macos
+      ref: fc33a449b9290b127a471808e22eb7b0edebad92
+  # Temp: fluxerapp/media-kit fork (revert with the dependencies above).
+  media_kit:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: media_kit
+  media_kit_libs_android_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/android/media_kit_libs_android_video
+  media_kit_libs_ios_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/ios/media_kit_libs_ios_video
+  media_kit_libs_linux:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/linux/media_kit_libs_linux
+  media_kit_libs_macos_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/macos/media_kit_libs_macos_video
+  media_kit_libs_windows_video:
+    git:
+      url: https://github.com/fluxerapp/media-kit
+      path: libs/windows/media_kit_libs_windows_video
+  mockito: 5.8.1
+  # Fork pins wakelock_plus ^1.8.1 (dbus ^0.8); keep 1.8.0 for desktop_drop.
+  wakelock_plus: 1.8.0
+
+dev_dependencies:
+  accessibility_radar: ^0.3.0
+  build_runner: ^2.15.0
+  drift_dev: 2.35.0
+  fake_async: ^1.3.3
+  file: ^7.0.1
+  flutter_driver:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  lint_hard: ^7.1.2
+  mockito: ^5.8.1
+  riverpod_generator: ^4.0.9
+  riverpod_lint: ^3.1.9
+  test: ^1.31.0
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/plutonium/
+    - assets/sounds/
+    - assets/haptics/
+    - assets/images/icons/
+    - assets/images/icons/channels/
+    - assets/images/connections/
+    - assets/images/browsers/
+    - assets/images/app_icon_previews/ios/
+    - assets/images/app_icon_previews/android/
+    - assets/emojis.json
+    - assets/emoji-sprites/
+    - assets/certificates/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  fonts:
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSans-Italic.ttf
+          weight: 400
+          style: italic
+    - family: IBMPlexMono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+          weight: 400

@@ -1,0 +1,58 @@
+class ErrorLogRateLimiter {
+  ErrorLogRateLimiter({
+    this.cooldown = const Duration(seconds: 60),
+    this.pruneInterval = const Duration(minutes: 5),
+    this.pruneThreshold = 64,
+  });
+
+  final Duration cooldown;
+  final Duration pruneInterval;
+  final int pruneThreshold;
+
+  final Map<String, _Entry> _entries = <String, _Entry>{};
+  DateTime? _lastPrune;
+
+  bool shouldLog({
+    required Object error,
+    required String source,
+    StackTrace? stackTrace,
+  }) {
+    final DateTime now = DateTime.now();
+    _maybePrune(now);
+
+    final String key = _key(error, stackTrace, source);
+    final _Entry? entry = _entries[key];
+    if (entry != null && now.difference(entry.lastLogged) < cooldown) {
+      return false;
+    }
+    _entries[key] = _Entry(lastLogged: now);
+    return true;
+  }
+
+  void _maybePrune(DateTime now) {
+    final bool intervalElapsed =
+        _lastPrune == null || now.difference(_lastPrune!) >= pruneInterval;
+    if (!intervalElapsed && _entries.length < pruneThreshold) {
+      return;
+    }
+    _lastPrune = now;
+    _entries.removeWhere(
+      (_, _Entry entry) => now.difference(entry.lastLogged) >= cooldown,
+    );
+  }
+
+  String _key(Object error, StackTrace? stackTrace, String source) {
+    final String? stackHead = stackTrace
+        ?.toString()
+        .split('\n')
+        .where((String line) => line.trim().isNotEmpty)
+        .firstOrNull;
+    return '${error.runtimeType}|$error|$source|${stackHead ?? ''}';
+  }
+}
+
+class _Entry {
+  _Entry({required this.lastLogged});
+
+  final DateTime lastLogged;
+}

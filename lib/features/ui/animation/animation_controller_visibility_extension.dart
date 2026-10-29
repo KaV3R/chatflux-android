@@ -1,0 +1,20 @@
+import 'package:flutter/scheduler.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+extension VisibilityAwareAnimationController on AnimationController {
+  void syncWithVisibility({
+    required bool isVisible,
+    bool animationsEnabled = true,
+  }) {
+    final AppLifecycleState? lifecycleState =
+        SchedulerBinding.instance.lifecycleState;
+    final bool isForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    final bool shouldAnimate = isVisible && isForeground && animationsEnabled;
+    if (shouldAnimate && !isAnimating) {
+      repeat();
+    } else if (!shouldAnimate && isAnimating) {
+      stop();
+    }
+  }
+}

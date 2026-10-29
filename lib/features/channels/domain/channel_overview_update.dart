@@ -1,0 +1,366 @@
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/threads/domain/thread_channel.dart';
+import 'package:fluxer_dart/export.dart' hide ChannelType;
+
+const int kMaxChannelTopicLength = 1024;
+const int kMaxChannelNameLength = 100;
+const int kMaxContentWarningTextLength = 200;
+const int kDefaultVoiceConnectionLimit = 5;
+const int kVoiceConnectionLimitMin = 1;
+const int kVoiceConnectionLimitMax = 100;
+const int kVoiceUserLimitMax = 99;
+
+const List<int> kBitrateOptionsKbps = <int>[8, 64, 96, 128];
+
+const List<int> kSlowmodeOptionsSeconds = <int>[
+  0,
+  5,
+  10,
+  15,
+  30,
+  60,
+  120,
+  300,
+  600,
+  900,
+  1800,
+  3600,
+  7200,
+  21600,
+];
+
+const Set<int> kSlowmodeSliderMarkerSeconds = <int>{0, 60, 3600, 21600};
+
+int snapSlowmodeSeconds(int seconds) {
+  if (kSlowmodeOptionsSeconds.contains(seconds)) {
+    return seconds;
+  }
+  int closest = kSlowmodeOptionsSeconds.first;
+  for (final int option in kSlowmodeOptionsSeconds) {
+    if ((option - seconds).abs() < (closest - seconds).abs()) {
+      closest = option;
+    }
+  }
+  return closest;
+}
+
+class ChannelOverviewFormState {
+  const ChannelOverviewFormState({
+    required this.name,
+    required this.topic,
+    required this.url,
+    required this.slowmode,
+    required this.nsfwOverride,
+    required this.contentWarningLevel,
+    required this.contentWarningText,
+    required this.bitrateKbps,
+    required this.userLimit,
+    required this.voiceConnectionLimit,
+    required this.rtcRegion,
+    this.rtcP2p = false,
+    this.announcement = false,
+    this.defaultAutoArchiveDuration = defaultThreadAutoArchiveDuration,
+    this.defaultThreadRateLimitPerUser = 0,
+  });
+
+  final String name;
+  final String topic;
+  final String url;
+  final int slowmode;
+  final bool? nsfwOverride;
+  final int contentWarningLevel;
+  final String contentWarningText;
+  final int bitrateKbps;
+  final int userLimit;
+  final int voiceConnectionLimit;
+  final String? rtcRegion;
+  final bool rtcP2p;
+  final bool announcement;
+  final int defaultAutoArchiveDuration;
+  final int defaultThreadRateLimitPerUser;
+
+  factory ChannelOverviewFormState.fromChannel(Channel channel) {
+    return ChannelOverviewFormState(
+      name: channel.name,
+      topic: channel.topic ?? '',
+      url: channel.url ?? '',
+      slowmode: snapSlowmodeSeconds(channel.rateLimitPerUser),
+      nsfwOverride: channel.nsfwOverride,
+      contentWarningLevel: channel.contentWarningLevel,
+      contentWarningText: channel.contentWarningText ?? '',
+      bitrateKbps: getNearestBitrateKbps(
+        channel.bitrate == null ? 64 : (channel.bitrate! / 1000).round(),
+      ),
+      userLimit: channel.userLimit ?? 0,
+      voiceConnectionLimit:
+          channel.voiceConnectionLimit ?? kDefaultVoiceConnectionLimit,
+      rtcRegion: channel.rtcRegion,
+      rtcP2p: channel.rtcP2p,
+      announcement: channel.type == ChannelType.guildAnnouncement,
+      defaultAutoArchiveDuration:
+          channel.defaultAutoArchiveDuration ??
+          defaultThreadAutoArchiveDuration,
+      defaultThreadRateLimitPerUser: snapSlowmodeSeconds(
+        channel.defaultThreadRateLimitPerUser ?? 0,
+      ),
+    );
+  }
+
+  bool isDirtyComparedTo(ChannelOverviewFormState original) {
+    return name != original.name ||
+        topic != original.topic ||
+        url != original.url ||
+        slowmode != original.slowmode ||
+        nsfwOverride != original.nsfwOverride ||
+        contentWarningLevel != original.contentWarningLevel ||
+        contentWarningText != original.contentWarningText ||
+        bitrateKbps != original.bitrateKbps ||
+        userLimit != original.userLimit ||
+        voiceConnectionLimit != original.voiceConnectionLimit ||
+        rtcRegion != original.rtcRegion ||
+        rtcP2p != original.rtcP2p ||
+        announcement != original.announcement ||
+        defaultAutoArchiveDuration != original.defaultAutoArchiveDuration ||
+        defaultThreadRateLimitPerUser != original.defaultThreadRateLimitPerUser;
+  }
+
+  static const Object _unset = Object();
+
+  ChannelOverviewFormState copyWith({
+    String? name,
+    String? topic,
+    String? url,
+    int? slowmode,
+    Object? nsfwOverride = _unset,
+    int? contentWarningLevel,
+    String? contentWarningText,
+    int? bitrateKbps,
+    int? userLimit,
+    int? voiceConnectionLimit,
+    Object? rtcRegion = _unset,
+    bool? rtcP2p,
+    bool? announcement,
+    int? defaultAutoArchiveDuration,
+    int? defaultThreadRateLimitPerUser,
+  }) {
+    return ChannelOverviewFormState(
+      name: name ?? this.name,
+      topic: topic ?? this.topic,
+      url: url ?? this.url,
+      slowmode: slowmode ?? this.slowmode,
+      nsfwOverride: identical(nsfwOverride, _unset)
+          ? this.nsfwOverride
+          : nsfwOverride as bool?,
+      contentWarningLevel: contentWarningLevel ?? this.contentWarningLevel,
+      contentWarningText: contentWarningText ?? this.contentWarningText,
+      bitrateKbps: bitrateKbps ?? this.bitrateKbps,
+      userLimit: userLimit ?? this.userLimit,
+      voiceConnectionLimit: voiceConnectionLimit ?? this.voiceConnectionLimit,
+      rtcRegion: identical(rtcRegion, _unset)
+          ? this.rtcRegion
+          : rtcRegion as String?,
+      rtcP2p: rtcP2p ?? this.rtcP2p,
+      announcement: announcement ?? this.announcement,
+      defaultAutoArchiveDuration:
+          defaultAutoArchiveDuration ?? this.defaultAutoArchiveDuration,
+      defaultThreadRateLimitPerUser:
+          defaultThreadRateLimitPerUser ?? this.defaultThreadRateLimitPerUser,
+    );
+  }
+}
+
+int getNearestBitrateKbps(int value) {
+  return kBitrateOptionsKbps.reduce(
+    (int closest, int option) =>
+        (option - value).abs() < (closest - value).abs() ? option : closest,
+  );
+}
+
+bool isChannelTopicTooLong(String topic) {
+  return topic.length > kMaxChannelTopicLength;
+}
+
+ContentWarningLevelInput? _contentWarningLevelForPatch(int? value) {
+  if (value == null) {
+    return null;
+  }
+  return ContentWarningLevelInput.fromJson(value);
+}
+
+ChannelUpdateRequestBodyVariant1 buildChannelOverviewUpdate({
+  required Channel channel,
+  required ChannelOverviewFormState current,
+  required ChannelOverviewFormState original,
+  required bool canManageChannel,
+  required bool canUpdateRtcRegion,
+}) {
+  final String? name = canManageChannel && current.name != original.name
+      ? current.name.trim()
+      : null;
+  final String? url =
+      canManageChannel &&
+          channel.type == ChannelType.guildLink &&
+          current.url != original.url
+      ? current.url.trim()
+      : null;
+  final String? topic =
+      canManageChannel &&
+          isGuildTextBasedChannelType(channel.type) &&
+          current.topic != original.topic
+      ? current.topic
+      : null;
+  final int? rateLimitPerUser =
+      canManageChannel &&
+          isGuildTextBasedChannelType(channel.type) &&
+          current.slowmode != original.slowmode
+      ? current.slowmode
+      : null;
+  final bool? nsfwOverride =
+      canManageChannel && current.nsfwOverride != original.nsfwOverride
+      ? current.nsfwOverride
+      : null;
+  final ContentWarningLevelInput? contentWarningLevel =
+      canManageChannel &&
+          current.contentWarningLevel != original.contentWarningLevel
+      ? _contentWarningLevelForPatch(current.contentWarningLevel)
+      : null;
+  final String? contentWarningText =
+      canManageChannel &&
+          current.contentWarningText != original.contentWarningText
+      ? (current.contentWarningText.isEmpty ? null : current.contentWarningText)
+      : null;
+  final int? bitrate =
+      canManageChannel &&
+          channel.type == ChannelType.guildVoice &&
+          current.bitrateKbps != original.bitrateKbps
+      ? current.bitrateKbps * 1000
+      : null;
+  final int? userLimit =
+      canManageChannel &&
+          channel.type == ChannelType.guildVoice &&
+          current.userLimit != original.userLimit
+      ? current.userLimit
+      : null;
+  final int? voiceConnectionLimit =
+      canManageChannel &&
+          channel.type == ChannelType.guildVoice &&
+          current.voiceConnectionLimit != original.voiceConnectionLimit
+      ? current.voiceConnectionLimit
+      : null;
+  final String? rtcRegion =
+      canUpdateRtcRegion &&
+          channel.type == ChannelType.guildVoice &&
+          current.rtcRegion != original.rtcRegion
+      ? current.rtcRegion
+      : null;
+  final bool? rtcP2p =
+      canManageChannel &&
+          channel.type == ChannelType.guildVoice &&
+          current.rtcP2p != original.rtcP2p
+      ? current.rtcP2p
+      : null;
+  final num? type =
+      canManageChannel &&
+          isAnnouncementConvertibleChannel(channel.type) &&
+          current.announcement != original.announcement
+      ? (current.announcement
+            ? ChannelType.guildAnnouncement.wireValue
+            : ChannelType.guildText.wireValue)
+      : null;
+  return switch (channel.type) {
+    ChannelType.guildText ||
+    ChannelType.guildAnnouncement ||
+    ChannelType.guildVoice ||
+    ChannelType.guildCategory ||
+    ChannelType.guildLink => ChannelUpdateRequestBodyVariant1(
+      topic: topic,
+      url: url,
+      bitrate: bitrate,
+      userLimit: userLimit,
+      voiceConnectionLimit: voiceConnectionLimit,
+      nsfwOverride: nsfwOverride,
+      contentWarningLevel: contentWarningLevel,
+      contentWarningText: contentWarningText,
+      rateLimitPerUser: rateLimitPerUser,
+      rtcRegion: rtcRegion,
+      rtcP2p: rtcP2p,
+      name: name,
+      type: type,
+    ),
+    _ => throw UnsupportedError(
+      'Channel overview updates are not supported for ${channel.type}',
+    ),
+  };
+}
+
+Set<String> overviewUpdateIncludeNullFields({
+  required ChannelOverviewFormState current,
+  required ChannelOverviewFormState original,
+  required bool canManageChannel,
+}) {
+  final Set<String> fields = <String>{};
+  if (canManageChannel && current.nsfwOverride != original.nsfwOverride) {
+    fields.add('nsfw_override');
+  }
+  if (canManageChannel &&
+      current.contentWarningText != original.contentWarningText &&
+      current.contentWarningText.trim().isEmpty) {
+    fields.add('content_warning_text');
+  }
+  return fields;
+}
+
+Map<String, dynamic> buildChannelOverviewPatchBody({
+  required Channel channel,
+  required ChannelOverviewFormState current,
+  required ChannelOverviewFormState original,
+  required bool canManageChannel,
+  required bool canUpdateRtcRegion,
+}) {
+  final ChannelUpdateRequestBodyVariant1 request = buildChannelOverviewUpdate(
+    channel: channel,
+    current: current,
+    original: original,
+    canManageChannel: canManageChannel,
+    canUpdateRtcRegion: canUpdateRtcRegion,
+  );
+  final Set<String> includeNullFields = overviewUpdateIncludeNullFields(
+    current: current,
+    original: original,
+    canManageChannel: canManageChannel,
+  );
+  final Map<String, dynamic> patch = channelUpdateRequestToPatchBody(request);
+  if (includeNullFields.contains('nsfw_override')) {
+    patch['nsfw_override'] = current.nsfwOverride;
+  }
+  if (includeNullFields.contains('content_warning_text')) {
+    final String trimmed = current.contentWarningText.trim();
+    patch['content_warning_text'] = trimmed.isEmpty ? null : trimmed;
+  }
+  if (canManageChannel && isTextThreadParentType(channel.type)) {
+    if (current.defaultAutoArchiveDuration !=
+        original.defaultAutoArchiveDuration) {
+      patch['default_auto_archive_duration'] =
+          current.defaultAutoArchiveDuration;
+    }
+    if (current.defaultThreadRateLimitPerUser !=
+        original.defaultThreadRateLimitPerUser) {
+      patch['default_thread_rate_limit_per_user'] =
+          current.defaultThreadRateLimitPerUser;
+    }
+  }
+  return patch;
+}
+
+Map<String, dynamic> channelUpdateRequestToPatchBody(
+  ChannelUpdateRequestBodyVariant1 request,
+) {
+  final Map<String, dynamic> body = request.toJson();
+  final Map<String, dynamic> patch = <String, dynamic>{};
+  for (final MapEntry<String, dynamic> entry in body.entries) {
+    if (entry.value != null) {
+      patch[entry.key] = entry.value;
+    }
+  }
+  return patch;
+}

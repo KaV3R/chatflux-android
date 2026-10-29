@@ -1,0 +1,264 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/media/fluxer_media_url.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
+import 'package:fluxer_app/features/friends/domain/friend.dart';
+import 'package:fluxer_app/features/profile/domain/presence_status_labels.dart';
+import 'package:fluxer_app/features/profile/presentation/user_profile_sheet.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class QuickSwitcherFriendsList extends ConsumerWidget {
+  const QuickSwitcherFriendsList({
+    required this.searchQuery,
+    required this.onNavigatedAway,
+    required this.scrollController,
+    super.key,
+  });
+
+  final String searchQuery;
+  final VoidCallback onNavigatedAway;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = FluxerLocalizations.of(context);
+    final friends = ref
+        .watch(dmViewModelProvider)
+        .friendsList
+        .where((Friend f) => f.friendStatus == FriendStatus.accepted)
+        .toList();
+    final String query = searchQuery.trim().toLowerCase();
+    final List<Friend> filtered = query.isEmpty
+        ? friends
+        : friends
+              .where((Friend friend) => _matchesFriend(friend, query))
+              .toList();
+    if (friends.isEmpty) {
+      return _buildScrollableEmpty(
+        context,
+        title: l10n.quickSwitcherFriendsEmptyTitle,
+        hint: l10n.quickSwitcherFriendsEmptyHint,
+      );
+    }
+    if (filtered.isEmpty) {
+      return _buildScrollableEmpty(
+        context,
+        title: l10n.quickSwitcherFriendsNoMatchTitle,
+        hint: l10n.quickSwitcherFriendsNoMatchHint,
+      );
+    }
+    final Map<String, List<Friend>> groups = _groupFriends(filtered);
+    final List<String> letters = groups.keys.toList()..sort();
+    return ListView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: FluxerBottomSheet.scrollViewPadding(
+        context,
+        padding: EdgeInsets.only(
+          left: context.layout.s3,
+          right: context.layout.s3,
+        ),
+      ),
+      children: <Widget>[
+        for (final String letter in letters) ...<Widget>[
+          Padding(
+            padding: EdgeInsets.only(bottom: context.layout.s1 + 2),
+            child: Text(letter, style: context.textStyles.smallText),
+          ),
+          ...groups[letter]!.map(
+            (Friend friend) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _FriendRow(
+                friend: friend,
+                onTap: () => unawaited(_openProfile(context, friend.id)),
+              ),
+            ),
+          ),
+          SizedBox(height: context.layout.s3),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _openProfile(BuildContext context, String userId) async {
+    final GoRouteInformationProvider location = GoRouter.of(
+      context,
+    ).routeInformationProvider;
+    bool navigated = false;
+    void markNavigated() => navigated = true;
+    location.addListener(markNavigated);
+    try {
+      await FluxerUserProfileSheet.show(context, userId: userId);
+    } finally {
+      location.removeListener(markNavigated);
+    }
+    if (navigated && context.mounted) {
+      onNavigatedAway();
+    }
+  }
+
+  bool _matchesFriend(Friend friend, String query) {
+    final List<String> haystacks = <String>[
+      friend.displayName,
+      friend.username,
+      if (friend.nickname != null) friend.nickname!,
+    ];
+    return haystacks.any((String value) => value.toLowerCase().contains(query));
+  }
+
+  Widget _buildScrollableEmpty(
+    BuildContext context, {
+    required String title,
+    required String hint,
+  }) {
+    return ListView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: context.layout.s8),
+      children: <Widget>[
+        SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.25,
+          child: _EmptyState(title: title, hint: hint),
+        ),
+      ],
+    );
+  }
+
+  Map<String, List<Friend>> _groupFriends(List<Friend> friends) {
+    final Map<String, List<Friend>> groups = <String, List<Friend>>{};
+    for (final Friend friend in friends) {
+      final String letter = friend.displayName.isNotEmpty
+          ? friend.displayName[0].toUpperCase()
+          : '#';
+      groups.putIfAbsent(letter, () => <Friend>[]).add(friend);
+    }
+    for (final List<Friend> group in groups.values) {
+      group.sort(
+        (Friend a, Friend b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+    }
+    return groups;
+  }
+}
+
+class _FriendRow extends StatelessWidget {
+  const _FriendRow({required this.friend, required this.onTap});
+
+  final Friend friend;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = FluxerLocalizations.of(context);
+    final String statusLabel = _statusLabel(friend.status, l10n);
+    return Material(
+      color: colors.backgroundSecondaryAlt,
+      borderRadius: context.layout.radiusLg,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: context.layout.radiusLg,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              FluxerAvatar.userPresence(
+                fallbackText: friend.displayName,
+                userId: friend.id,
+                imageUrl: FluxerMediaUrl.userAvatar(
+                  userId: friend.id,
+                  hash: friend.avatar,
+                ),
+                avatarColor: friend.avatarColor,
+                size: 32,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      friend.displayName,
+                      style: context.textStyles.username.copyWith(
+                        fontSize: 15,
+                        height: 18 / 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (statusLabel.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 1),
+                      Text(
+                        statusLabel,
+                        style: context.textStyles.bodySmall.copyWith(
+                          fontSize: 13,
+                          height: 16 / 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              PhosphorIcon(
+                PhosphorIconsBold.caretRight,
+                size: 16,
+                color: colors.textPrimaryMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _statusLabel(String status, FluxerLocalizations l10n) {
+    if (status.isEmpty || status == 'offline') {
+      return '';
+    }
+    return presenceStatusLabel(status, l10n);
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.title, required this.hint});
+
+  final String title;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(context.layout.s8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: context.textStyles.label.copyWith(
+                color: context.colors.textTertiary,
+                height: 20 / 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hint,
+              textAlign: TextAlign.center,
+              style: context.textStyles.timestamp.copyWith(height: 16 / 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

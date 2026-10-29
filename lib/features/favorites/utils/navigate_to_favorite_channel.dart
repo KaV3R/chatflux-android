@@ -1,0 +1,63 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/router/navigate_to_content.dart';
+import 'package:fluxer_app/core/router/route_names.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/utils/navigation/navigate_to_channel_content.dart';
+import 'package:fluxer_app/features/favorites/domain/favorite_guild_id.dart';
+import 'package:fluxer_app/features/mature_content/utils/channel_gate_navigator.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+Future<void> navigateToFavoriteChannel({
+  required BuildContext context,
+  required WidgetRef ref,
+  required String channelId,
+  String? guildId,
+  Channel? channel,
+  String? messageId,
+}) async {
+  final String chatPath = messageId == null || messageId.isEmpty
+      ? RoutePaths.favoritesChannel(channelId)
+      : RoutePaths.favoritesChannelMessage(channelId, messageId);
+  final String? favoriteGuildId = guildId;
+
+  if (favoriteGuildId == null || isFavoriteDmGuildId(favoriteGuildId)) {
+    final bool canProceed = await promptForChannelGateIfNeeded(
+      context: context,
+      container: ref.container,
+      channelId: channelId,
+    );
+    if (!context.mounted || !canProceed) {
+      return;
+    }
+    navigateToContent(context, chatPath);
+    return;
+  }
+
+  final Channel? resolvedChannel =
+      channel ?? await loadGuildChannelById(ref, channelId);
+  if (!context.mounted) {
+    return;
+  }
+  if (resolvedChannel != null) {
+    await openGuildChannelContent(
+      context: context,
+      ref: ref,
+      guildId: favoriteGuildId,
+      channel: resolvedChannel,
+      chatPath: chatPath,
+      targetMessageId: messageId,
+    );
+    return;
+  }
+
+  final bool canProceed = await promptForChannelGateIfNeeded(
+    context: context,
+    container: ref.container,
+    channelId: channelId,
+    guildId: favoriteGuildId,
+  );
+  if (!context.mounted || !canProceed) {
+    return;
+  }
+  navigateToContent(context, chatPath);
+}

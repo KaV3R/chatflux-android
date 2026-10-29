@@ -1,0 +1,196 @@
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/embeds/embed_gallery_media.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/embeds/embed_shared.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_network_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_thumb_hash_placeholder.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_markdown.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/wallpaper/chat_wallpaper_text_theme.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_gallery_utils.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_media_viewer_utils.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_youtube_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_dimension_utils.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_markdown/fluxer_markdown.dart';
+
+class EmbedLink extends StatelessWidget {
+  final Embed embed;
+  final EmbedGalleryIndex galleryIndex;
+  final int embedIndex;
+  final MediaDimensionSize dimensionSize;
+  final bool revealSpoilers;
+  final FluxerSpoilerSyncController? spoilerSyncController;
+  final String? channelId;
+  final String? messageId;
+
+  const EmbedLink({
+    required this.embed,
+    required this.galleryIndex,
+    required this.embedIndex,
+    this.dimensionSize = MediaDimensionSize.small,
+    this.revealSpoilers = false,
+    this.spoilerSyncController,
+    this.channelId,
+    this.messageId,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChatSurfaceTheme(
+      builder: (BuildContext context) {
+        final sideColor = embed.color != null
+            ? Color(0xFF000000 | (embed.color! & 0xFFFFFF))
+            : context.colors.backgroundSecondaryAlt;
+
+        final dimensions = mediaDimensionsForSize(dimensionSize);
+        final EmbedGalleryDisplay gallery = galleryIndex.resolveDisplay(
+          embedIndex: embedIndex,
+          hasAnyMedia:
+              embed.thumbnail != null ||
+              embed.image != null ||
+              embed.video != null,
+        );
+
+        return Container(
+          margin: const EdgeInsets.only(top: 4),
+          constraints: BoxConstraints(maxWidth: dimensions.maxWidth),
+          decoration: BoxDecoration(
+            color: context.colors.embedBackground,
+            border: Border(left: BorderSide(color: sideColor, width: 4)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (embed.providerName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: EmbedProvider(
+                      name: embed.providerName!,
+                      url: embed.providerUrl,
+                    ),
+                  ),
+                if (embed.author != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: EmbedAuthorRow(author: embed.author!),
+                  ),
+                if (embed.title != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: EmbedTitle(title: embed.title!, url: embed.url),
+                  ),
+                if (embed.description != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: MessageMarkdown(
+                      data: embed.description!,
+                      baseStyle: context.textStyles.embedDescription,
+                      markdownContext:
+                          FluxerMarkdownContext.restrictedEmbedDescription,
+                      revealSpoilers: revealSpoilers,
+                      spoilerSyncController: spoilerSyncController,
+                    ),
+                  ),
+                if (gallery.showGallery)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: EmbedGalleryMedia(
+                      embed: embed,
+                      galleryImages: gallery.galleryImages,
+                      embedIndex: embedIndex,
+                      dimensionSize: dimensionSize,
+                      revealSpoilers: revealSpoilers,
+                      channelId: channelId,
+                      messageId: messageId,
+                    ),
+                  )
+                else if (isValidEmbedMedia(embed.thumbnail))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: FluxerGestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: canOpenEmbedMediaViewer(embed.thumbnail!)
+                          ? () => openEmbedMediaViewer(
+                              context,
+                              media: embed.thumbnail!,
+                              title: embed.title,
+                              embedPageUrl: embed.url,
+                              embedIndex: embedIndex,
+                              channelId: channelId,
+                              messageId: messageId,
+                            )
+                          : null,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LayoutBuilder(
+                          builder:
+                              (
+                                BuildContext context,
+                                BoxConstraints constraints,
+                              ) => _thumbnailBox(
+                                context: context,
+                                thumbnail: embed.thumbnail!,
+                                dimensions: mediaDimensionsWithinWidth(
+                                  dimensions,
+                                  constraints.maxWidth,
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (embed.footer != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: EmbedFooterRow(
+                      footer: embed.footer!,
+                      timestamp: embed.timestamp,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _thumbnailBox({
+    required BuildContext context,
+    required EmbedMedia thumbnail,
+    required FluxerMediaDimensions dimensions,
+  }) {
+    final Size displaySize = constrainMediaSize(
+      dimensions: dimensions,
+      width: thumbnail.width,
+      height: thumbnail.height,
+    )!;
+    final ({int? width, int? height}) cache = coverDecodeCacheSize(
+      cellWidth: displaySize.width,
+      cellHeight: displaySize.height,
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      sourceWidth: thumbnail.width,
+      sourceHeight: thumbnail.height,
+    );
+    final String imageUrl = embedMediaEffectiveUrl(thumbnail);
+    final Widget image = ChatNetworkImage(
+      imageUrl: imageUrl,
+      contentType: thumbnail.contentType,
+      fit: BoxFit.cover,
+      memCacheWidth: cache.width,
+      memCacheHeight: cache.height,
+      placeholder: MediaThumbHashPlaceholder(thumbHash: thumbnail.placeholder),
+    );
+    return SizedBox(
+      width: displaySize.width,
+      height: displaySize.height,
+      child: image,
+    );
+  }
+}

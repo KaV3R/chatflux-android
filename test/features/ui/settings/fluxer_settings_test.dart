@@ -1,0 +1,129 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/features/ui/settings/fluxer_settings.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+import '../../../helpers/test_l10n.dart';
+
+Widget buildTestApp(Widget child) {
+  final colorTheme = buildDarkColorTheme();
+  return MaterialApp(
+    locale: kTestLocale,
+    localizationsDelegates: fluxerLocalizationsDelegates,
+    supportedLocales: FluxerLocalizations.supportedLocales,
+    theme: buildFluxerTheme(
+      colorTheme: colorTheme,
+      textTheme: FluxerTextTheme.fromColors(colorTheme),
+      layoutTheme: FluxerLayoutTheme.scaled(),
+    ),
+    home: Scaffold(body: child),
+  );
+}
+
+void main() {
+  group('FluxerSettings primitives', () {
+    testWidgets('header renders title, description, and back action', (
+      tester,
+    ) async {
+      var backPressed = false;
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Material(
+            child: FluxerSettingsHeader(
+              title: 'Settings',
+              description: 'Manage your app preferences.',
+              onBack: () => backPressed = true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Manage your app preferences.'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pump();
+
+      expect(backPressed, isTrue);
+    });
+
+    testWidgets('group and row render shared mobile settings layout', (
+      tester,
+    ) async {
+      var tapped = false;
+
+      await tester.pumpWidget(
+        buildTestApp(const Material(child: SizedBox.shrink())),
+      );
+
+      await tester.pumpWidget(
+        buildTestApp(
+          Material(
+            child: FluxerMenuGroup(
+              children: [
+                FluxerBottomSheetMenuItem(
+                  label: 'Notifications',
+                  hint: 'Push, desktop, and badge settings.',
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => tapped = true,
+                ),
+                FluxerBottomSheetMenuItem(
+                  label: 'Appearance',
+                  hint: 'Theme, density, and font sizing.',
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('Push, desktop, and badge settings.'), findsOneWidget);
+      expect(find.byType(Divider), findsOneWidget);
+
+      await tester.tap(find.text('Notifications'));
+      await tester.pump();
+
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('form section and danger zone preserve hierarchy', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          const Material(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FluxerSettingsFormSection(
+                  title: 'Profile',
+                  description: 'Shown on your public account.',
+                  children: [Text('Display name'), Text('Bio')],
+                ),
+                FluxerSettingsDangerZone(
+                  title: 'Danger zone',
+                  description: 'These actions are permanent.',
+                  child: Text('Delete account'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Shown on your public account.'), findsOneWidget);
+      expect(find.text('Display name'), findsOneWidget);
+      expect(find.text('Danger zone'), findsOneWidget);
+      expect(find.text('These actions are permanent.'), findsOneWidget);
+      expect(find.text('Delete account'), findsOneWidget);
+    });
+  });
+}

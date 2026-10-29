@@ -1,0 +1,234 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/media/fluxer_media_url.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/channels/utils/navigation/navigate_to_channel_content.dart';
+import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
+import 'package:fluxer_app/features/dm/domain/dm_conversation.dart';
+import 'package:fluxer_app/features/dm/domain/dm_unread_state.dart';
+import 'package:fluxer_app/features/dm/presentation/widgets/group_dm_avatar.dart';
+import 'package:fluxer_app/features/dm/providers/dm_mute_provider.dart';
+import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
+import 'package:fluxer_app/features/dm/providers/unread_dm_provider.dart';
+import 'package:fluxer_app/features/friends/providers/friend_providers.dart';
+import 'package:fluxer_app/features/guilds/presentation/widgets/guild_navbar.dart'
+    show GuildNavbarIconShape, GuildNavbarPill;
+import 'package:fluxer_app/features/guilds/providers/guild_drag_provider.dart'
+    show kGuildNavbarWidth;
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/navigation_item_semantics.dart';
+
+class DmNavbarItem extends ConsumerStatefulWidget {
+  final String channelId;
+  final String recipientId;
+  final String displayName;
+  final int type;
+  final void Function(Offset position)? onContextMenu;
+
+  const DmNavbarItem({
+    required this.channelId,
+    required this.recipientId,
+    required this.displayName,
+    required this.type,
+    this.onContextMenu,
+    super.key,
+  });
+
+  @override
+  ConsumerState<DmNavbarItem> createState() => _DmNavbarItemState();
+}
+
+class _DmNavbarItemState extends ConsumerState<DmNavbarItem>
+    with AutomaticKeepAliveClientMixin {
+  bool _isHovered = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  Future<void> _navigateToDm() async {
+    await navigateToDmChannelContent(
+      context: context,
+      ref: ref,
+      channelId: widget.channelId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final (int mentionCount, bool hasUnread) = ref.watch(
+      unreadDmChannelsProvider.select(
+        (s) => (
+          s.mentionCountFor(widget.channelId),
+          s.hasUnread(widget.channelId),
+        ),
+      ),
+    );
+    final bool isSelected = ref.watch(
+      activeChannelIdProvider.select((id) => id == widget.channelId),
+    );
+    final colors = context.colors;
+
+    final isMuted =
+        ref
+            .watch(mutedDmChannelIdsProvider)
+            .value
+            ?.contains(widget.channelId) ??
+        false;
+    final showFadedOnMuted = ref.watch(
+      appearancePreferencesProvider.select(
+        (s) => s.showFadedUnreadOnMutedChannels,
+      ),
+    );
+    final unreadState = computeDmUnreadIndicator(
+      unreadCount: hasUnread ? 1 : 0,
+      mentionCount: mentionCount,
+      isMuted: isMuted,
+      showFadedUnreadOnMutedChannels: showFadedOnMuted,
+    );
+
+    final isGroup = isDmGroupType(widget.type);
+    final DmConversation? conversation = ref.watch(
+      dmViewModelProvider.select(
+        (state) => _findConversation(state.conversations),
+      ),
+    );
+    final String displayName = isGroup
+        ? conversation?.displayNameWith(
+                null,
+                l10n: FluxerLocalizations.of(context),
+                currentUserId: ref.watch(currentUserIdProvider),
+              ) ??
+              widget.displayName
+        : ref.watch(friendNicknameProvider(widget.recipientId)).value ??
+              widget.displayName;
+    final avatarImageUrl = isGroup
+        ? null
+        : FluxerMediaUrl.userAvatar(
+            userId: widget.recipientId,
+            hash: conversation?.recipientAvatar,
+          );
+
+    final double indicatorHeight = isSelected
+        ? GuildNavbarPill.selectedHeight
+        : _isHovered
+        ? GuildNavbarPill.hoverHeight
+        : unreadState.show
+        ? GuildNavbarPill.unreadHeight
+        : 0;
+    final bool showBadge = mentionCount > 0 && unreadState.show;
+    final String semanticLabel = navigationItemSemanticLabel(
+      l10n: FluxerLocalizations.of(context),
+      name: displayName,
+      isSelected: isSelected,
+      hasUnread: unreadState.show && mentionCount == 0,
+      mentionCount: showBadge ? mentionCount : 0,
+      isMuted: isMuted,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: GuildNavbarIconShape.itemSpacing / 2,
+      ),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: Semantics(
+          button: true,
+          selected: isSelected,
+          label: semanticLabel,
+          child: ExcludeSemantics(
+            child: FluxerGestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => unawaited(_navigateToDm()),
+              onSecondaryTapDown: (details) =>
+                  widget.onContextMenu?.call(details.globalPosition),
+              onLongPress: () => widget.onContextMenu?.call(Offset.zero),
+              child: SizedBox(
+                width: kGuildNavbarWidth,
+                height: GuildNavbarIconShape.size,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: GuildNavbarPill(
+                          height: indicatorHeight,
+                          faded:
+                              unreadState.faded && !isSelected && !_isHovered,
+                        ),
+                      ),
+                    ),
+                    FluxerTooltip(
+                      message: displayName,
+                      position: FluxerTooltipPosition.right,
+                      child: SizedBox.square(
+                        dimension: GuildNavbarIconShape.size,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            if (isGroup && conversation != null)
+                              GroupDmAvatar.conversation(
+                                conversation,
+                                size: GuildNavbarIconShape.size,
+                              )
+                            else if (isGroup)
+                              const FluxerAvatarCluster(
+                                size: GuildNavbarIconShape.size,
+                              )
+                            else
+                              FluxerAvatar.user(
+                                fallbackText: displayName,
+                                userId: widget.recipientId,
+                                imageUrl: avatarImageUrl,
+                                showStatus: false,
+                                size: GuildNavbarIconShape.size,
+                              ),
+                            if (showBadge)
+                              Positioned(
+                                bottom: GuildNavbarPill.badgeInset,
+                                right: GuildNavbarPill.badgeInset,
+                                child: Opacity(
+                                  opacity: unreadState.faded ? 0.5 : 1.0,
+                                  child: FluxerBadgeEntrance(
+                                    child: FluxerBadge.count(
+                                      count: mentionCount,
+                                      cutoutColor:
+                                          colors.serverSidebarBackground,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  DmConversation? _findConversation(List<DmConversation> conversations) {
+    for (final conversation in conversations) {
+      if (conversation.id == widget.channelId) {
+        return conversation;
+      }
+    }
+    return null;
+  }
+}

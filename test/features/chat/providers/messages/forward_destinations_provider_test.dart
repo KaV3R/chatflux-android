@@ -1,0 +1,589 @@
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/features/chat/providers/messages/forward_destinations_provider.dart';
+import 'package:fluxer_app/features/dm/domain/dm_conversation.dart';
+import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
+import 'package:fluxer_app/features/friends/domain/friend.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_list_view_model.dart';
+import 'package:fluxer_app/features/settings/providers/view_models/user_settings_view_model.dart';
+
+import '../../../../helpers/open_test_database.dart';
+
+const String _userId = 'user_1';
+const String _ownedGuild = 'guild_owned';
+const String _otherGuild = 'guild_other';
+const String _memberGuild = 'guild_member';
+const int _sendMessagesBit = 1 << 11;
+
+UserSettingsViewState _userSettings() => const UserSettingsViewState(
+  userId: _userId,
+  username: 'user',
+  displayName: 'user',
+  discriminator: '0001',
+  avatar: null,
+  avatarColor: null,
+  memberSince: null,
+  status: 'online',
+  messageDisplayCompact: false,
+  developerMode: false,
+  trustedDomains: <String>[],
+);
+
+class _FakeGuilds extends GuildListViewModel {
+  _FakeGuilds(this._guilds);
+  final List<Guild> _guilds;
+  @override
+  GuildListViewState build() => GuildListViewState(guilds: _guilds);
+}
+
+class _FakeUser extends UserSettingsViewModel {
+  @override
+  UserSettingsViewState build() => _userSettings();
+}
+
+class _FakeDms extends DmViewModel {
+  _FakeDms(this._conversations, {this.friends = const <Friend>[]});
+  final List<DmConversation> _conversations;
+  final List<Friend> friends;
+  @override
+  DmViewState build() => DmViewState(
+    conversations: _conversations,
+    friendsList: friends,
+    activeTab: FriendsTab.online,
+    searchQuery: '',
+  );
+}
+
+DmConversation _dm(String id, {int type = 1}) => DmConversation(
+  id: id,
+  type: type,
+  recipientId: 'recip_$id',
+  recipientName: 'Recipient $id',
+  lastMessage: '',
+  lastMessageTime: DateTime(2020),
+);
+
+Future<FluxerDatabase> _seedDb() async {
+  final FluxerDatabase db = openTestDatabase();
+  for (final (String id, String ownerId) in <(String, String)>[
+    (_ownedGuild, _userId),
+    (_otherGuild, 'someone_else'),
+    (_memberGuild, 'someone_else'),
+  ]) {
+    await db.guildDao.upsertServer(
+      ServersCompanion.insert(id: id, name: id, ownerId: Value(ownerId)),
+    );
+  }
+
+  Future<void> channel(
+    String id,
+    String guildId,
+    int type, {
+    int rateLimit = 0,
+  }) {
+    return db.channelDao.upsertChannel(
+      ChannelsCompanion.insert(
+        id: id,
+        guildId: guildId,
+        name: id,
+        type: Value(type),
+        rateLimitPerUser: Value(rateLimit),
+      ),
+    );
+  }
+
+  await channel('c_source', _ownedGuild, 0);
+  await channel('c_text', _ownedGuild, 0);
+  await channel('c_voice', _ownedGuild, 2);
+  await channel('c_category', _ownedGuild, 4);
+  await channel('c_link', _ownedGuild, 998);
+
+  await channel('c_other', _otherGuild, 0);
+
+  await channel('c_slow', _memberGuild, 0, rateLimit: 10);
+  await db.roleDao.upsertRoles(<RolesCompanion>[
+    RolesCompanion.insert(
+      id: _memberGuild,
+      guildId: _memberGuild,
+      name: '@everyone',
+      permissions: const Value('$_sendMessagesBit'),
+    ),
+  ]);
+  await db.memberDao.upsertMember(
+    MembersCompanion.insert(userId: _userId, guildId: _memberGuild),
+  );
+
+  await db.roleDao.upsertRoles(<RolesCompanion>[
+    RolesCompanion.insert(
+      id: _otherGuild,
+      guildId: _otherGuild,
+      name: '@everyone',
+      permissions: const Value('0'),
+    ),
+  ]);
+  await db.memberDao.upsertMember(
+    MembersCompanion.insert(userId: _userId, guildId: _otherGuild),
+  );
+
+  return db;
+}
+
+ProviderContainer _container(FluxerDatabase db, List<DmConversation> dms) {
+  return ProviderContainer(
+    overrides: [
+      fluxerDatabaseProvider.overrideWithValue(db),
+      guildListViewModelProvider.overrideWith(
+        () => _FakeGuilds(<Guild>[
+          const Guild(id: _ownedGuild, name: 'Owned', ownerId: _userId),
+          const Guild(id: _otherGuild, name: 'Other', ownerId: 'someone_else'),
+          const Guild(
+            id: _memberGuild,
+            name: 'Member',
+            ownerId: 'someone_else',
+          ),
+        ]),
+      ),
+      userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+      dmViewModelProvider.overrideWith(() => _FakeDms(dms)),
+    ],
+  );
+}
+
+Future<List<ForwardDestination>> _read(
+  ProviderContainer container, {
+  bool hasEmbeds = false,
+  bool hasAttachments = false,
+}) {
+  final provider = forwardDestinationsProvider(
+    sourceChannelId: 'c_source',
+    sourceHasEmbeds: hasEmbeds,
+    sourceHasAttachments: hasAttachments,
+  );
+  container.listen(provider, (_, _) {});
+  return container.read(provider.future);
+}
+
+Future<Map<String, ForwardDestination>> _resolve(
+  ProviderContainer container, {
+  bool hasEmbeds = false,
+  bool hasAttachments = false,
+}) async {
+  final List<ForwardDestination> result = await _read(
+    container,
+    hasEmbeds: hasEmbeds,
+    hasAttachments: hasAttachments,
+  );
+  return <String, ForwardDestination>{
+    for (final ForwardDestination d in result) d.channelId: d,
+  };
+}
+
+void main() {
+  test('excludes non-text-based channel types', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(byId.containsKey('c_source'), isTrue);
+    expect(byId.containsKey('c_category'), isFalse);
+    expect(byId.containsKey('c_link'), isFalse);
+    expect(byId.containsKey('c_text'), isTrue);
+    expect(byId.containsKey('c_voice'), isTrue);
+  });
+
+  test('maps guild channel kinds and keeps owner channels sendable', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(byId['c_text']!.kind, ForwardDestinationKind.guildText);
+    expect(byId['c_text']!.disable, ForwardDestinationDisable.none);
+    expect(byId['c_text']!.guildName, 'Owned');
+    expect(byId['c_text']!.guildAvatarImageUrl, isNull);
+    expect(byId['c_voice']!.kind, ForwardDestinationKind.guildVoice);
+    expect(byId['c_voice']!.disable, ForwardDestinationDisable.none);
+  });
+
+  test('resolves guild and group avatar metadata for destinations', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        fluxerDatabaseProvider.overrideWithValue(db),
+        guildListViewModelProvider.overrideWith(
+          () => _FakeGuilds(<Guild>[
+            const Guild(
+              id: _ownedGuild,
+              name: 'Owned',
+              ownerId: _userId,
+              icon: 'owned_icon',
+            ),
+          ]),
+        ),
+        userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+        dmViewModelProvider.overrideWith(
+          () => _FakeDms(<DmConversation>[
+            DmConversation(
+              id: 'dm_1',
+              type: 1,
+              recipientId: '42',
+              recipientName: 'Alice',
+              recipientAvatar: 'alice_avatar',
+              lastMessage: '',
+              lastMessageTime: DateTime(2020),
+            ),
+            DmConversation(
+              id: 'group_1',
+              type: 3,
+              recipientId: 'group_recip',
+              recipientName: 'Group',
+              icon: 'group_icon',
+              groupMembers: const <GroupMemberInfo>[
+                GroupMemberInfo(id: 'member_1', name: 'Bob', avatar: 'bob'),
+              ],
+              lastMessage: '',
+              lastMessageTime: DateTime(2020),
+            ),
+          ]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(
+      byId['c_text']!.guildAvatarImageUrl,
+      contains('guild_owned/owned_icon'),
+    );
+    expect(byId['dm_1']!.avatarImageUrl, contains('42/alice_avatar'));
+    expect(byId['group_1']!.groupIconUrl, contains('group_1/group_icon'));
+    expect(byId['group_1']!.groupMembers, hasLength(1));
+  });
+
+  test('disables channels without send permission', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(
+      byId['c_other']!.disable,
+      ForwardDestinationDisable.noSendPermission,
+    );
+  });
+
+  test('flags slowmode only when the user cannot bypass it', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(byId['c_slow']!.disable, ForwardDestinationDisable.none);
+    expect(byId['c_slow']!.slowmodeEnabled, isTrue);
+    expect(byId['c_slow']!.rateLimitPerUser, 10);
+    expect(byId['c_text']!.slowmodeEnabled, isFalse);
+  });
+
+  test('requires attach-files permission when the message has media', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(
+      container,
+      hasAttachments: true,
+    );
+
+    expect(
+      byId['c_slow']!.disable,
+      ForwardDestinationDisable.noAttachPermission,
+    );
+    expect(byId['c_text']!.disable, ForwardDestinationDisable.none);
+  });
+
+  test('includes DMs, group DMs and personal notes as enabled', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[
+      _dm('dm_1'),
+      _dm('group_1', type: 3),
+      _dm('notes_1', type: 999),
+    ]);
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(byId['dm_1']!.kind, ForwardDestinationKind.dm);
+    expect(byId['dm_1']!.disable, ForwardDestinationDisable.none);
+    expect(byId['dm_1']!.slowmodeEnabled, isFalse);
+    expect(byId['group_1']!.kind, ForwardDestinationKind.group);
+    expect(byId['notes_1']!.kind, ForwardDestinationKind.personalNotes);
+  });
+
+  test('names DMs the same way the DM list does', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        fluxerDatabaseProvider.overrideWithValue(db),
+        guildListViewModelProvider.overrideWith(
+          () => _FakeGuilds(const <Guild>[]),
+        ),
+        userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+        dmViewModelProvider.overrideWith(
+          () => _FakeDms(
+            <DmConversation>[
+              DmConversation(
+                id: 'dm_1',
+                type: 1,
+                recipientId: 'friend_1',
+                recipientName: 'phonetest',
+                lastMessage: '',
+                lastMessageTime: DateTime(2020),
+              ),
+              DmConversation(
+                id: 'group_empty',
+                type: 3,
+                recipientId: '',
+                recipientName: '',
+                lastMessage: '',
+                lastMessageTime: DateTime(2020),
+              ),
+              DmConversation(
+                id: 'group_members',
+                type: 3,
+                recipientId: '',
+                recipientName: '',
+                groupMembers: const <GroupMemberInfo>[
+                  GroupMemberInfo(id: '100', name: 'phonetest'),
+                  GroupMemberInfo(id: '200', name: 'Sim Third'),
+                ],
+                lastMessage: '',
+                lastMessageTime: DateTime(2020),
+              ),
+              _dm('notes_1', type: 999),
+            ],
+            friends: const <Friend>[
+              Friend(
+                id: 'friend_1',
+                username: 'phonetest',
+                friendStatus: FriendStatus.accepted,
+                nickname: 'PT Nick',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final Map<String, ForwardDestination> byId = await _resolve(container);
+
+    expect(byId['dm_1']!.displayName, 'PT Nick');
+    expect(byId['group_empty']!.displayName, 'Unnamed group');
+    expect(byId['group_members']!.displayName, 'Sim Third, phonetest');
+    expect(byId['notes_1']!.displayName, 'Personal notes');
+  });
+
+  test('includes a DM that is itself the forward source', () async {
+    final FluxerDatabase db = await _seedDb();
+    final ProviderContainer container = _container(db, <DmConversation>[
+      _dm('c_source'),
+      _dm('dm_keep'),
+    ]);
+    addTearDown(container.dispose);
+
+    final List<ForwardDestination> result = await _read(container);
+    final Set<String> ids = result
+        .map((ForwardDestination d) => d.channelId)
+        .toSet();
+    expect(ids.contains('c_source'), isTrue);
+    expect(ids.contains('dm_keep'), isTrue);
+  });
+
+  test('guild send-disabled pre-empts permissions for its channels', () async {
+    final FluxerDatabase db = openTestDatabase();
+    await db.channelDao.upsertChannel(
+      ChannelsCompanion.insert(
+        id: 'c_src',
+        guildId: 'g_disabled',
+        name: 'src',
+        type: const Value(0),
+      ),
+    );
+    await db.channelDao.upsertChannel(
+      ChannelsCompanion.insert(
+        id: 'c_in_disabled',
+        guildId: 'g_disabled',
+        name: 'general',
+        type: const Value(0),
+      ),
+    );
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        fluxerDatabaseProvider.overrideWithValue(db),
+        guildListViewModelProvider.overrideWith(
+          () => _FakeGuilds(const <Guild>[
+            Guild(
+              id: 'g_disabled',
+              name: 'Disabled',
+              ownerId: _userId,
+              disabledOperations: 1 << 4,
+            ),
+          ]),
+        ),
+        userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+        dmViewModelProvider.overrideWith(
+          () => _FakeDms(const <DmConversation>[]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final provider = forwardDestinationsProvider(
+      sourceChannelId: 'c_src',
+      sourceHasEmbeds: false,
+      sourceHasAttachments: false,
+    );
+    container.listen(provider, (_, _) {});
+    final List<ForwardDestination> result = await container.read(
+      provider.future,
+    );
+    final ForwardDestination dest = result.firstWhere(
+      (ForwardDestination d) => d.channelId == 'c_in_disabled',
+    );
+    expect(dest.disable, ForwardDestinationDisable.guildSendDisabled);
+  });
+
+  test('member timeout disables channels in that guild', () async {
+    final FluxerDatabase db = openTestDatabase();
+    await db.channelDao.upsertChannel(
+      ChannelsCompanion.insert(
+        id: 'c_src',
+        guildId: 'g_timeout',
+        name: 'src',
+        type: const Value(0),
+      ),
+    );
+    await db.channelDao.upsertChannel(
+      ChannelsCompanion.insert(
+        id: 'c_timeout',
+        guildId: 'g_timeout',
+        name: 'general',
+        type: const Value(0),
+      ),
+    );
+    await db.roleDao.upsertRoles(<RolesCompanion>[
+      RolesCompanion.insert(
+        id: 'g_timeout',
+        guildId: 'g_timeout',
+        name: '@everyone',
+        permissions: const Value('$_sendMessagesBit'),
+      ),
+    ]);
+    await db.memberDao.upsertMember(
+      MembersCompanion.insert(
+        userId: _userId,
+        guildId: 'g_timeout',
+        communicationDisabledUntil: Value(
+          DateTime.now().add(const Duration(hours: 1)),
+        ),
+      ),
+    );
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        fluxerDatabaseProvider.overrideWithValue(db),
+        guildListViewModelProvider.overrideWith(
+          () => _FakeGuilds(const <Guild>[
+            Guild(id: 'g_timeout', name: 'Timeout', ownerId: 'other'),
+          ]),
+        ),
+        userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+        dmViewModelProvider.overrideWith(
+          () => _FakeDms(const <DmConversation>[]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(currentUserIdProvider.notifier).set(_userId);
+
+    final provider = forwardDestinationsProvider(
+      sourceChannelId: 'c_src',
+      sourceHasEmbeds: false,
+      sourceHasAttachments: false,
+    );
+    container.listen(provider, (_, _) {});
+    final List<ForwardDestination> result = await container.read(
+      provider.future,
+    );
+    final ForwardDestination dest = result.firstWhere(
+      (ForwardDestination d) => d.channelId == 'c_timeout',
+    );
+    expect(dest.disable, ForwardDestinationDisable.memberTimedOut);
+  });
+
+  test(
+    'does not block a destination when permission data is not loaded',
+    () async {
+      final FluxerDatabase db = openTestDatabase();
+      await db.channelDao.upsertChannel(
+        ChannelsCompanion.insert(
+          id: 'c_src',
+          guildId: 'g_unloaded',
+          name: 'src',
+          type: const Value(0),
+        ),
+      );
+      await db.channelDao.upsertChannel(
+        ChannelsCompanion.insert(
+          id: 'c_unloaded',
+          guildId: 'g_unloaded',
+          name: 'general',
+          type: const Value(0),
+        ),
+      );
+      final ProviderContainer container = ProviderContainer(
+        overrides: [
+          fluxerDatabaseProvider.overrideWithValue(db),
+          guildListViewModelProvider.overrideWith(
+            () => _FakeGuilds(const <Guild>[
+              Guild(
+                id: 'g_unloaded',
+                name: 'Unloaded',
+                ownerId: 'someone_else',
+              ),
+            ]),
+          ),
+          userSettingsViewModelProvider.overrideWith(_FakeUser.new),
+          dmViewModelProvider.overrideWith(
+            () => _FakeDms(const <DmConversation>[]),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final provider = forwardDestinationsProvider(
+        sourceChannelId: 'c_src',
+        sourceHasEmbeds: false,
+        sourceHasAttachments: false,
+      );
+      container.listen(provider, (_, _) {});
+      final List<ForwardDestination> result = await container.read(
+        provider.future,
+      );
+      final ForwardDestination dest = result.firstWhere(
+        (ForwardDestination d) => d.channelId == 'c_unloaded',
+      );
+      expect(dest.disable, ForwardDestinationDisable.none);
+    },
+  );
+}

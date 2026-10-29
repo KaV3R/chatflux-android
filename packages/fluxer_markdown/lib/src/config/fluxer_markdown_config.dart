@@ -1,0 +1,222 @@
+import 'package:flutter/widgets.dart';
+import 'package:fluxer_markdown/src/utils/ansi_palette.dart';
+import 'package:material_ui/material_ui.dart';
+
+enum FluxerGuildNavigationType { customize, browse, guide, linkedRoles }
+
+FluxerGuildNavigationType? parseFluxerGuildNavigationType(String raw) {
+  return switch (raw) {
+    'customize' => FluxerGuildNavigationType.customize,
+    'browse' => FluxerGuildNavigationType.browse,
+    'guide' => FluxerGuildNavigationType.guide,
+    'linked-roles' => FluxerGuildNavigationType.linkedRoles,
+    _ => null,
+  };
+}
+
+enum FluxerAlertType { note, tip, important, warning, caution }
+
+FluxerAlertType? tryParseFluxerAlertType(String raw) {
+  return switch (raw.toUpperCase()) {
+    'NOTE' => FluxerAlertType.note,
+    'TIP' => FluxerAlertType.tip,
+    'IMPORTANT' => FluxerAlertType.important,
+    'WARNING' => FluxerAlertType.warning,
+    'CAUTION' => FluxerAlertType.caution,
+    _ => null,
+  };
+}
+
+typedef FluxerUnicodeEmojiUrlBuilder = String? Function(String unicode);
+typedef FluxerCustomEmojiUrlBuilder =
+    String Function({
+      required String id,
+      required bool animated,
+      required int size,
+    });
+typedef FluxerMentionBuilder =
+    Widget Function(BuildContext context, String id, TextStyle style);
+typedef FluxerEveryoneMentionBuilder =
+    Widget Function(BuildContext context, String label, TextStyle style);
+typedef FluxerCommandMentionBuilder =
+    Widget Function(
+      BuildContext context,
+      String command,
+      String applicationId,
+      TextStyle style,
+    );
+typedef FluxerGuildNavigationMentionBuilder =
+    Widget Function(
+      BuildContext context,
+      FluxerGuildNavigationType type,
+      String? navigationId,
+      TextStyle style,
+    );
+typedef FluxerLinkWidgetBuilder =
+    Widget? Function(BuildContext context, String href, TextStyle style);
+typedef FluxerLinkTapHandler =
+    Future<void> Function(BuildContext context, String href);
+typedef FluxerAlertBuilder =
+    Widget Function(
+      BuildContext context,
+      FluxerAlertType type,
+      Widget body,
+      TextStyle baseStyle,
+    );
+typedef FluxerSpoilerSyncKeyNormalizer = String? Function(String raw);
+typedef FluxerCodeCopyHandler =
+    void Function(BuildContext context, String code);
+typedef FluxerTimestampFormatter =
+    String Function(DateTime localDateTime, String style);
+typedef FluxerSelectionContextMenuBuilder =
+    Widget Function(
+      BuildContext context,
+      SelectableRegionState selectableRegionState,
+    );
+typedef FluxerEmojiLongPressHandler =
+    void Function(
+      BuildContext context, {
+      required String? emojiId,
+      required String name,
+      required bool animated,
+      required bool isCustom,
+    });
+
+class FluxerSpoilerSyncController extends ChangeNotifier {
+  final Set<String> _revealedKeys = <String>{};
+  var _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  bool isRevealed(Iterable<String> keys) {
+    if (_isDisposed) {
+      return false;
+    }
+    return keys.any(_revealedKeys.contains);
+  }
+
+  void reveal(Iterable<String> keys) {
+    if (_isDisposed) {
+      return;
+    }
+    var changed = false;
+    for (final key in keys) {
+      if (key.isEmpty) {
+        continue;
+      }
+      changed = _revealedKeys.add(key) || changed;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+}
+
+class FluxerMarkdownConfig {
+  const FluxerMarkdownConfig({
+    required this.unicodeEmojiUrlBuilder,
+    required this.customEmojiUrlBuilder,
+    this.unicodeEmojiPattern,
+    this.animateCustomEmoji = true,
+    this.linkColor,
+    this.blockquoteBorderColor,
+    this.blockquoteTextColor,
+    this.inlineCodeBackgroundColor,
+    this.inlineCodeTextColor,
+    this.codeTextStyle,
+    this.tableBorderColor,
+    this.tableHeaderBackgroundColor,
+    this.tableHeaderTextColor,
+    this.tableRowOddBackgroundColor,
+    this.tableRowEvenBackgroundColor,
+    this.tableBorderRadius,
+    this.spoilerBackgroundColor,
+    this.internalLinkPattern,
+    this.userMentionBuilder,
+    this.channelMentionBuilder,
+    this.roleMentionBuilder,
+    this.everyoneMentionBuilder,
+    this.commandMentionBuilder,
+    this.guildNavigationMentionBuilder,
+    this.linkWidgetBuilder,
+    this.onTapLink,
+    this.alertBuilder,
+    this.spoilersInitiallyRevealed = false,
+    this.spoilerSyncController,
+    this.spoilerSyncKeyNormalizer,
+    this.onCopyCode,
+    this.timestampFormatter,
+    this.selectionContextMenuBuilder,
+    this.onEmojiLongPress,
+    this.alwaysUnderlineLinks = false,
+    this.dimStrikethroughText = true,
+    this.ansiPalette,
+  });
+
+  final FluxerUnicodeEmojiUrlBuilder unicodeEmojiUrlBuilder;
+  final FluxerCustomEmojiUrlBuilder customEmojiUrlBuilder;
+  final RegExp? unicodeEmojiPattern;
+  final bool animateCustomEmoji;
+  final Color? linkColor;
+  final Color? blockquoteBorderColor;
+  final Color? blockquoteTextColor;
+  final Color? inlineCodeBackgroundColor;
+  final Color? inlineCodeTextColor;
+  final TextStyle? codeTextStyle;
+  final Color? tableBorderColor;
+  final Color? tableHeaderBackgroundColor;
+  final Color? tableHeaderTextColor;
+  final Color? tableRowOddBackgroundColor;
+  final Color? tableRowEvenBackgroundColor;
+  final BorderRadius? tableBorderRadius;
+  final Color? spoilerBackgroundColor;
+  final RegExp? internalLinkPattern;
+  final FluxerMentionBuilder? userMentionBuilder;
+  final FluxerMentionBuilder? channelMentionBuilder;
+  final FluxerMentionBuilder? roleMentionBuilder;
+  final FluxerEveryoneMentionBuilder? everyoneMentionBuilder;
+  final FluxerCommandMentionBuilder? commandMentionBuilder;
+  final FluxerGuildNavigationMentionBuilder? guildNavigationMentionBuilder;
+  final FluxerLinkWidgetBuilder? linkWidgetBuilder;
+  final FluxerLinkTapHandler? onTapLink;
+  final FluxerAlertBuilder? alertBuilder;
+  final bool spoilersInitiallyRevealed;
+  final FluxerSpoilerSyncController? spoilerSyncController;
+  final FluxerSpoilerSyncKeyNormalizer? spoilerSyncKeyNormalizer;
+  final FluxerCodeCopyHandler? onCopyCode;
+  final FluxerTimestampFormatter? timestampFormatter;
+  final FluxerSelectionContextMenuBuilder? selectionContextMenuBuilder;
+  final FluxerEmojiLongPressHandler? onEmojiLongPress;
+  final bool alwaysUnderlineLinks;
+  final bool dimStrikethroughText;
+  final AnsiPalette? ansiPalette;
+
+  Object get layoutCacheKey => (
+    animateCustomEmoji,
+    linkColor,
+    blockquoteBorderColor,
+    blockquoteTextColor,
+    inlineCodeBackgroundColor,
+    inlineCodeTextColor,
+    codeTextStyle,
+    tableBorderColor,
+    tableHeaderBackgroundColor,
+    tableHeaderTextColor,
+    tableRowOddBackgroundColor,
+    tableRowEvenBackgroundColor,
+    tableBorderRadius,
+    spoilerBackgroundColor,
+    spoilersInitiallyRevealed,
+    alwaysUnderlineLinks,
+    dimStrikethroughText,
+    ansiPalette,
+    spoilerSyncController,
+    unicodeEmojiPattern,
+    internalLinkPattern,
+    selectionContextMenuBuilder,
+  );
+}

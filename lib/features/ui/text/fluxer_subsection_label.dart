@@ -1,0 +1,29 @@
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/ui/preview/fluxer_widget_preview.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+class FluxerSubsectionLabel extends StatelessWidget {
+  const FluxerSubsectionLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Semantics(
+      header: true,
+      child: Text(
+        text,
+        style: context.textStyles.smallText.copyWith(
+          color: colors.textTertiaryMuted,
+        ),
+      ),
+    );
+  }
+}
+
+@FluxerWidgetPreview(name: 'Default', group: 'FluxerSubsectionLabel')
+Widget fluxerSubsectionLabelPreview() {
+  return const FluxerSubsectionLabel('Additional Groups');
+}

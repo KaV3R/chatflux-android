@@ -1,0 +1,420 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/chat_video_source.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/forward_message_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/attachments/attachment_expiry_footnote.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_inline_video_player.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_mobile_fullscreen_video.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_network_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_alt_text.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_load_error_placeholder.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_thumb_hash_placeholder.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/message_double_tap_exemption.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/messages/spoiler_overlay.dart';
+import 'package:fluxer_app/features/chat/utils/attachments/attachment_display_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/hdr_aware_image_url.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_dimension_utils.dart';
+import 'package:fluxer_app/features/chat/utils/messages/spoiler_utils.dart';
+import 'package:fluxer_app/features/mature_content/presentation/widgets/mature_media_overlay.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/advanced_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/user_date_formatting.dart';
+import 'package:fluxer_markdown/fluxer_markdown.dart';
+
+class AttachmentMediaGrid extends ConsumerWidget {
+  const AttachmentMediaGrid({
+    required this.attachments,
+    required this.revealSpoilers,
+    required this.dimensionSize,
+    this.spoilerSyncController,
+    this.channelId,
+    this.messageId,
+    this.spoilerSyncScope,
+    this.mediaActionScope,
+    super.key,
+  });
+
+  final List<Attachment> attachments;
+  final bool revealSpoilers;
+  final MediaDimensionSize dimensionSize;
+  final FluxerSpoilerSyncController? spoilerSyncController;
+  final String? channelId;
+  final String? messageId;
+  final String? spoilerSyncScope;
+  final MessageMediaActionScope? mediaActionScope;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (attachments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    ref.watch(
+      appearancePreferencesProvider.select(
+        (AppearancePreferencesState state) => state.hdrDisplayMode,
+      ),
+    );
+    final bool showExpiryIndicator = ref.watch(
+      advancedPreferencesProvider.select(
+        (AdvancedPreferencesState state) => state.showAttachmentExpiryIndicator,
+      ),
+    );
+    final FluxerMediaDimensions dimensions = mediaDimensionsForSize(
+      dimensionSize,
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: dimensions.maxWidth),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLayout(context),
+          if (_hasExpiry && showExpiryIndicator)
+            AttachmentExpiryFootnote(text: _buildExpiryText(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLayout(BuildContext context) {
+    final int count = attachments.length.clamp(2, 10);
+    final List<Attachment> visibleAttachments = attachments
+        .take(count)
+        .toList();
+    return switch (count) {
+      2 => _buildRows(context, visibleAttachments, const [2]),
+      3 => _buildThreeLayout(context, visibleAttachments),
+      4 => _buildRows(context, visibleAttachments, const [2, 2]),
+      5 => _buildRows(context, visibleAttachments, const [2, 3]),
+      6 => _buildRows(context, visibleAttachments, const [3, 3]),
+      7 => _buildHeroGridLayout(
+        context,
+        visibleAttachments,
+        heroRatio: 16 / 9,
+        rows: const [3, 3],
+      ),
+      8 => _buildRows(context, visibleAttachments, const [2, 3, 3]),
+      9 => _buildRows(context, visibleAttachments, const [3, 3, 3]),
+      10 => _buildHeroGridLayout(
+        context,
+        visibleAttachments,
+        heroRatio: 16 / 9,
+        rows: const [3, 3, 3],
+      ),
+      _ => _buildRows(context, visibleAttachments, const [2]),
+    };
+  }
+
+  Widget _buildThreeLayout(BuildContext context, List<Attachment> items) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double gridWidth = constraints.maxWidth;
+        final double columnWidth = (gridWidth - _kGridGap) / 2;
+        const double rightCellHeight = (_kThreeLayoutHeight - _kGridGap) / 2;
+        return SizedBox(
+          height: _kThreeLayoutHeight,
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildTile(
+                  context,
+                  items[0],
+                  cellWidth: columnWidth,
+                  cellHeight: _kThreeLayoutHeight,
+                ),
+              ),
+              const SizedBox(width: _kGridGap),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _buildTile(
+                        context,
+                        items[1],
+                        cellWidth: columnWidth,
+                        cellHeight: rightCellHeight,
+                      ),
+                    ),
+                    const SizedBox(height: _kGridGap),
+                    Expanded(
+                      child: _buildTile(
+                        context,
+                        items[2],
+                        cellWidth: columnWidth,
+                        cellHeight: rightCellHeight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeroGridLayout(
+    BuildContext context,
+    List<Attachment> items, {
+    required double heroRatio,
+    required List<int> rows,
+  }) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double gridWidth = constraints.maxWidth;
+        final double heroHeight = gridWidth / heroRatio;
+        int index = 0;
+        final List<Widget> children = <Widget>[
+          SizedBox(
+            height: heroHeight,
+            width: gridWidth,
+            child: _buildTile(
+              context,
+              items[index],
+              cellWidth: gridWidth,
+              cellHeight: heroHeight,
+            ),
+          ),
+        ];
+        index++;
+        for (final int rowCount in rows) {
+          if (index >= items.length) {
+            break;
+          }
+          children
+            ..add(const SizedBox(height: _kGridGap))
+            ..add(
+              _buildRow(context, items, index, rowCount, gridWidth: gridWidth),
+            );
+          index += rowCount;
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        );
+      },
+    );
+  }
+
+  Widget _buildRows(
+    BuildContext context,
+    List<Attachment> items,
+    List<int> rows,
+  ) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double gridWidth = constraints.maxWidth;
+        int index = 0;
+        final List<Widget> children = <Widget>[];
+        for (int i = 0; i < rows.length; i++) {
+          if (index >= items.length) {
+            break;
+          }
+          if (i > 0) {
+            children.add(const SizedBox(height: _kGridGap));
+          }
+          children.add(
+            _buildRow(context, items, index, rows[i], gridWidth: gridWidth),
+          );
+          index += rows[i];
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        );
+      },
+    );
+  }
+
+  Widget _buildRow(
+    BuildContext context,
+    List<Attachment> items,
+    int startIndex,
+    int count, {
+    required double gridWidth,
+  }) {
+    final double cellWidth = (gridWidth - (count - 1) * _kGridGap) / count;
+    final double cellHeight = cellWidth;
+    final List<Widget> rowChildren = <Widget>[];
+    for (int i = 0; i < count; i++) {
+      final int itemIndex = startIndex + i;
+      if (itemIndex >= items.length) {
+        break;
+      }
+      if (i > 0) {
+        rowChildren.add(const SizedBox(width: _kGridGap));
+      }
+      rowChildren.add(
+        Expanded(
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: _buildTile(
+              context,
+              items[itemIndex],
+              cellWidth: cellWidth,
+              cellHeight: cellHeight,
+            ),
+          ),
+        ),
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rowChildren,
+    );
+  }
+
+  Widget _buildTile(
+    BuildContext context,
+    Attachment attachment, {
+    required double cellWidth,
+    required double cellHeight,
+  }) {
+    final bool isVideo = attachment.isVideo;
+    final bool canOpen = attachmentHasLoadableUrl(attachment);
+    final HdrDisplayMode hdrDisplayMode = ProviderScope.containerOf(
+      context,
+    ).read(appearancePreferencesProvider).hdrDisplayMode;
+    final double devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final FluxerMediaDimensions dimensions = mediaDimensionsForSize(
+      dimensionSize,
+    );
+    final String displayUrl = isVideo
+        ? (ChatVideoSource.fromAttachment(attachment, dimensions).posterUrl ??
+              '')
+        : buildHdrAwareImageUrl(
+            url: attachmentEffectiveUrl(attachment),
+            mode: hdrDisplayMode,
+            contentType: attachment.contentType,
+          );
+    final ({int? width, int? height}) cache = coverDecodeCacheSize(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      devicePixelRatio: devicePixelRatio,
+      sourceWidth: attachment.width,
+      sourceHeight: attachment.height,
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SpoilerOverlay(
+        isSpoiler: attachment.isSpoiler,
+        initiallyRevealed: revealSpoilers,
+        spoilerSyncController: spoilerSyncController,
+        syncKeys: spoilerSyncKeysForAttachment(
+          scope: spoilerSyncScope ?? messageId ?? '',
+          attachment: attachment,
+        ),
+        child: MatureMediaOverlay(
+          channelId: channelId,
+          isMatureMedia: attachment.isMatureMedia,
+          borderRadius: BorderRadius.circular(8),
+          child: MessageDoubleTapExempt(
+            child: FluxerGestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: canOpen ? () => _openMedia(context, attachment) : null,
+              child: MediaAltText(
+                altText: attachment.description,
+                caption: MediaAltTextCaption.never,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    if (displayUrl.isEmpty)
+                      const MediaLoadErrorPlaceholder()
+                    else
+                      ChatNetworkImage(
+                        imageUrl: displayUrl,
+                        filename: attachment.filename,
+                        contentType: attachment.contentType,
+                        memCacheWidth: cache.width,
+                        memCacheHeight: cache.height,
+                        fit: BoxFit.cover,
+                        placeholder: MediaThumbHashPlaceholder(
+                          thumbHash: attachment.placeholder,
+                        ),
+                        errorPlaceholder: const MediaLoadErrorPlaceholder(),
+                      ),
+                    if (isVideo) const VideoPlayButtonOverlay(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openMedia(BuildContext context, Attachment attachment) {
+    if (attachment.isVideo) {
+      unawaited(
+        showChatMobileFullscreenVideo(
+          context,
+          launchContext: ChatFullscreenVideoLaunchContext.fromAttachment(
+            attachment: attachment,
+            layoutDimensions: mediaDimensionsForSize(dimensionSize),
+            actionScope: mediaActionScope,
+          ),
+        ),
+      );
+      return;
+    }
+    final List<Attachment> images = attachments
+        .where((Attachment item) => !item.isVideo)
+        .toList();
+    final int initialIndex = images.indexOf(attachment);
+    unawaited(
+      showAttachmentMediaViewer(
+        context,
+        items: images.map(AttachmentMediaViewerItem.fromAttachment).toList(),
+        initialIndex: initialIndex < 0 ? 0 : initialIndex,
+        channelId: channelId,
+        onForward: (channelId != null && messageId != null)
+            ? (int i) => showForwardMediaSheet(
+                context,
+                sourceChannelId: channelId!,
+                sourceMessageId: messageId!,
+                attachmentIds: <String>[images[i].id],
+              )
+            : null,
+        actionScope: mediaActionScope,
+      ),
+    );
+  }
+
+  bool get _hasExpiry =>
+      attachments.any((Attachment attachment) => attachment.expiresAt != null);
+
+  String _buildExpiryText(BuildContext context) {
+    final List<DateTime> dates =
+        attachments
+            .map((Attachment attachment) => attachment.expiresAt)
+            .whereType<DateTime>()
+            .toList()
+          ..sort();
+    if (dates.isEmpty) {
+      return '';
+    }
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final String earliest = formatUserMediumDate(
+      dates.first.toLocal(),
+      l10n.localeName,
+    );
+    final String latest = formatUserMediumDate(
+      dates.last.toLocal(),
+      l10n.localeName,
+    );
+    if (earliest == latest) {
+      return l10n.chatAttachmentExpiresOn(earliest);
+    }
+    return l10n.chatAttachmentExpiresBetween(earliest, latest);
+  }
+}
+
+const double _kGridGap = 4;
+const double _kThreeLayoutHeight = 300;

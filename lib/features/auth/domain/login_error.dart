@@ -1,0 +1,18 @@
+enum LoginError {
+  invalidEmail,
+  invalidCredentials,
+  invalidUsernameOrPassword,
+  unableToCreateAccount,
+  unableToSignIn,
+  unableToSendResetLink,
+  unableToResetPassword,
+  passkeyNoCredentials,
+  passkeyDeviceNotSupported,
+  passkeyDomainNotAssociated,
+  passkeyTimeout,
+  passkeyFailed,
+  ssoCancelled,
+  ssoFailed,
+  serviceUnavailable,
+  verificationFailed,
+}

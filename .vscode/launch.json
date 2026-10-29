@@ -1,0 +1,217 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Android Canary FCM",
+            "preLaunchTask": "firebase: FCM",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "canaryFcm",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=fcm"
+            ]
+        },
+        {
+            "name": "Android Canary FCM (Profile)",
+            "preLaunchTask": "firebase: FCM",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "canaryFcm",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=fcm"
+            ]
+        },
+        {
+            "name": "Android Beta FCM",
+            "preLaunchTask": "firebase: FCM",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "betaFcm",
+                "--dart-define-from-file=tool/dart_defines/beta.json",
+                "--dart-define=PUSH_PROVIDER=fcm"
+            ]
+        },
+        {
+            "name": "Android Stable FCM",
+            "preLaunchTask": "firebase: FCM",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "stableFcm",
+                "--dart-define-from-file=tool/dart_defines/stable.json",
+                "--dart-define=PUSH_PROVIDER=fcm"
+            ]
+        },
+        {
+            "name": "Android Canary UnifiedPush",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "canaryUnifiedpush",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=unifiedpush"
+            ]
+        },
+        {
+            "name": "Android Canary UnifiedPush (Profile)",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "canaryUnifiedpush",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=unifiedpush"
+            ]
+        },
+        {
+            "name": "Android Beta UnifiedPush",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "betaUnifiedpush",
+                "--dart-define-from-file=tool/dart_defines/beta.json",
+                "--dart-define=PUSH_PROVIDER=unifiedpush"
+            ]
+        },
+        {
+            "name": "Android Stable UnifiedPush",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "stableUnifiedpush",
+                "--dart-define-from-file=tool/dart_defines/stable.json",
+                "--dart-define=PUSH_PROVIDER=unifiedpush"
+            ]
+        },
+        {
+            "name": "iOS Canary APNs",
+            "preLaunchTask": "build: iOS store billing",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "canary",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "iOS Canary APNs (Profile)",
+            "preLaunchTask": "build: iOS store billing",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "canary",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "iOS Beta APNs",
+            "preLaunchTask": "build: iOS store billing",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "beta",
+                "--dart-define-from-file=tool/dart_defines/beta.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "iOS Stable APNs",
+            "preLaunchTask": "build: iOS store billing",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "stable",
+                "--dart-define-from-file=tool/dart_defines/stable.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "macOS Canary",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "macos",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "canary",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "macOS Canary (Profile)",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "macos",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "canary",
+                "--dart-define-from-file=tool/dart_defines/canary.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "macOS Beta",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "macos",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "beta",
+                "--dart-define-from-file=tool/dart_defines/beta.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        },
+        {
+            "name": "macOS Stable",
+            "preLaunchTask": "firebase: OSS (UnifiedPush / APNs)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "macos",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "stable",
+                "--dart-define-from-file=tool/dart_defines/stable.json",
+                "--dart-define=PUSH_PROVIDER=apns"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,387 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/voice_settings_provider.dart';
+import 'package:fluxer_app/features/ui/ui.dart';
+import 'package:fluxer_app/features/voice/domain/voice_settings_state.dart';
+import 'package:fluxer_app/features/voice/presentation/sheets/voice_channel_chat_sheet.dart';
+import 'package:fluxer_app/features/voice/presentation/widgets/voice_change_audio_output_row.dart';
+import 'package:fluxer_app/features/voice/presentation/widgets/voice_output_route_radio_group.dart';
+import 'package:fluxer_app/features/voice/providers/voice_call_display_preferences_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_call_layout_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_channel_text_chat_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_noise_filter_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_p2p_mode_provider.dart';
+import 'package:fluxer_app/features/voice/providers/voice_session_provider.dart';
+import 'package:fluxer_app/features/voice/utils/audio/speaker_route.dart';
+import 'package:fluxer_app/features/voice/utils/e2ee/p2p_mode.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:livekit_client/livekit_client.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+const Key kVoiceControlPanelSettingsKey = Key('voice-control-panel-settings');
+const Key kVoiceControlPanelShowChatKey = Key('voice-control-panel-show-chat');
+const Key kVoiceControlPanelUseEarpieceKey = Key(
+  'voice-control-panel-use-earpiece',
+);
+const Key kVoiceControlPanelOnlyShowVideosKey = Key(
+  'voice-control-panel-only-show-videos',
+);
+const Key kVoiceControlPanelShowOwnCameraKey = Key(
+  'voice-control-panel-show-own-camera',
+);
+const Key kVoiceControlPanelPrioritizeSpeakersKey = Key(
+  'voice-control-panel-prioritize-speakers',
+);
+const Key kVoiceControlPanelViewModeKey = Key('voice-control-panel-view-mode');
+const Key kVoiceControlPanelSwitchToStandardKey = Key(
+  'voice-control-panel-switch-to-standard',
+);
+
+class VoiceChannelControlPanelSettings extends ConsumerWidget {
+  const VoiceChannelControlPanelSettings({
+    this.channelId,
+    this.channelName,
+    super.key,
+  });
+
+  final String? channelId;
+  final String? channelName;
+
+  Future<void> _setNoiseSuppressionTier(
+    WidgetRef ref,
+    NoiseSuppressionTier tier,
+  ) async {
+    final VoiceSettings settingsNotifier = ref.read(
+      voiceSettingsProvider.notifier,
+    );
+    final VoiceSettingsState settings = ref.read(voiceSettingsProvider);
+    if (settings.voiceProcessingMode != VoiceProcessingMode.custom) {
+      await settingsNotifier.setVoiceProcessingMode(VoiceProcessingMode.custom);
+    }
+    await settingsNotifier.setNoiseSuppressionTier(tier);
+  }
+
+  Future<void> _confirmSwitchToStandardCall(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final bool? confirmed = await showFluxerSettingsConfirmSheet(
+      context,
+      title: l10n.voiceP2pSwitchToStandard,
+      description: l10n.voiceP2pSwitchToStandardDescription,
+      confirmLabel: l10n.voiceP2pSwitchToStandard,
+    );
+    if (confirmed != true) {
+      return;
+    }
+    ref.read(voiceSessionProvider.notifier).switchToStandardCall();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final layout = context.layout;
+    final VoiceSettingsState settings = ref.watch(voiceSettingsProvider);
+    final VoiceSettings settingsNotifier = ref.read(
+      voiceSettingsProvider.notifier,
+    );
+    final VoiceCallDisplayPreferencesState displayPreferences = ref.watch(
+      voiceCallDisplayPreferencesProvider,
+    );
+    final VoiceCallDisplayPreferences displayNotifier = ref.read(
+      voiceCallDisplayPreferencesProvider.notifier,
+    );
+    final VoiceCallLayoutState callLayout = ref.watch(voiceCallLayoutProvider);
+    final VoiceCallLayout callLayoutNotifier = ref.read(
+      voiceCallLayoutProvider.notifier,
+    );
+    final bool noiseFilterSupported = ref
+        .watch(voiceNoiseFilterProvider)
+        .maybeWhen(
+          data: (VoiceNoiseFilterState value) => value.isSupported,
+          orElse: () => false,
+        );
+    final NoiseSuppressionTier noiseSuppressionTier =
+        effectiveVoicePanelNoiseSuppressionTier(
+          settings: settings,
+          noiseFilterSupported: noiseFilterSupported,
+        );
+    final String? channelId = this.channelId;
+    final bool showChatRow =
+        channelId != null &&
+        (ref.watch(voiceChannelTextChatSupportedProvider(channelId)).value ??
+            false);
+    final bool isP2pCall =
+        ref.watch(activeVoiceChannelModeProvider) == VoiceChannelMode.p2p;
+    final bool isPinnedP2pChannel =
+        isP2pCall &&
+        channelId != null &&
+        (ref.watch(channelByIdProvider(channelId)).value?.rtcP2p ?? false);
+    final bool showSwitchToStandard = isP2pCall && !isPinnedP2pChannel;
+    final bool canSwitchSpeaker = AudioManager.instance.canSwitchSpeakerphone;
+    return Padding(
+      key: kVoiceControlPanelSettingsKey,
+      padding: EdgeInsets.fromLTRB(layout.s4, layout.s2, layout.s4, layout.s6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (showSwitchToStandard) ...<Widget>[
+            FluxerListSection(
+              children: <Widget>[
+                FluxerListRow(
+                  key: kVoiceControlPanelSwitchToStandardKey,
+                  leading: const VoicePanelListIcon(
+                    icon: PhosphorIconsFill.shareNetwork,
+                  ),
+                  title: l10n.voiceP2pSwitchToStandard,
+                  subtitle: l10n.voiceP2pSwitchToStandardDescription,
+                  onTap: () {
+                    unawaited(_confirmSwitchToStandardCall(context, ref));
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: layout.s4),
+          ],
+          if (showChatRow) ...<Widget>[
+            FluxerListSection(
+              children: <Widget>[
+                FluxerListRow(
+                  key: kVoiceControlPanelShowChatKey,
+                  leading: const VoicePanelListIcon(
+                    icon: PhosphorIconsFill.chatTeardrop,
+                  ),
+                  title: l10n.voiceTextChatShow,
+                  trailing: PhosphorIcon(
+                    PhosphorIconsBold.caretRight,
+                    size: 18,
+                    color: context.colors.textPrimaryMuted,
+                  ),
+                  onTap: () {
+                    unawaited(
+                      showVoiceChannelChatSheet(
+                        context,
+                        channelId: channelId,
+                        channelName: channelName,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: layout.s4),
+          ],
+          FluxerListSection(
+            header: l10n.voicePanelSettingsSectionTitle,
+            children: <Widget>[
+              if (showNativeVoiceAudioRoutePicker())
+                const VoiceChangeAudioOutputPanelRow()
+              else if (canSwitchSpeaker)
+                const VoiceOutputRouteRadioGroup(
+                  controlKey: kVoiceControlPanelUseEarpieceKey,
+                ),
+              VoicePanelSettingSwitchRow(
+                key: kVoiceControlPanelOnlyShowVideosKey,
+                icon: PhosphorIconsFill.videoCamera,
+                label: l10n.voicePanelOnlyShowVideosLabel,
+                description: l10n.voicePanelOnlyShowVideosDescription,
+                value: displayPreferences.onlyShowVideos,
+                onChanged: (bool value) {
+                  displayNotifier.setOnlyShowVideos(value: value);
+                },
+              ),
+              VoicePanelSettingSwitchRow(
+                key: kVoiceControlPanelShowOwnCameraKey,
+                icon: PhosphorIconsFill.userFocus,
+                label: l10n.voicePanelShowOwnCameraLabel,
+                value: displayPreferences.showOwnCamera,
+                onChanged: (bool value) {
+                  displayNotifier.setShowOwnCamera(value: value);
+                },
+              ),
+              VoicePanelSettingSwitchRow(
+                key: kVoiceControlPanelPrioritizeSpeakersKey,
+                icon: PhosphorIconsFill.handTap,
+                label: l10n.voicePrioritizeSpeakersLabel,
+                value: settings.prioritizeSpeakingParticipants,
+                onChanged: (bool value) {
+                  unawaited(
+                    settingsNotifier.setPrioritizeSpeakingParticipants(
+                      value: value,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: layout.s4),
+          FluxerListSection(
+            header: l10n.voiceCallViewModeLabel,
+            children: <Widget>[
+              Padding(
+                key: kVoiceControlPanelViewModeKey,
+                padding: EdgeInsets.all(layout.s4),
+                child: FluxerRadioGroup<VoiceCallLayoutMode>(
+                  value: callLayout.mode,
+                  onChanged: callLayoutNotifier.setMode,
+                  items: <FluxerRadioItem<VoiceCallLayoutMode>>[
+                    FluxerRadioItem(
+                      value: VoiceCallLayoutMode.grid,
+                      label: l10n.voiceCallViewModeGrid,
+                    ),
+                    FluxerRadioItem(
+                      value: VoiceCallLayoutMode.focus,
+                      label: l10n.voiceCallViewModeFocus,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: layout.s4),
+          FluxerListSection(
+            header: l10n.audioAndVideoNoiseSuppressionSectionTitle,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.all(layout.s4),
+                child: FluxerRadioGroup<NoiseSuppressionTier>(
+                  value: noiseSuppressionTier,
+                  onChanged: (NoiseSuppressionTier value) {
+                    unawaited(_setNoiseSuppressionTier(ref, value));
+                  },
+                  items: <FluxerRadioItem<NoiseSuppressionTier>>[
+                    FluxerRadioItem(
+                      value: NoiseSuppressionTier.enhanced,
+                      label: l10n.audioAndVideoNoiseSuppressionEnhancedLabel,
+                      enabled: noiseFilterSupported,
+                    ),
+                    FluxerRadioItem(
+                      value: NoiseSuppressionTier.standard,
+                      label: l10n.audioAndVideoNoiseSuppressionStandardLabel,
+                    ),
+                    FluxerRadioItem(
+                      value: NoiseSuppressionTier.none,
+                      label: l10n.audioAndVideoNoiseSuppressionNoneLabel,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+NoiseSuppressionTier effectiveVoicePanelNoiseSuppressionTier({
+  required VoiceSettingsState settings,
+  required bool noiseFilterSupported,
+}) {
+  switch (settings.voiceProcessingMode) {
+    case VoiceProcessingMode.studio:
+      return NoiseSuppressionTier.none;
+    case VoiceProcessingMode.voice:
+      return noiseFilterSupported
+          ? NoiseSuppressionTier.enhanced
+          : NoiseSuppressionTier.standard;
+    case VoiceProcessingMode.custom:
+      return settings.noiseSuppressionTier;
+  }
+}
+
+class VoicePanelListIcon extends StatelessWidget {
+  const VoicePanelListIcon({required this.icon, super.key});
+
+  final PhosphorIconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: Center(
+        child: PhosphorIcon(icon, size: 20, color: context.colors.textPrimary),
+      ),
+    );
+  }
+}
+
+class VoicePanelSettingSwitchRow extends StatelessWidget {
+  const VoicePanelSettingSwitchRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.description,
+    super.key,
+  });
+
+  final PhosphorIconData icon;
+  final String label;
+  final String? description;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final layout = context.layout;
+    final textStyles = context.textStyles;
+    final colors = context.colors;
+    return FluxerTappable(
+      onTap: () => onChanged(!value),
+      semanticLabel: description != null ? '$label. $description' : label,
+      toggled: value,
+      excludeChildSemantics: true,
+      builder: (BuildContext context, Set<WidgetState> states) {
+        final bool isPressed = states.contains(WidgetState.pressed);
+        return AnimatedContainer(
+          duration: context.motion.fast,
+          curve: context.motion.curve,
+          color: isPressed
+              ? colors.backgroundModifierHover.withValues(alpha: 0.45)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              VoicePanelListIcon(icon: icon),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      label,
+                      style: textStyles.username.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (description != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        description!,
+                        style: textStyles.bodySmall.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(width: layout.s4),
+              FluxerSwitchControl(value: value),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

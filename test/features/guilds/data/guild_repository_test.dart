@@ -1,0 +1,176 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/features/guilds/data/guild_repository.dart';
+import 'package:fluxer_app/shared/utils/sdk_converters.dart';
+import 'package:fluxer_dart/export.dart';
+
+import '../../../helpers/open_test_database.dart';
+
+GuildResponse _apiGuild(String id) => GuildResponse.fromJson({
+  'id': id,
+  'name': 'Guild $id',
+  'splash_card_alignment': 0,
+  'owner_id': 'user-1',
+  'system_channel_flags': 0,
+  'afk_timeout': 300,
+  'features': <String>[],
+  'verification_level': 0,
+  'mfa_level': 0,
+  'nsfw_level': 0,
+  'nsfw': false,
+  'content_warning_level': 0,
+  'explicit_content_filter': 0,
+  'default_message_notifications': 0,
+  'disabled_operations': 0,
+});
+
+class _HeldGuildsAdapter implements HttpClientAdapter {
+  final Completer<List<Map<String, Object?>>> guilds =
+      Completer<List<Map<String, Object?>>>();
+  final Completer<void> guildsRequested = Completer<void>();
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    if (options.path.endsWith('/users/@me/guilds')) {
+      guildsRequested.complete();
+      return ResponseBody.fromString(
+        jsonEncode(await guilds.future),
+        200,
+        headers: <String, List<String>>{
+          Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+        },
+      );
+    }
+    return ResponseBody.fromString('{}', 404);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+void main() {
+  group('GuildRepository.syncServers', () {
+    test(
+      'drops the result when the account changed during the fetch',
+      () async {
+        final FluxerDatabase db = openTestDatabase();
+        await db.authSessionDao.saveSessionMetadata(userId: 'user-a');
+        await db.authSessionDao.touchSession('user-a');
+        final _HeldGuildsAdapter adapter = _HeldGuildsAdapter();
+        final Dio dio = Dio(BaseOptions(baseUrl: 'https://a.example/api'))
+          ..httpClientAdapter = adapter;
+        final Future<void> sync = GuildRepository(
+          FluxerClient(dio),
+          db,
+        ).syncServers();
+        await adapter.guildsRequested.future;
+
+        await db.authSessionDao.saveSessionMetadata(userId: 'user-b');
+        await db.customStatement(
+          "UPDATE auth_sessions SET last_active = 0 WHERE user_id = 'user-a'",
+        );
+        await db.clearAccountData();
+        await db.guildDao.upsertServer(
+          ServersCompanion.insert(id: 'guild-b', name: 'B community'),
+        );
+        adapter.guilds.complete(<Map<String, Object?>>[
+          _apiGuild('guild-a1').toJson(),
+          _apiGuild('guild-a2').toJson(),
+        ]);
+        await sync;
+
+        expect((await db.guildDao.getServers()).map((row) => row.id), <String>[
+          'guild-b',
+        ]);
+      },
+    );
+  });
+
+  group('GuildRepository.getOwnedGuilds', () {
+    late FluxerDatabase db;
+    late GuildRepository repository;
+
+    setUp(() {
+      db = openTestDatabase();
+      repository = GuildRepository(FluxerClient(Dio()), db);
+    });
+
+    test('returns only guilds owned by the user', () async {
+      await db.guildDao.upsertServers([
+        ServersCompanion.insert(
+          id: 'guild-1',
+          name: 'Owned',
+          ownerId: const Value('user-1'),
+        ),
+        ServersCompanion.insert(
+          id: 'guild-2',
+          name: 'Other',
+          ownerId: const Value('user-2'),
+        ),
+        ServersCompanion.insert(
+          id: 'guild-3',
+          name: 'Also Owned',
+          ownerId: const Value('user-1'),
+        ),
+      ]);
+
+      final ownedGuilds = await repository.getOwnedGuilds('user-1');
+
+      expect(ownedGuilds.map((guild) => guild.id).toSet(), {
+        'guild-1',
+        'guild-3',
+      });
+    });
+
+    test('returns empty list when user owns no guilds', () async {
+      await db.guildDao.upsertServer(
+        ServersCompanion.insert(
+          id: 'guild-1',
+          name: 'Other',
+          ownerId: const Value('user-2'),
+        ),
+      );
+
+      final ownedGuilds = await repository.getOwnedGuilds('user-1');
+
+      expect(ownedGuilds, isEmpty);
+    });
+  });
+
+  group('GuildRepository unavailable preservation', () {
+    test('upsert keeps unavailable flag when sync logic applies it', () async {
+      final db = openTestDatabase();
+      await db.guildDao.upsertServer(
+        ServersCompanion.insert(
+          id: 'guild-1',
+          name: 'Offline',
+          unavailable: const Value(true),
+        ),
+      );
+
+      final unavailableIds = (await db.guildDao.getServers())
+          .where((row) => row.unavailable)
+          .map((row) => row.id)
+          .toSet();
+      await db.guildDao.upsertServer(
+        guildFromSdk(
+          _apiGuild('guild-1'),
+          unavailable: unavailableIds.contains('guild-1'),
+        ),
+      );
+
+      final row = await db.guildDao.getServerById('guild-1');
+      expect(row?.unavailable, isTrue);
+    });
+  });
+}

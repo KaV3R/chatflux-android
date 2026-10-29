@@ -1,0 +1,43 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/router/shell_navigator_keys.dart';
+import 'package:fluxer_app/features/shell/providers/layout/shell_popup_overlay_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+bool navigatorHasPopupOverlay(NavigatorState? navigator) {
+  return _navigatorShowsPopupOverlay(navigator);
+}
+
+@visibleForTesting
+bool navigatorShowsPopupOverlay(NavigatorState? navigator) {
+  return _navigatorShowsPopupOverlay(navigator);
+}
+
+bool _navigatorShowsPopupOverlay(NavigatorState? navigator) {
+  if (navigator == null || !navigator.mounted || !navigator.canPop()) {
+    return false;
+  }
+  bool hasPopup = false;
+  navigator.popUntil((Route<dynamic> route) {
+    hasPopup = route is PopupRoute;
+    return true;
+  });
+  return hasPopup;
+}
+
+bool shellNavigatorsHavePopupOverlay() {
+  if (navigatorShowsPopupOverlay(shellTabOverlayNavigatorKey.currentState)) {
+    return true;
+  }
+  for (final GlobalKey<NavigatorState> key in shellBranchNavigatorKeys) {
+    if (navigatorShowsPopupOverlay(key.currentState)) {
+      return true;
+    }
+  }
+  return navigatorShowsPopupOverlay(rootNavigatorKey.currentState);
+}
+
+void reconcileShellPopupOverlayForContainer(ProviderContainer container) {
+  container
+      .read(shellHasPopupOverlayProvider.notifier)
+      .setHasOverlay(value: shellNavigatorsHavePopupOverlay());
+}

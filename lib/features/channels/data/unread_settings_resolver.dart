@@ -1,0 +1,419 @@
+import 'dart:convert';
+
+import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
+import 'package:fluxer_app/features/guilds/utils/guild_notification_resolution.dart';
+import 'package:fluxer_app/features/threads/domain/thread_channel.dart';
+import 'package:fluxer_dart/export.dart';
+
+class ResolvedUnreadSettings {
+  const ResolvedUnreadSettings({
+    required this.isMuted,
+    required this.allowsMessageUnread,
+    required this.allowsMentionUnread,
+  });
+
+  final bool isMuted;
+  final bool allowsMessageUnread;
+  final bool allowsMentionUnread;
+}
+
+UserGuildSettingsResponse? decodeUserGuildSettings(String data) {
+  try {
+    return UserGuildSettingsResponse.fromJson(
+      jsonDecode(data) as Map<String, dynamic>,
+    );
+  } on Object {
+    return null;
+  }
+}
+
+UserNotificationSettings? getLockedCommunityUnreadBadgesLevel({
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+  GuildNotificationContext? guildContext,
+}) {
+  if (guildSettings == null) {
+    return null;
+  }
+  if (_isGuildMuted(guildSettings, now)) {
+    return UserNotificationSettings.noMessages;
+  }
+  final notificationLevel = resolveGuildMessageNotificationsFromContext(
+    stored: guildSettings.messageNotifications,
+    guildContext: guildContext,
+  );
+  if (notificationLevel == UserNotificationSettings.allMessages) {
+    return UserNotificationSettings.allMessages;
+  }
+  if (notificationLevel == UserNotificationSettings.noMessages) {
+    return UserNotificationSettings.noMessages;
+  }
+  return null;
+}
+
+UserNotificationSettings? resolveUnreadBadgesLevel({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  bool unreadBadgeCustomizationEnabled = false,
+}) {
+  return _resolvedUnreadBadgeLevel(
+    channel: channel,
+    guildSettings: guildSettings,
+    unreadBadgeCustomizationEnabled: unreadBadgeCustomizationEnabled,
+  );
+}
+
+UserNotificationSettings? resolveGuildUnreadBadgesLevel({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  bool unreadBadgeCustomizationEnabled = false,
+  GuildNotificationContext? guildContext,
+}) {
+  final lockedLevel = getLockedCommunityUnreadBadgesLevel(
+    guildSettings: guildSettings,
+    now: DateTime.now(),
+    guildContext: guildContext,
+  );
+  if (lockedLevel != null) {
+    return lockedLevel;
+  }
+  return _resolvedUnreadBadgeLevel(
+    channel: channel,
+    guildSettings: guildSettings,
+    unreadBadgeCustomizationEnabled: unreadBadgeCustomizationEnabled,
+  );
+}
+
+ResolvedUnreadSettings resolveChannelUnreadSettings({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+  bool unreadBadgeCustomizationEnabled = false,
+  GuildNotificationContext? guildContext,
+}) {
+  final UserNotificationSettings badgeLevel =
+      resolveUnreadBadgesLevel(
+        channel: channel,
+        guildSettings: guildSettings,
+        unreadBadgeCustomizationEnabled: unreadBadgeCustomizationEnabled,
+      ) ??
+      resolveMessageNotifications(
+        channel: channel,
+        guildSettings: guildSettings,
+        guildContext: guildContext,
+      );
+  return ResolvedUnreadSettings(
+    isMuted: isChannelDirectlyMuted(
+      channel: channel,
+      guildSettings: guildSettings,
+      now: now,
+    ),
+    allowsMessageUnread: badgeLevel == UserNotificationSettings.allMessages,
+    allowsMentionUnread: badgeLevel != UserNotificationSettings.noMessages,
+  );
+}
+
+ResolvedUnreadSettings resolveUnreadSettings({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+  bool unreadBadgeCustomizationEnabled = false,
+  GuildNotificationContext? guildContext,
+}) {
+  return resolveChannelUnreadSettings(
+    channel: channel,
+    guildSettings: guildSettings,
+    now: now,
+    unreadBadgeCustomizationEnabled: unreadBadgeCustomizationEnabled,
+    guildContext: guildContext,
+  );
+}
+
+bool isGuildOrCategoryOrChannelMuted({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+}) {
+  if (_isGuildMuted(guildSettings, now)) {
+    return true;
+  }
+  final overrides = guildSettings?.channelOverrides ?? const {};
+  final parentOverride = channel.parentId == null
+      ? null
+      : overrides[channel.parentId!];
+  if (_isChannelMuted(parentOverride, now)) {
+    return true;
+  }
+  return _isChannelMuted(overrides[channel.id], now);
+}
+
+bool isThreadMemberMuted(db.ThreadMember? member, DateTime now) {
+  if (member == null || !member.muted) {
+    return false;
+  }
+  return _isMuteActive(threadMemberMuteEndTime(member), now);
+}
+
+String? threadMemberMuteEndTime(db.ThreadMember member) {
+  final String? raw = member.muteConfigJson;
+  if (raw == null || raw.isEmpty) {
+    return null;
+  }
+  final Object? decoded = jsonDecode(raw);
+  return _muteEndTime(
+    decoded is Map<String, dynamic> ? decoded['end_time'] : null,
+  );
+}
+
+bool isThreadMuted({
+  required String threadId,
+  required db.Channel? parent,
+  required db.ThreadMember? member,
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+}) {
+  if (_isGuildMuted(guildSettings, now) ||
+      isThreadMemberMuted(member, now) ||
+      _isChannelMuted(guildSettings?.channelOverrides?[threadId], now)) {
+    return true;
+  }
+  return parent != null &&
+      isGuildOrCategoryOrChannelMuted(
+        channel: parent,
+        guildSettings: guildSettings,
+        now: now,
+      );
+}
+
+UserNotificationSettings resolveThreadMessageNotifications({
+  required String threadId,
+  required db.Channel? parent,
+  required db.ThreadMember? member,
+  required UserGuildSettingsResponse? guildSettings,
+  GuildNotificationContext? guildContext,
+}) {
+  final UserNotificationSettings level = switch (threadNotificationSettingOf(
+    member?.flags ?? 0,
+  )) {
+    ThreadNotificationSetting.allMessages =>
+      UserNotificationSettings.allMessages,
+    ThreadNotificationSetting.onlyMentions =>
+      UserNotificationSettings.onlyMentions,
+    ThreadNotificationSetting.none => UserNotificationSettings.noMessages,
+    ThreadNotificationSetting.parentDefault =>
+      _explicitLevel(
+            guildSettings?.channelOverrides?[threadId]?.messageNotifications,
+          ) ??
+          (parent == null
+              ? resolveGuildMessageNotificationsFromContext(
+                  stored:
+                      guildSettings?.messageNotifications ??
+                      UserNotificationSettings.inherit,
+                  guildContext: guildContext,
+                )
+              : resolveMessageNotifications(
+                  channel: parent,
+                  guildSettings: guildSettings,
+                  guildContext: guildContext,
+                )),
+  };
+  if (member == null && level == UserNotificationSettings.allMessages) {
+    return UserNotificationSettings.onlyMentions;
+  }
+  return level;
+}
+
+bool isChannelDirectlyMuted({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required DateTime now,
+}) {
+  final overrides = guildSettings?.channelOverrides ?? const {};
+  return _isChannelMuted(overrides[channel.id], now);
+}
+
+bool isChannelOverrideMuted(
+  ChannelOverrides? override, {
+  required DateTime now,
+}) {
+  return _isChannelMuted(override, now);
+}
+
+UserNotificationSettings? _resolvedUnreadBadgeLevel({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required bool unreadBadgeCustomizationEnabled,
+}) {
+  if (!unreadBadgeCustomizationEnabled) {
+    return null;
+  }
+  final overrides = guildSettings?.channelOverrides ?? const {};
+  final directOverride = overrides[channel.id];
+  final parentOverride = channel.parentId == null
+      ? null
+      : overrides[channel.parentId!];
+  return _explicitLevel(directOverride?.unreadBadges) ??
+      _explicitLevel(parentOverride?.unreadBadges) ??
+      _explicitLevel(guildSettings?.unreadBadges);
+}
+
+bool _isGuildMuted(UserGuildSettingsResponse? settings, DateTime now) {
+  if (settings?.muted != true) {
+    return false;
+  }
+  return _isMuteActive(_muteEndTime(settings?.muteConfig?.endTime), now);
+}
+
+bool _isChannelMuted(ChannelOverrides? override, DateTime now) {
+  if (override?.muted != true) {
+    return false;
+  }
+  return _isMuteActive(_muteEndTime(override?.muteConfig?.endTime), now);
+}
+
+bool _isMuteActive(String? endTime, DateTime now) {
+  if (endTime == null || endTime.isEmpty) {
+    return true;
+  }
+  final parsed = DateTime.tryParse(endTime);
+  return parsed == null || parsed.isAfter(now);
+}
+
+UserNotificationSettings? _explicitLevel(Object? level) {
+  final UserNotificationSettings? stored = switch (level) {
+    final UserNotificationSettings value => value,
+    final UserNotificationSettingsInput value =>
+      UserNotificationSettings.fromJson(value.json ?? 0),
+    _ => null,
+  };
+  if (stored == null ||
+      stored == UserNotificationSettings.inherit ||
+      stored == UserNotificationSettings.$unknown) {
+    return null;
+  }
+  return stored;
+}
+
+String? _muteEndTime(dynamic value) {
+  if (value is String && value.isNotEmpty) {
+    return value;
+  }
+  return null;
+}
+
+UserNotificationSettings resolveMessageNotifications({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  GuildNotificationContext? guildContext,
+}) {
+  final overrides = guildSettings?.channelOverrides ?? const {};
+  final direct = _explicitLevel(overrides[channel.id]?.messageNotifications);
+  if (direct != null) {
+    return direct;
+  }
+  if (channel.parentId != null) {
+    final parent = _explicitLevel(
+      overrides[channel.parentId!]?.messageNotifications,
+    );
+    if (parent != null) {
+      return parent;
+    }
+  }
+  return resolveGuildMessageNotificationsFromContext(
+    stored:
+        guildSettings?.messageNotifications ?? UserNotificationSettings.inherit,
+    guildContext: guildContext,
+  );
+}
+
+bool shouldShowChannelInUnreadInbox({
+  required db.Channel channel,
+  required UserGuildSettingsResponse? guildSettings,
+  required bool hasUnread,
+  required bool hasMentions,
+  required DateTime now,
+  bool unreadBadgeCustomizationEnabled = false,
+  GuildNotificationContext? guildContext,
+}) {
+  final level = resolveUnreadBadgesLevel(
+    channel: channel,
+    guildSettings: guildSettings,
+    unreadBadgeCustomizationEnabled: unreadBadgeCustomizationEnabled,
+  );
+  if (level != null) {
+    return _shouldShowUnreadInboxStateAtLevel(
+      level,
+      hasUnread: hasUnread,
+      hasMentions: hasMentions,
+    );
+  }
+  if (isGuildOrCategoryOrChannelMuted(
+    channel: channel,
+    guildSettings: guildSettings,
+    now: now,
+  )) {
+    return false;
+  }
+  return _shouldShowUnreadInboxStateAtLevel(
+    resolveMessageNotifications(
+      channel: channel,
+      guildSettings: guildSettings,
+      guildContext: guildContext,
+    ),
+    hasUnread: hasUnread,
+    hasMentions: hasMentions,
+  );
+}
+
+bool _shouldShowUnreadInboxStateAtLevel(
+  UserNotificationSettings level, {
+  required bool hasUnread,
+  required bool hasMentions,
+}) {
+  if (level == UserNotificationSettings.noMessages) {
+    return false;
+  }
+  if (level == UserNotificationSettings.onlyMentions) {
+    return hasMentions;
+  }
+  return hasUnread || hasMentions;
+}
+
+UserNotificationSettings resolvePrivateMessageNotifications({
+  required UserGuildSettingsResponse? guildSettings,
+  required String channelId,
+}) {
+  final overrides = guildSettings?.channelOverrides ?? const {};
+  final direct = _explicitLevel(overrides[channelId]?.messageNotifications);
+  if (direct != null) {
+    return direct;
+  }
+  final stored =
+      guildSettings?.messageNotifications ?? UserNotificationSettings.inherit;
+  if (stored == UserNotificationSettings.inherit ||
+      stored == UserNotificationSettings.$unknown) {
+    return UserNotificationSettings.allMessages;
+  }
+  return stored;
+}
+
+bool shouldNotifyMessageBasedOnSettings({
+  required UserNotificationSettings level,
+  required bool isMentioned,
+  required bool isPrivateChannel,
+  required bool isPrivateChannelMuted,
+}) {
+  if (level == UserNotificationSettings.noMessages) {
+    return false;
+  }
+  if (level == UserNotificationSettings.allMessages) {
+    return true;
+  }
+  if (isMentioned) {
+    return true;
+  }
+  if (isPrivateChannel && !isPrivateChannelMuted) {
+    return true;
+  }
+  return false;
+}

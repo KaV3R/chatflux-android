@@ -1,0 +1,192 @@
+name: Dart analyze
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - canary
+    paths:
+      - "**/*.dart"
+      - ".github/workflows/dart-analyze.yml"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "analysis_options.yaml"
+  pull_request:
+    branches:
+      - canary
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        # Temp use while waiting for a pr: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+
+      - name: Restore pub cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Restore build_runner cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('pubspec.lock', 'lib/**', 'build.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
+
+      - name: Configure APNs build tree
+        run: dart tool/configure_build.dart --profile=apns
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Resolve package dependencies
+        run: bash tool/pub_get_packages.sh
+
+      - name: Verify generated localizations
+        run: |
+          flutter gen-l10n
+          dart format lib/l10n/generated
+          git diff --exit-code -- lib/l10n/generated
+
+      - name: Summarize untranslated localizations
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          [ -f build/l10n_untranslated.json ] || exit 0
+          {
+            echo "### Untranslated Flutter strings"
+            echo
+            echo "| Locale | Missing |"
+            echo "| --- | ---: |"
+            jq -r 'to_entries | sort_by(.key)[] | "| \(.key) | \(.value | length) |"' build/l10n_untranslated.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run code generation
+        run: dart run build_runner build
+
+      - name: Check formatting
+        run: bash tool/format_dart.sh --output=none --set-exit-if-changed
+
+      - name: Analyze project source
+        run: bash tool/flutter_analyze.sh
+
+      - name: Verify OSS configure output
+        run: flutter test --reporter failures-only test/build/oss_configure_build_test.dart
+
+  test:
+    needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+
+      - name: Restore pub cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Restore build_runner cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .dart_tool/build
+          key: ${{ runner.os }}-build-runner-${{ hashFiles('pubspec.lock', 'lib/**', 'build.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-runner-
+
+      - name: Set up Rust
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --default-toolchain stable
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            . "$HOME/.cargo/env"
+          fi
+          rustup show active-toolchain || rustup toolchain install stable
+
+      - name: Enable native asset build hooks
+        run: flutter config --enable-native-assets
+
+      - name: Configure APNs build tree
+        run: dart tool/configure_build.dart --profile=apns
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build
+
+      - name: Run tests
+        run: bash tool/flutter_test_ci.sh
+
+  package-tests:
+    needs: analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - fluxer_markdown
+          - fluxer_fcm
+          - fluxer_markdown_native
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+
+      - name: Restore pub cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Set up Rust
+        if: startsWith(matrix.package, 'fluxer_markdown')
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --default-toolchain stable
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            . "$HOME/.cargo/env"
+          fi
+          rustup show active-toolchain || rustup toolchain install stable
+
+      - name: Enable native asset build hooks
+        run: flutter config --enable-native-assets
+
+      - name: Run package tests
+        run: |
+          cd packages/${{ matrix.package }}
+          flutter pub get
+          if [ "${{ matrix.package }}" = "fluxer_markdown_native" ]; then
+            bash ../../tool/flutter_test_ci.sh --dart
+          else
+            bash ../../tool/flutter_test_ci.sh
+          fi

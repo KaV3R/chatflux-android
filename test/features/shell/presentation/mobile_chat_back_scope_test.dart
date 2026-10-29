@@ -1,0 +1,308 @@
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/router/shell_popup_route_observer.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/attachment_panel_provider.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/expression_panel_provider.dart';
+import 'package:fluxer_app/features/shell/presentation/mobile_chat_back_scope.dart';
+import 'package:fluxer_app/features/shell/providers/drawer/reveal_side_provider.dart';
+import 'package:fluxer_app/features/shell/providers/layout/shell_popup_overlay_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:go_router/go_router.dart';
+
+void main() {
+  testWidgets(
+    'mobile back returns to guild root when the drawer is open on guild chat',
+    (tester) async {
+      final router = _routerFor('/channels/guild/channel');
+      addTearDown(router.dispose);
+      final container = _containerFor(router);
+
+      await tester.pumpWidget(_buildBackScopeApp(container, router));
+      await tester.pumpAndSettle();
+
+      expect(container.read(currentRevealSideProvider), RevealSide.main);
+
+      final firstHandled = await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(firstHandled, isTrue);
+      expect(container.read(currentRevealSideProvider), RevealSide.left);
+      expect(
+        router.routerDelegate.currentConfiguration.uri.path,
+        '/channels/guild/channel',
+      );
+
+      container.read(currentRevealSideProvider.notifier).set(RevealSide.left);
+      await tester.pump();
+
+      final secondHandled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(secondHandled, isTrue);
+      expect(
+        router.routerDelegate.currentConfiguration.uri.path,
+        '/channels/guild',
+      );
+    },
+  );
+
+  testWidgets('mobile back on the dm list leaves the app', (tester) async {
+    final List<String> platformCalls = _recordPlatformCalls(tester);
+    final router = _routerFor('/channels/@me');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(handled, isTrue);
+    expect(platformCalls, <String>['SystemNavigator.pop']);
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      '/channels/@me',
+    );
+  });
+
+  testWidgets('mobile back on a community channel list leaves the app', (
+    tester,
+  ) async {
+    final List<String> platformCalls = _recordPlatformCalls(tester);
+    final router = _routerFor('/channels/guild');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(handled, isTrue);
+    expect(platformCalls, <String>['SystemNavigator.pop']);
+  });
+
+  testWidgets('mobile back from chat does not leave the app', (tester) async {
+    final List<String> platformCalls = _recordPlatformCalls(tester);
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(platformCalls, isEmpty);
+    expect(container.read(currentRevealSideProvider), RevealSide.left);
+  });
+
+  testWidgets('mobile back closes the expression panel before the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    container.read(expressionPanelProvider.notifier).open();
+    expect(container.read(expressionPanelProvider), isTrue);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(handled, isTrue);
+    expect(container.read(expressionPanelProvider), isFalse);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+  });
+
+  testWidgets('mobile back closes the attachment panel before the drawer', (
+    tester,
+  ) async {
+    final router = _routerFor('/channels/guild/channel');
+    addTearDown(router.dispose);
+    final container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    container.read(attachmentPanelProvider.notifier).open();
+    expect(container.read(attachmentPanelProvider), isTrue);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(handled, isTrue);
+    expect(container.read(attachmentPanelProvider), isFalse);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+  });
+
+  testWidgets('mobile back dismisses an open bottom sheet before the drawer', (
+    tester,
+  ) async {
+    late final ProviderContainer container;
+    final ShellPopupRouteObserver popupObserver = ShellPopupRouteObserver(({
+      required bool hasOverlay,
+    }) {
+      container
+          .read(shellHasPopupOverlayProvider.notifier)
+          .setHasOverlay(value: hasOverlay);
+    });
+    final router = _routerFor(
+      '/channels/guild/channel',
+      navigatorObservers: [popupObserver],
+    );
+    addTearDown(router.dispose);
+    container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    final BuildContext chatContext = tester.element(find.text('chat'));
+
+    showModalBottomSheet<void>(
+      context: chatContext,
+      builder: (BuildContext context) => const Text('sheet'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('sheet'), findsOneWidget);
+    expect(container.read(shellHasPopupOverlayProvider), isTrue);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(handled, isTrue);
+    expect(find.text('sheet'), findsNothing);
+    expect(container.read(shellHasPopupOverlayProvider), isFalse);
+    expect(container.read(currentRevealSideProvider), RevealSide.main);
+  });
+
+  testWidgets('mobile back dismisses a community menu on the channel list', (
+    tester,
+  ) async {
+    late final ProviderContainer container;
+    final ShellPopupRouteObserver popupObserver = ShellPopupRouteObserver(({
+      required bool hasOverlay,
+    }) {
+      container
+          .read(shellHasPopupOverlayProvider.notifier)
+          .setHasOverlay(value: hasOverlay);
+    });
+    final router = _routerFor(
+      '/channels/guild',
+      navigatorObservers: [popupObserver],
+    );
+    addTearDown(router.dispose);
+    container = _containerFor(router);
+
+    await tester.pumpWidget(_buildBackScopeApp(container, router));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select a channel'), findsOneWidget);
+
+    final BuildContext listContext = tester.element(
+      find.text('Select a channel'),
+    );
+
+    showModalBottomSheet<void>(
+      context: listContext,
+      builder: (BuildContext context) => const Text('community menu'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('community menu'), findsOneWidget);
+    expect(container.read(shellHasPopupOverlayProvider), isTrue);
+
+    final bool handled = await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(handled, isTrue);
+    expect(find.text('community menu'), findsNothing);
+    expect(container.read(shellHasPopupOverlayProvider), isFalse);
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      '/channels/guild',
+    );
+  });
+}
+
+List<String> _recordPlatformCalls(WidgetTester tester) {
+  final List<String> calls = <String>[];
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (MethodCall call) async {
+      if (call.method == 'SystemNavigator.pop') {
+        calls.add(call.method);
+      }
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    ),
+  );
+  return calls;
+}
+
+GoRouter _routerFor(
+  String initialLocation, {
+  List<NavigatorObserver> navigatorObservers = const <NavigatorObserver>[],
+}) {
+  return GoRouter(
+    initialLocation: initialLocation,
+    observers: navigatorObservers,
+    routes: [
+      GoRoute(
+        path: '/channels/@me',
+        builder: (context, state) =>
+            const MobileChatBackScope(child: Text('dms')),
+      ),
+      GoRoute(
+        path: '/channels/:guildId',
+        builder: (context, state) =>
+            const MobileChatBackScope(child: Text('Select a channel')),
+        routes: [
+          GoRoute(
+            path: ':channelId',
+            builder: (context, state) =>
+                const MobileChatBackScope(child: Text('chat')),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+ProviderContainer _containerFor(GoRouter router) {
+  final container = ProviderContainer(
+    overrides: [fluxerRouterProvider.overrideWithValue(router)],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
+Widget _buildBackScopeApp(ProviderContainer container, GoRouter router) {
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp.router(
+      routerConfig: router,
+      builder: (context, child) => MediaQuery(
+        data: const MediaQueryData(size: Size(400, 800)),
+        child: child ?? const SizedBox.shrink(),
+      ),
+    ),
+  );
+}

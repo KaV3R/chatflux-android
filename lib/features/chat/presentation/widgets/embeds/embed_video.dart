@@ -1,0 +1,158 @@
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/embeds/embed_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/embeds/embed_shared.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/embeds/embed_youtube.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_inline_video_player.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/wallpaper/chat_wallpaper_text_theme.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_youtube_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_dimension_utils.dart';
+import 'package:fluxer_app/features/mature_content/presentation/widgets/mature_media_overlay.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+class EmbedVideo extends StatelessWidget {
+  final Embed embed;
+  final MediaDimensionSize dimensionSize;
+  final String? channelId;
+  final int? embedIndex;
+  final MessageMediaActionScope? videoActionScope;
+
+  const EmbedVideo({
+    required this.embed,
+    this.dimensionSize = MediaDimensionSize.small,
+    this.channelId,
+    this.embedIndex,
+    this.videoActionScope,
+    super.key,
+  });
+
+  bool get _hasHeader =>
+      embed.providerName != null || embed.author != null || embed.title != null;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChatSurfaceTheme(
+      builder: (BuildContext context) {
+        final bool isMediaOnly = embed.isMediaOnlyEmbed;
+        final sideColor = embed.color != null
+            ? Color(0xFF000000 | (embed.color! & 0xFFFFFF))
+            : context.colors.backgroundSecondaryAlt;
+
+        final dimensions = mediaDimensionsForSize(dimensionSize);
+        final ChatFullscreenVideoLaunchContext? youtubeLaunchContext =
+            canRenderYouTubeEmbed(embed)
+            ? ChatFullscreenVideoLaunchContext.fromYouTubeEmbed(
+                embed: embed,
+                embedIndex: embedIndex,
+                actionScope: videoActionScope,
+              )
+            : null;
+        final ChatFullscreenVideoLaunchContext? launchContext =
+            youtubeLaunchContext == null && isValidEmbedMedia(embed.video)
+            ? ChatFullscreenVideoLaunchContext.fromEmbed(
+                embed: embed,
+                embedIndex: embedIndex,
+                actionScope: videoActionScope,
+              )
+            : null;
+        if (isMediaOnly &&
+            youtubeLaunchContext == null &&
+            launchContext == null) {
+          return EmbedImage(
+            embed: embed,
+            dimensionSize: dimensionSize,
+            channelId: channelId,
+            embedIndex: embedIndex,
+            mediaActionScope: videoActionScope,
+          );
+        }
+        final double mediaRadius = isMediaOnly ? 8 : 4;
+        final Widget player = youtubeLaunchContext != null
+            ? EmbedYouTube(
+                embed: embed,
+                launchContext: youtubeLaunchContext,
+                dimensionSize: dimensionSize,
+              )
+            : launchContext == null
+            ? const SizedBox.shrink()
+            : ChatInlineVideoPlayer(
+                source: launchContext.source,
+                launchContext: launchContext,
+                dimensionSize: dimensionSize,
+              );
+        final Widget media = MatureMediaOverlay(
+          channelId: channelId,
+          isMatureMedia: embed.isMatureMedia,
+          borderRadius: BorderRadius.circular(mediaRadius),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(mediaRadius),
+            child: player,
+          ),
+        );
+
+        if (isMediaOnly) {
+          return Container(
+            margin: const EdgeInsets.only(top: 4, bottom: 3),
+            constraints: BoxConstraints(
+              maxWidth: dimensions.maxWidth,
+              maxHeight: dimensions.maxHeight,
+            ),
+            decoration: BoxDecoration(
+              color: context.colors.backgroundSecondaryAlt,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: media,
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: 4),
+          constraints: BoxConstraints(maxWidth: dimensions.maxWidth),
+          decoration: BoxDecoration(
+            color: context.colors.embedBackground,
+            border: Border(left: BorderSide(color: sideColor, width: 4)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_hasHeader)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (embed.providerName != null)
+                        EmbedProvider(
+                          name: embed.providerName!,
+                          url: embed.providerUrl,
+                        ),
+                      if (embed.author != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: EmbedAuthorRow(author: embed.author!),
+                        ),
+                      if (embed.title != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: EmbedTitle(
+                            title: embed.title!,
+                            url: embed.url,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                child: media,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

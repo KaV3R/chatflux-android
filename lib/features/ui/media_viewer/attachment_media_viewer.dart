@@ -1,0 +1,1126 @@
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui';
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/accessibility/presentation/allow_image_frame_animation.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/media_options_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/mobile_media_options_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_network_image.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/media_load_error_placeholder.dart';
+import 'package:fluxer_app/features/chat/utils/attachments/attachment_display_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/favorite_media_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/gif_preview_media_policy.dart';
+import 'package:fluxer_app/features/chat/utils/media/hdr_aware_image_url.dart';
+import 'package:fluxer_app/features/chat/utils/media/save_message_media_favorite.dart';
+import 'package:fluxer_app/features/forum/providers/media_download_policy_provider.dart';
+import 'package:fluxer_app/features/mature_content/presentation/widgets/mature_media_overlay.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/shell/foldable/tabletop_hinge_column.dart';
+import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
+import 'package:fluxer_app/features/ui/button/fluxer_button.dart';
+import 'package:fluxer_app/features/ui/media_viewer/media_viewer_dismiss.dart';
+import 'package:fluxer_app/features/ui/media_viewer/media_viewer_drag_recognizers.dart';
+import 'package:fluxer_app/features/ui/media_viewer/touch_media_viewer_page.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/external_links/external_link_handler.dart';
+import 'package:fluxer_app/shared/providers/input_modality_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+class AttachmentMediaViewerItem {
+  const AttachmentMediaViewerItem({
+    required this.url,
+    required this.filename,
+    this.width,
+    this.height,
+    this.isMatureMedia = false,
+    this.attachmentId,
+    this.embedIndex,
+    this.linkUrl,
+    this.proxyUrl,
+    this.contentType,
+    this.downloadUrl,
+    this.contentHash,
+    this.description,
+  });
+
+  factory AttachmentMediaViewerItem.fromAttachment(Attachment attachment) {
+    return AttachmentMediaViewerItem(
+      url: attachment.url,
+      filename: attachment.filename,
+      width: attachment.width,
+      height: attachment.height,
+      isMatureMedia: attachment.isMatureMedia,
+      attachmentId: attachment.id,
+      proxyUrl: attachment.proxyUrl,
+      contentType: attachment.contentType,
+      downloadUrl: attachmentEffectiveDownloadUrl(
+        url: attachment.url,
+        isExpired: attachment.expired ?? false,
+        proxyUrl: attachment.proxyUrl,
+      ),
+      contentHash: attachment.contentHash,
+      description: attachment.description,
+    );
+  }
+
+  final String url;
+  final String filename;
+  final int? width;
+  final int? height;
+  final bool isMatureMedia;
+  final String? attachmentId;
+  final int? embedIndex;
+  final String? linkUrl;
+  final String? proxyUrl;
+
+  String get shareableUrl {
+    final String resolved = linkUrl?.trim() ?? '';
+    return resolved.isNotEmpty ? resolved : url;
+  }
+
+  final String? contentType;
+  final String? downloadUrl;
+  final String? contentHash;
+  final String? description;
+}
+
+bool _mayBeAnimated(AttachmentMediaViewerItem item) {
+  final String? contentType = item.contentType?.toLowerCase();
+  return mediaProxyUrlIsAnimated(item.url) ||
+      isAnimatedImagePreviewUrl(item.filename) ||
+      contentType == 'image/gif' ||
+      contentType == 'image/webp' ||
+      contentType == 'image/avif';
+}
+
+Future<void> showAttachmentMediaViewer(
+  BuildContext context, {
+  required List<AttachmentMediaViewerItem> items,
+  int initialIndex = 0,
+  String? channelId,
+  void Function(int index)? onForward,
+  MessageMediaActionScope? actionScope,
+}) async {
+  if (items.isEmpty) {
+    return;
+  }
+  final int clampedInitialIndex = initialIndex.clamp(0, items.length - 1);
+  await showGeneralDialog<void>(
+    context: context,
+    barrierLabel: FluxerLocalizations.of(context).mediaViewerImagePreview,
+    barrierColor: Colors.transparent,
+    pageBuilder: (_, _, _) {
+      return AttachmentMediaViewerShell(
+        items: items,
+        initialIndex: clampedInitialIndex,
+        channelId: channelId,
+        onForward: onForward,
+        actionScope: actionScope,
+      );
+    },
+    transitionBuilder: (_, animation, _, child) {
+      return FadeTransition(opacity: animation, child: child);
+    },
+  );
+}
+
+class AttachmentMediaViewerShell extends ConsumerStatefulWidget {
+  const AttachmentMediaViewerShell({
+    required this.items,
+    required this.initialIndex,
+    this.channelId,
+    this.onForward,
+    this.actionScope,
+    super.key,
+  });
+
+  final List<AttachmentMediaViewerItem> items;
+  final int initialIndex;
+  final String? channelId;
+
+  final void Function(int index)? onForward;
+
+  final MessageMediaActionScope? actionScope;
+
+  @override
+  ConsumerState<AttachmentMediaViewerShell> createState() =>
+      _AttachmentMediaViewerShellState();
+}
+
+class _AttachmentMediaViewerShellState
+    extends ConsumerState<AttachmentMediaViewerShell> {
+  static const double _desktopZoomScale = 2.5;
+  static const double _pageDecodeScreenFactor = 2;
+  late final PageController _pageController;
+  late final List<TransformationController> _touchControllers;
+  late int _currentIndex;
+  bool _isDesktopZoomed = false;
+  Offset _desktopPanOffset = Offset.zero;
+  Offset? _desktopDragOrigin;
+  bool _isPointerDownInsideContent = false;
+  bool _desktopMediaHovered = false;
+  bool _isDesktopDragging = false;
+  double _touchDismissProgress = 0;
+  bool _isTouchZoomed = false;
+  ScrollHoldController? _touchPageHold;
+  Drag? _touchPageDrag;
+
+  int? _pageDecodeCap;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+    _touchControllers = widget.items
+        .map((AttachmentMediaViewerItem _) => TransformationController())
+        .toList();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    for (final TransformationController controller in _touchControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _executeClose() {
+    Navigator.of(context).pop();
+  }
+
+  void _executeOpenInBrowser() {
+    final AttachmentMediaViewerItem item = widget.items[_currentIndex];
+    if (item.url.isEmpty) {
+      return;
+    }
+    unawaited(handleExternalLinkTap(context, item.url));
+  }
+
+  void _executeForward() {
+    final void Function(int index)? onForward = widget.onForward;
+    if (onForward == null) {
+      return;
+    }
+    final int index = _currentIndex;
+    Navigator.of(context).pop();
+    onForward(index);
+  }
+
+  void _executeSelectIndex(int index) {
+    if (index == _currentIndex) {
+      return;
+    }
+    _resetZoomState();
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _executeNext() {
+    if (_currentIndex >= widget.items.length - 1) {
+      return;
+    }
+    _executeSelectIndex(_currentIndex + 1);
+  }
+
+  void _executePrevious() {
+    if (_currentIndex <= 0) {
+      return;
+    }
+    _executeSelectIndex(_currentIndex - 1);
+  }
+
+  void _resetZoomState() {
+    final bool hasTouchZoom = _touchControllers.any(
+      (TransformationController controller) =>
+          (controller.value.getMaxScaleOnAxis() - 1).abs() >= 0.01,
+    );
+    if (!_isDesktopZoomed &&
+        _desktopPanOffset == Offset.zero &&
+        !hasTouchZoom &&
+        !_isTouchZoomed) {
+      return;
+    }
+    setState(() {
+      _isDesktopZoomed = false;
+      _desktopPanOffset = Offset.zero;
+      _isDesktopDragging = false;
+      _isTouchZoomed = false;
+      _touchDismissProgress = 0;
+      for (final TransformationController controller in _touchControllers) {
+        controller.value = Matrix4.identity();
+      }
+    });
+  }
+
+  void _handleTouchDismissProgress(double progress) {
+    if (_touchDismissProgress == progress) {
+      return;
+    }
+    setState(() {
+      _touchDismissProgress = progress;
+    });
+  }
+
+  void _handleTouchPageDragDown(DragDownDetails details) {
+    _touchPageHold = _pageController.position.hold(() {
+      _touchPageHold = null;
+    });
+  }
+
+  void _handleTouchPageDragStart(DragStartDetails details) {
+    _touchPageDrag = _pageController.position.drag(details, () {
+      _touchPageDrag = null;
+    });
+  }
+
+  void _handleTouchPageDragUpdate(DragUpdateDetails details) {
+    _touchPageDrag?.update(details);
+  }
+
+  void _handleTouchPageDragEnd(DragEndDetails details) {
+    _touchPageDrag?.end(details);
+  }
+
+  void _handleTouchPageDragCancel() {
+    _touchPageHold?.cancel();
+    _touchPageDrag?.cancel();
+  }
+
+  void _handleTouchZoomChanged(bool isZoomed) {
+    if (_isTouchZoomed == isZoomed) {
+      return;
+    }
+    setState(() {
+      _isTouchZoomed = isZoomed;
+    });
+  }
+
+  double _readCurrentTouchScale() {
+    final Matrix4 matrix = _touchControllers[_currentIndex].value;
+    return matrix.getMaxScaleOnAxis();
+  }
+
+  bool _canDismissBackdrop({required bool useTouchGestures}) {
+    if (useTouchGestures) {
+      return (_readCurrentTouchScale() - 1).abs() < 0.01 &&
+          _touchDismissProgress < 0.01 &&
+          !_isTouchZoomed;
+    }
+    if (_isDesktopZoomed) {
+      return false;
+    }
+    return _desktopPanOffset.distance < 0.5;
+  }
+
+  void _executeDesktopToggleZoom() {
+    setState(() {
+      _isDesktopZoomed = !_isDesktopZoomed;
+      if (!_isDesktopZoomed) {
+        _desktopPanOffset = Offset.zero;
+      }
+    });
+  }
+
+  bool _hasOptionsMenu(AttachmentMediaViewerItem item) =>
+      MediaOptionsLaunchContext.fromImageViewerItem(
+        item,
+        actionScope: widget.actionScope,
+      ).hasOptionsMenu;
+
+  Future<void> _openOptions() async {
+    final AttachmentMediaViewerItem currentItem = widget.items[_currentIndex];
+    await showMobileMediaOptionsSheet(
+      context: context,
+      ref: ref,
+      launchContext: MediaOptionsLaunchContext.fromImageViewerItem(
+        currentItem,
+        actionScope: widget.actionScope,
+      ),
+      onCloseViewer: _executeClose,
+    );
+  }
+
+  Widget _buildMediaPageView({required bool useTouchGestures}) {
+    final ScrollBehavior scrollBehavior = ScrollConfiguration.of(context);
+    final DeviceGestureSettings? gestureSettings =
+        MediaQuery.maybeGestureSettingsOf(context);
+    return Listener(
+      onPointerDown: (_) => _isPointerDownInsideContent = true,
+      onPointerUp: (_) => _isPointerDownInsideContent = false,
+      onPointerCancel: (_) => _isPointerDownInsideContent = false,
+      child: RawGestureDetector(
+        gestures: <Type, GestureRecognizerFactory>{
+          if (useTouchGestures && !_isTouchZoomed)
+            MediaViewerHorizontalDragGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  MediaViewerHorizontalDragGestureRecognizer
+                >(
+                  () => MediaViewerHorizontalDragGestureRecognizer(
+                    debugOwner: this,
+                    supportedDevices: scrollBehavior.dragDevices,
+                  ),
+                  (MediaViewerHorizontalDragGestureRecognizer instance) {
+                    instance
+                      ..onDown = _handleTouchPageDragDown
+                      ..onStart = _handleTouchPageDragStart
+                      ..onUpdate = _handleTouchPageDragUpdate
+                      ..onEnd = _handleTouchPageDragEnd
+                      ..onCancel = _handleTouchPageDragCancel
+                      ..velocityTrackerBuilder = scrollBehavior
+                          .velocityTrackerBuilder(context)
+                      ..multitouchDragStrategy = scrollBehavior
+                          .getMultitouchDragStrategy(context)
+                      ..gestureSettings = gestureSettings;
+                  },
+                ),
+        },
+        child: _buildPageView(useTouchGestures: useTouchGestures),
+      ),
+    );
+  }
+
+  Widget _buildPageView({required bool useTouchGestures}) {
+    return PageView.builder(
+      clipBehavior: Clip.none,
+      controller: _pageController,
+      physics: useTouchGestures
+          ? const _ExternallyDraggedPagePhysics()
+          : (_isDesktopZoomed
+                ? const NeverScrollableScrollPhysics()
+                : const ClampingScrollPhysics()),
+      onPageChanged: (int index) {
+        setState(() {
+          _currentIndex = index;
+          _desktopMediaHovered = false;
+          _isDesktopDragging = false;
+        });
+        _resetZoomState();
+      },
+      itemCount: widget.items.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildMediaPage(
+          context: context,
+          item: widget.items[index],
+          useTouchGestures: useTouchGestures,
+          index: index,
+        );
+      },
+    );
+  }
+
+  Widget _buildTopBar({
+    required FluxerLocalizations l10n,
+    required bool isMobile,
+    required bool useTouchGestures,
+    required AttachmentMediaViewerItem currentItem,
+    required String indexLabel,
+    required double dismissChromeOpacity,
+    required bool showOptionsButton,
+    MessageMediaFavoriteTarget? favoriteTarget,
+  }) {
+    final MessageMediaActionScope? actionScope = widget.actionScope;
+    final bool downloadsHidden =
+        actionScope != null &&
+        ref.watch(mediaDownloadHiddenProvider(actionScope.message.channelId));
+    return Opacity(
+      opacity: useTouchGestures ? dismissChromeOpacity : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            if (!isMobile && !_isDesktopZoomed) ...[
+              Flexible(
+                child: _MediaViewerInfoPill(
+                  filename: currentItem.filename,
+                  dimensions: _buildDimensionsLabel(currentItem),
+                  indexLabel: indexLabel,
+                  description: currentItem.description,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            if (isMobile)
+              Tooltip(
+                message: l10n.mediaViewerClose,
+                child: FluxerButton.mediaOverlay(
+                  onPressed: _executeClose,
+                  icon: PhosphorIconsBold.x,
+                  isSquare: true,
+                ),
+              ),
+            const Spacer(),
+            if (!isMobile && widget.onForward != null) ...[
+              Tooltip(
+                message: l10n.mediaViewerForward,
+                child: FluxerButton.mediaOverlay(
+                  onPressed: _executeForward,
+                  icon: PhosphorIconsBold.arrowBendUpRight,
+                  isSquare: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            if (!isMobile) ...[
+              if (!downloadsHidden) ...[
+                Tooltip(
+                  message: l10n.mediaViewerOpenInBrowser,
+                  child: FluxerButton.mediaOverlay(
+                    onPressed: _executeOpenInBrowser,
+                    icon: PhosphorIconsBold.arrowSquareOut,
+                    isSquare: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (!useTouchGestures) ...[
+                Tooltip(
+                  message: _isDesktopZoomed
+                      ? l10n.mediaViewerZoomOut
+                      : l10n.mediaViewerZoomIn,
+                  child: FluxerButton.mediaOverlay(
+                    onPressed: _executeDesktopToggleZoom,
+                    icon: _isDesktopZoomed
+                        ? PhosphorIconsBold.magnifyingGlassMinus
+                        : PhosphorIconsBold.magnifyingGlassPlus,
+                    isSquare: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Tooltip(
+                message: l10n.mediaViewerClose,
+                child: FluxerButton.mediaOverlay(
+                  onPressed: _executeClose,
+                  icon: PhosphorIconsBold.x,
+                  isSquare: true,
+                ),
+              ),
+            ],
+            if (favoriteTarget != null && widget.actionScope != null) ...[
+              SavedMediaFavoriteToolbarButton(
+                message: widget.actionScope!.message,
+                target: favoriteTarget,
+              ),
+              const SizedBox(width: 8),
+            ],
+            if (showOptionsButton)
+              Tooltip(
+                message: l10n.mediaViewerOptions,
+                child: FluxerButton.mediaOverlay(
+                  onPressed: _openOptions,
+                  icon: PhosphorIconsBold.dotsThree,
+                  isSquare: true,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomChrome({
+    required FluxerLocalizations l10n,
+    required bool isMobile,
+    required bool useTouchGestures,
+    required String indexLabel,
+    required double dismissChromeOpacity,
+    required bool canGoPrevious,
+    required bool canGoNext,
+    required AttachmentMediaViewerItem currentItem,
+  }) {
+    final String? altText = currentItem.description?.trim();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (altText != null &&
+            altText.isNotEmpty &&
+            (isMobile || _isDesktopZoomed))
+          Opacity(
+            opacity: useTouchGestures ? dismissChromeOpacity : 1,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: IgnorePointer(
+                child: Align(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: context.colors.backgroundTextarea.withValues(
+                          alpha: 0.92,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          altText,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: context.textStyles.smallText.copyWith(
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (widget.items.length > 1 && (!_isDesktopZoomed || useTouchGestures))
+          Opacity(
+            opacity: useTouchGestures ? dismissChromeOpacity : 1,
+            child: _MediaViewerThumbnailStrip(
+              items: widget.items,
+              currentIndex: _currentIndex,
+              channelId: widget.channelId,
+              onSelectIndex: _executeSelectIndex,
+            ),
+          ),
+        if (widget.items.length > 1)
+          Opacity(
+            opacity: useTouchGestures ? dismissChromeOpacity : 1,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: canGoPrevious ? _executePrevious : null,
+                    tooltip: l10n.mediaViewerPreviousAttachment,
+                    icon: const Icon(PhosphorIconsBold.caretLeft),
+                  ),
+                  Text(
+                    indexLabel,
+                    style: context.textStyles.smallText.copyWith(
+                      color: context.colors.textPrimaryMuted,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: canGoNext ? _executeNext : null,
+                    tooltip: l10n.mediaViewerNextAttachment,
+                    icon: const Icon(PhosphorIconsBold.caretRight),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    final bool isMobile = isMobileLayout(context);
+    final bool useTouchGestures = isTouchPrimaryInput(ref);
+    final AttachmentMediaViewerItem currentItem = widget.items[_currentIndex];
+    final String indexLabel = l10n.mediaViewerAttachmentIndex(
+      _currentIndex + 1,
+      widget.items.length,
+    );
+    final bool canGoPrevious = _currentIndex > 0;
+    final bool canGoNext = _currentIndex < widget.items.length - 1;
+    final Attachment? resolvedAttachment = widget.actionScope == null
+        ? null
+        : resolveMessageAttachment(
+            widget.actionScope!.message,
+            currentItem.attachmentId,
+          );
+    final MessageMediaFavoriteTarget? favoriteTarget =
+        favoriteTargetForMessageMedia(
+          actionScope: widget.actionScope,
+          attachmentId: currentItem.attachmentId,
+          embedIndex: currentItem.embedIndex,
+          filename: currentItem.filename,
+          fallbackContentHash: currentItem.contentHash,
+          attachment: resolvedAttachment,
+          forMediaViewerToolbar: true,
+        );
+    final bool showOptionsButton = _hasOptionsMenu(currentItem);
+    final double backdropBaseOpacity = isMobile ? 0.85 : 0.6;
+    final double backdropOpacity = useTouchGestures
+        ? mediaViewerDismissBackdropOpacity(
+            baseOpacity: backdropBaseOpacity,
+            dismissProgress: _touchDismissProgress,
+          )
+        : backdropBaseOpacity;
+    final double dismissChromeOpacity = mediaViewerDismissChromeOpacity(
+      dismissProgress: _touchDismissProgress,
+    );
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (_, KeyEvent event) {
+        if (event is! KeyDownEvent) {
+          return KeyEventResult.ignored;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.escape) {
+          _executeClose();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          _executePrevious();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          _executeNext();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FluxerGestureDetector(
+              onTap: () {
+                if (_canDismissBackdrop(useTouchGestures: useTouchGestures) &&
+                    !_isPointerDownInsideContent) {
+                  _executeClose();
+                }
+              },
+              child: Semantics(
+                button: true,
+                label: l10n.mediaViewerDismissBackdrop,
+                child: ExcludeSemantics(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: backdropOpacity),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: isMobile ? 8 : 4,
+                        sigmaY: isMobile ? 8 : 4,
+                      ),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (useTouchGestures)
+              Positioned.fill(
+                child: _buildMediaPageView(useTouchGestures: useTouchGestures),
+              ),
+            SafeArea(
+              child: useTouchGestures
+                  ? TabletopHingeColumn(
+                      upper: Column(
+                        children: <Widget>[
+                          _buildTopBar(
+                            l10n: l10n,
+                            isMobile: isMobile,
+                            useTouchGestures: useTouchGestures,
+                            currentItem: currentItem,
+                            indexLabel: indexLabel,
+                            dismissChromeOpacity: dismissChromeOpacity,
+                            showOptionsButton: showOptionsButton,
+                            favoriteTarget: favoriteTarget,
+                          ),
+                          const Spacer(),
+                        ],
+                      ),
+                      lower: _buildBottomChrome(
+                        l10n: l10n,
+                        isMobile: isMobile,
+                        useTouchGestures: useTouchGestures,
+                        indexLabel: indexLabel,
+                        dismissChromeOpacity: dismissChromeOpacity,
+                        canGoPrevious: canGoPrevious,
+                        canGoNext: canGoNext,
+                        currentItem: currentItem,
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        _buildTopBar(
+                          l10n: l10n,
+                          isMobile: isMobile,
+                          useTouchGestures: useTouchGestures,
+                          currentItem: currentItem,
+                          indexLabel: indexLabel,
+                          dismissChromeOpacity: dismissChromeOpacity,
+                          showOptionsButton: showOptionsButton,
+                          favoriteTarget: favoriteTarget,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                            child: _buildMediaPageView(
+                              useTouchGestures: useTouchGestures,
+                            ),
+                          ),
+                        ),
+                        _buildBottomChrome(
+                          l10n: l10n,
+                          isMobile: isMobile,
+                          useTouchGestures: useTouchGestures,
+                          indexLabel: indexLabel,
+                          dismissChromeOpacity: dismissChromeOpacity,
+                          canGoPrevious: canGoPrevious,
+                          canGoNext: canGoNext,
+                          currentItem: currentItem,
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String? _buildDimensionsLabel(AttachmentMediaViewerItem item) {
+    final int? width = item.width;
+    final int? height = item.height;
+    if (width == null || height == null || width <= 0 || height <= 0) {
+      return null;
+    }
+    return '${width}x$height';
+  }
+
+  Widget _buildMediaPage({
+    required BuildContext context,
+    required AttachmentMediaViewerItem item,
+    required bool useTouchGestures,
+    required int index,
+  }) {
+    final HdrDisplayMode hdrDisplayMode = ref.watch(
+      appearancePreferencesProvider.select(
+        (AppearancePreferencesState state) => state.hdrDisplayMode,
+      ),
+    );
+    final String imageUrl = buildHdrAwareDisplayImageUrl(
+      url: item.url,
+      proxyUrl: item.proxyUrl,
+      mode: hdrDisplayMode,
+      contentType: item.contentType,
+    );
+    const Widget errorPlaceholder = MediaLoadErrorPlaceholder();
+    final int? decodeCap = _mayBeAnimated(item)
+        ? null
+        : _pageDecodeCap ??=
+              (MediaQuery.sizeOf(context).longestSide *
+                      MediaQuery.devicePixelRatioOf(context) *
+                      _pageDecodeScreenFactor)
+                  .ceil();
+    final bool isPortrait = (item.height ?? 0) > (item.width ?? 0);
+    final Widget image = imageUrl.isEmpty
+        ? errorPlaceholder
+        : AllowImageFrameAnimation(
+            child: ChatNetworkImage(
+              imageUrl: imageUrl,
+              filename: item.filename,
+              contentType: item.contentType,
+              memCacheWidth: isPortrait ? null : decodeCap,
+              memCacheHeight: isPortrait ? decodeCap : null,
+              errorPlaceholder: errorPlaceholder,
+            ),
+          );
+    final Widget media = MatureMediaOverlay(
+      channelId: widget.channelId,
+      isMatureMedia: item.isMatureMedia,
+      child: image,
+    );
+    if (useTouchGestures) {
+      return TouchMediaViewerPage(
+        transformationController: _touchControllers[index],
+        isCurrentPage: index == _currentIndex,
+        onDismissProgress: _handleTouchDismissProgress,
+        onClose: _executeClose,
+        onZoomChanged: _handleTouchZoomChanged,
+        onLongPress: _hasOptionsMenu(item) ? _openOptions : null,
+        child: media,
+      );
+    }
+    return MouseRegion(
+      cursor: _resolveDesktopMediaCursor(index),
+      onEnter: index == _currentIndex
+          ? (_) {
+              setState(() {
+                _desktopMediaHovered = true;
+              });
+            }
+          : null,
+      onExit: index == _currentIndex
+          ? (_) {
+              setState(() {
+                _desktopMediaHovered = false;
+              });
+            }
+          : null,
+      child: FluxerGestureDetector(
+        onDoubleTap: _executeDesktopToggleZoom,
+        onPanStart: _isDesktopZoomed
+            ? (DragStartDetails details) {
+                setState(() {
+                  _isDesktopDragging = true;
+                  _desktopDragOrigin =
+                      details.localPosition - _desktopPanOffset;
+                });
+              }
+            : null,
+        onPanUpdate: _isDesktopZoomed
+            ? (DragUpdateDetails details) {
+                final Offset? dragOrigin = _desktopDragOrigin;
+                if (dragOrigin == null) {
+                  return;
+                }
+                final Size viewportSize = MediaQuery.sizeOf(context);
+                final double maxPanX = math.max(0, viewportSize.width * 0.4);
+                final double maxPanY = math.max(0, viewportSize.height * 0.35);
+                final Offset nextOffset = details.localPosition - dragOrigin;
+                setState(() {
+                  _desktopPanOffset = Offset(
+                    nextOffset.dx.clamp(-maxPanX, maxPanX),
+                    nextOffset.dy.clamp(-maxPanY, maxPanY),
+                  );
+                });
+              }
+            : null,
+        onPanEnd: _isDesktopZoomed
+            ? (_) {
+                setState(() {
+                  _isDesktopDragging = false;
+                  _desktopDragOrigin = null;
+                });
+              }
+            : null,
+        onPanCancel: _isDesktopZoomed
+            ? () {
+                setState(() {
+                  _isDesktopDragging = false;
+                  _desktopDragOrigin = null;
+                });
+              }
+            : null,
+        child: Center(
+          child: Transform.translate(
+            offset: _desktopPanOffset,
+            child: Transform.scale(
+              scale: _isDesktopZoomed ? _desktopZoomScale : 1,
+              child: media,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  MouseCursor _resolveDesktopMediaCursor(int index) {
+    if (index != _currentIndex) {
+      return MouseCursor.defer;
+    }
+    if (_isDesktopZoomed && _isDesktopDragging) {
+      return SystemMouseCursors.grabbing;
+    }
+    if (_desktopMediaHovered) {
+      return _isDesktopZoomed
+          ? SystemMouseCursors.zoomOut
+          : SystemMouseCursors.zoomIn;
+    }
+    return MouseCursor.defer;
+  }
+}
+
+class _MediaViewerInfoPill extends StatelessWidget {
+  const _MediaViewerInfoPill({
+    required this.filename,
+    required this.dimensions,
+    required this.indexLabel,
+    this.description,
+  });
+
+  final String filename;
+  final String? dimensions;
+  final String indexLabel;
+  final String? description;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> metaChunks = <String>[indexLabel];
+    if (dimensions != null && dimensions!.isNotEmpty) {
+      metaChunks.add(dimensions!);
+    }
+    final String? altText = description?.trim();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.colors.backgroundTextarea,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: context.colors.backgroundModifierAccent),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              filename,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textStyles.bodyMedium.copyWith(
+                color: context.colors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              metaChunks.join(' • '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textStyles.smallText.copyWith(
+                color: context.colors.textPrimaryMuted,
+              ),
+            ),
+            if (altText != null && altText.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                altText,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: context.textStyles.smallText.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaViewerThumbnailStrip extends ConsumerWidget {
+  const _MediaViewerThumbnailStrip({
+    required this.items,
+    required this.currentIndex,
+    required this.onSelectIndex,
+    this.channelId,
+  });
+
+  final List<AttachmentMediaViewerItem> items;
+  final int currentIndex;
+  final String? channelId;
+  final ValueChanged<int> onSelectIndex;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final HdrDisplayMode hdrDisplayMode = ref.watch(
+      appearancePreferencesProvider.select(
+        (AppearancePreferencesState state) => state.hdrDisplayMode,
+      ),
+    );
+    final int thumbnailDecodeSide =
+        (56 * MediaQuery.devicePixelRatioOf(context)).ceil();
+    return SizedBox(
+      height: 70,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        itemBuilder: (BuildContext context, int index) {
+          final bool isSelected = index == currentIndex;
+          final AttachmentMediaViewerItem item = items[index];
+          final bool hideMatureThumbnail =
+              item.isMatureMedia && channelId != null;
+          final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+          return Semantics(
+            button: true,
+            selected: isSelected,
+            label: l10n.mediaViewerAttachmentThumbnail(index + 1),
+            child: ExcludeSemantics(
+              child: FluxerGestureDetector(
+                onTap: () => onSelectIndex(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  width: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? context.colors.brandPrimary
+                          : context.colors.backgroundModifierAccent,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: hideMatureThumbnail
+                        ? ColoredBox(
+                            color: context.colors.spoilerBackground,
+                            child: const SizedBox.expand(),
+                          )
+                        : _thumbnailImage(
+                            item,
+                            hdrDisplayMode,
+                            thumbnailDecodeSide,
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemCount: items.length,
+      ),
+    );
+  }
+
+  Widget _thumbnailImage(
+    AttachmentMediaViewerItem item,
+    HdrDisplayMode hdrDisplayMode,
+    int decodeSide,
+  ) {
+    final String imageUrl = buildHdrAwareDisplayImageUrl(
+      url: item.url,
+      proxyUrl: item.proxyUrl,
+      mode: hdrDisplayMode,
+      contentType: item.contentType,
+    );
+    if (imageUrl.isEmpty) {
+      return const MediaLoadErrorPlaceholder(showLabel: false);
+    }
+    const Widget errorPlaceholder = MediaLoadErrorPlaceholder(showLabel: false);
+    final int? decodeCap = _mayBeAnimated(item) ? null : decodeSide;
+    final bool isLandscape = (item.width ?? 0) > (item.height ?? 0);
+    return ChatNetworkImage(
+      imageUrl: imageUrl,
+      filename: item.filename,
+      contentType: item.contentType,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      memCacheWidth: isLandscape ? null : decodeCap,
+      memCacheHeight: isLandscape ? decodeCap : null,
+      errorPlaceholder: errorPlaceholder,
+    );
+  }
+}
+
+class _ExternallyDraggedPagePhysics extends ClampingScrollPhysics {
+  const _ExternallyDraggedPagePhysics({super.parent});
+
+  @override
+  _ExternallyDraggedPagePhysics applyTo(ScrollPhysics? ancestor) {
+    return _ExternallyDraggedPagePhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) => false;
+}

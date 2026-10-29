@@ -1,0 +1,83 @@
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/profile/domain/custom_status_utils.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/emoji/emoji_image_cache.dart';
+import 'package:fluxer_app/shared/widgets/unicode_emoji_widget.dart';
+import 'package:fluxer_dart/export.dart';
+
+const int kCustomStatusEmojiRequestSize = 32;
+
+class CustomStatusDisplay extends StatelessWidget {
+  const CustomStatusDisplay({
+    required this.stored,
+    this.maxLines = 2,
+    this.emojiSize = 16,
+    this.textStyle,
+    this.trailing = false,
+    super.key,
+  });
+
+  final String? stored;
+  final int? maxLines;
+  final double emojiSize;
+  final TextStyle? textStyle;
+  final bool trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final CustomStatusResponse? status = parseStoredCustomStatus(stored);
+    if (status == null) {
+      return const SizedBox.shrink();
+    }
+    final String? text = status.text?.trim();
+    final bool hasText = text != null && text.isNotEmpty;
+    final Widget? emoji = _buildEmoji(status);
+    if (emoji == null && !hasText) {
+      return const SizedBox.shrink();
+    }
+    final bool clamp = maxLines != null;
+    final Widget? label = hasText
+        ? Text(
+            text,
+            style:
+                textStyle ??
+                context.textStyles.bodySmall.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+            maxLines: maxLines,
+            overflow: clamp ? TextOverflow.ellipsis : null,
+          )
+        : null;
+    return Row(
+      mainAxisSize: trailing ? MainAxisSize.min : MainAxisSize.max,
+      crossAxisAlignment: maxLines == 1
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      children: <Widget>[
+        if (emoji != null) ...<Widget>[
+          emoji,
+          if (hasText) const SizedBox(width: 4),
+        ],
+        if (label != null)
+          if (trailing) Flexible(child: label) else Expanded(child: label),
+      ],
+    );
+  }
+
+  Widget? _buildEmoji(CustomStatusResponse status) {
+    final SnowflakeType? emojiId = status.emojiId;
+    if (emojiId != null) {
+      return CachedEmojiImage(
+        emojiId: emojiId,
+        animated: status.emojiAnimated,
+        requestSize: kCustomStatusEmojiRequestSize,
+        size: emojiSize,
+      );
+    }
+    final String? emojiName = status.emojiName;
+    if (emojiName != null && emojiName.isNotEmpty) {
+      return UnicodeEmojiWidget(emoji: emojiName, size: emojiSize);
+    }
+    return null;
+  }
+}

@@ -1,0 +1,375 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/instance/instance_runtime_config.dart';
+import 'package:fluxer_app/core/observability/observability_reporting_provider.dart';
+import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preference_field.dart';
+import 'package:fluxer_app/core/synced_preferences/engine/synced_preferences_store.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/settings/presentation/widgets/user_advanced_settings.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/advanced_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/chat_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/local_settings_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/voice_settings_provider.dart';
+import 'package:fluxer_app/features/settings/providers/view_models/user_settings_view_model.dart';
+import 'package:fluxer_app/features/settings/utils/platform_desktop_utils.dart';
+import 'package:fluxer_app/features/voice/domain/voice_settings_state.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:riverpod/src/framework.dart';
+
+import '../../helpers/test_l10n.dart';
+import '../../helpers/wide_layout_test_sizes.dart';
+
+class _InertSyncedPreferencesStore extends SyncedPreferencesStore {
+  // Test stub does not use super parameters.
+  // ignore: use_super_parameters
+  _InertSyncedPreferencesStore(Ref ref) : super(ref);
+
+  @override
+  void markDirty(SyncedPreferenceField field) {}
+
+  @override
+  void scheduleFlush() {}
+}
+
+class _FakeAdvancedPreferences extends AdvancedPreferences {
+  @override
+  AdvancedPreferencesState build() => const AdvancedPreferencesState();
+
+  @override
+  Future<void> setEnableTextSelection({required bool value}) async {
+    state = state.copyWith(enableTextSelection: value);
+  }
+
+  @override
+  Future<void> setShowAttachmentExpiryIndicator({required bool value}) async {
+    state = state.copyWith(showAttachmentExpiryIndicator: value);
+  }
+}
+
+class _FakeAppearancePreferences extends AppearancePreferences {
+  @override
+  AppearancePreferencesState build() => const AppearancePreferencesState();
+}
+
+class _FakeChatPreferences extends ChatPreferences {
+  @override
+  ChatPreferencesState build() => const ChatPreferencesState();
+}
+
+class _FakeUserSettings extends UserSettingsViewModel {
+  @override
+  UserSettingsViewState build() => const UserSettingsViewState(
+    userId: 'u1',
+    username: 'tester',
+    displayName: 'Tester',
+    discriminator: '0',
+    avatar: null,
+    avatarColor: null,
+    memberSince: null,
+    status: 'online',
+    messageDisplayCompact: false,
+    developerMode: false,
+    trustedDomains: <String>[],
+  );
+
+  @override
+  Future<void> setDeveloperMode({required bool value}) async {
+    state = state.copyWith(developerMode: value);
+  }
+}
+
+class _FakeVoiceSettings extends VoiceSettings {
+  @override
+  VoiceSettingsState build() => const VoiceSettingsState();
+}
+
+class _FakeObservabilityReporting extends ObservabilityReporting {
+  @override
+  bool build() => false;
+}
+
+class _FakeLocalSettings extends LocalSettings {
+  @override
+  LocalSettingsState build() => const LocalSettingsState();
+}
+
+List<Override> _overrides() {
+  return [
+    syncedPreferencesStoreProvider.overrideWith(
+      _InertSyncedPreferencesStore.new,
+    ),
+    advancedPreferencesProvider.overrideWith(_FakeAdvancedPreferences.new),
+    appearancePreferencesProvider.overrideWith(_FakeAppearancePreferences.new),
+    chatPreferencesProvider.overrideWith(_FakeChatPreferences.new),
+    userSettingsViewModelProvider.overrideWith(_FakeUserSettings.new),
+    voiceSettingsProvider.overrideWith(_FakeVoiceSettings.new),
+    observabilityReportingProvider.overrideWith(
+      _FakeObservabilityReporting.new,
+    ),
+    localSettingsProvider.overrideWith(_FakeLocalSettings.new),
+  ];
+}
+
+Widget _wrap(
+  Widget child, {
+  required Size size,
+  List<Override> extraOverrides = const <Override>[],
+}) {
+  final colorTheme = buildDarkColorTheme();
+  return ProviderScope(
+    overrides: [..._overrides(), ...extraOverrides],
+    child: MaterialApp(
+      locale: kTestLocale,
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      home: MediaQuery(
+        data: MediaQueryData(size: size),
+        child: Scaffold(body: child),
+      ),
+    ),
+  );
+}
+
+void main() {
+  final FluxerLocalizations l10n = testL10n;
+
+  Future<void> pumpAdvancedSettings(
+    WidgetTester tester, {
+    required Size size,
+    List<Override> extraOverrides = const <Override>[],
+  }) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      _wrap(
+        const UserAdvancedSettings(),
+        size: size,
+        extraOverrides: extraOverrides,
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('hides wide-layout text selection on narrow screens', (
+    tester,
+  ) async {
+    await pumpAdvancedSettings(tester, size: const Size(400, 2000));
+    expect(
+      findTestText(l10n.advancedSettingEnableTextSelectionLabel),
+      findsNothing,
+    );
+    expect(
+      findTestText(l10n.advancedSettingsCategoryAccessibility),
+      findsOneWidget,
+    );
+    expect(findTestText(l10n.advancedSettingsCategoryPrivacy), findsOneWidget);
+    expect(
+      findTestText(l10n.advancedSettingVideoSeekThumbnailsLabel),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows media buttons on narrow screens', (tester) async {
+    await pumpAdvancedSettings(tester, size: const Size(400, 2000));
+    await tester.scrollUntilVisible(
+      findTestText(l10n.advancedSettingMediaButtonsLabel),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(findTestText(l10n.advancedSettingMediaButtonsLabel), findsOneWidget);
+  });
+
+  testWidgets(
+    'media buttons sheet includes attachment expiry toggle on narrow screens',
+    (tester) async {
+      await pumpAdvancedSettings(tester, size: const Size(400, 2000));
+      await tester.scrollUntilVisible(
+        findTestText(l10n.advancedSettingMediaButtonsLabel),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(findTestText(l10n.advancedSettingMediaButtonsLabel));
+      await tester.pumpAndSettle();
+
+      expect(
+        findTestText(l10n.advancedSettingShowAttachmentExpiryLabel),
+        findsOneWidget,
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(
+          findTestText(l10n.advancedSettingShowAttachmentExpiryLabel),
+        ),
+      );
+      expect(
+        container
+            .read(advancedPreferencesProvider)
+            .showAttachmentExpiryIndicator,
+        isTrue,
+      );
+
+      await tester.tap(
+        findTestText(l10n.advancedSettingShowAttachmentExpiryLabel),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        container
+            .read(advancedPreferencesProvider)
+            .showAttachmentExpiryIndicator,
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets('shows wide-layout text selection on wide screens', (
+    tester,
+  ) async {
+    await pumpAdvancedSettings(
+      tester,
+      size: Size(kWideTestViewportSize.width, 2000),
+    );
+    expect(
+      findTestText(l10n.advancedSettingEnableTextSelectionLabel),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('hides keyboard hints on narrow mobile screens', (tester) async {
+    if (isDesktopOs) {
+      return;
+    }
+    await pumpAdvancedSettings(tester, size: const Size(400, 2000));
+    expect(findTestText(l10n.advancedSettingKeyboardHintsLabel), findsNothing);
+  });
+
+  testWidgets('shows keyboard hints on wide screens', (tester) async {
+    await pumpAdvancedSettings(
+      tester,
+      size: Size(kWideTestViewportSize.width, 2000),
+    );
+    expect(
+      findTestText(l10n.advancedSettingKeyboardHintsLabel),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('toggling developer mode updates provider state', (tester) async {
+    await pumpAdvancedSettings(
+      tester,
+      size: Size(kWideTestViewportSize.width, 2000),
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(UserAdvancedSettings)),
+    );
+    expect(
+      container.read(userSettingsViewModelProvider).developerMode,
+      isFalse,
+    );
+
+    final Finder developerModeToggle = find.bySemanticsLabel(
+      testSettingsSwitchSemanticsLabel(
+        label: l10n.advancedSettingDeveloperModeLabel,
+        description: l10n.advancedSettingDeveloperModeDescription,
+      ),
+    );
+    await tester.scrollUntilVisible(
+      developerModeToggle,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(developerModeToggle);
+    await tester.pumpAndSettle();
+
+    expect(container.read(userSettingsViewModelProvider).developerMode, isTrue);
+  });
+
+  testWidgets(
+    'crash reporting copy names Fluxer on a branded self-hosted instance',
+    (tester) async {
+      await pumpAdvancedSettings(
+        tester,
+        size: Size(kWideTestViewportSize.width, 3000),
+        extraOverrides: [
+          instanceRuntimeConfigProvider.overrideWithValue(
+            const InstanceRuntimeConfig(
+              productName: 'Acme',
+              selfHosted: true,
+              stripeEnabled: false,
+              emailsEnabled: true,
+              voiceEnabled: true,
+              presignedAttachmentUploads: true,
+              gifEnabled: true,
+              blueskyEnabled: true,
+              gifAttributionRequired: false,
+              singleCommunity: false,
+              directMessagesDisabled: false,
+              registrationClosed: false,
+              adminRegistrationUrlsEnabled: false,
+              collectDateOfBirth: true,
+            ),
+          ),
+        ],
+      );
+      final Finder destination = findTestText(
+        l10n.advancedCrashReportingDescription,
+      );
+      await tester.scrollUntilVisible(
+        destination,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(destination, findsOneWidget);
+      expect(
+        findTestText(l10n.advancedCrashReportingSectionDescription),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Acme'), findsNothing);
+      expect(find.textContaining('anonymous'), findsNothing);
+    },
+  );
+
+  testWidgets('toggling text selection updates advanced preferences', (
+    tester,
+  ) async {
+    await pumpAdvancedSettings(
+      tester,
+      size: Size(kWideTestViewportSize.width, 2000),
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(UserAdvancedSettings)),
+    );
+    expect(
+      container.read(advancedPreferencesProvider).enableTextSelection,
+      isFalse,
+    );
+
+    await tester.tap(
+      findTestText(l10n.advancedSettingEnableTextSelectionLabel),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(advancedPreferencesProvider).enableTextSelection,
+      isTrue,
+    );
+  });
+}

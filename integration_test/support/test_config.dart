@@ -1,0 +1,37 @@
+// ignore_for_file: do_not_use_environment -- integration runs are configured through --dart-define
+
+class IntegrationTestConfig {
+  const IntegrationTestConfig._();
+
+  static const String email = String.fromEnvironment('TEST_LAB_EMAIL');
+  static const String password = String.fromEnvironment('TEST_LAB_PASSWORD');
+  static const String guildId = String.fromEnvironment('TEST_LAB_GUILD_ID');
+  static const String channelId = String.fromEnvironment('TEST_LAB_CHANNEL_ID');
+
+  static const String perfStreams = String.fromEnvironment(
+    'PERF_STREAMS',
+    defaultValue: 'Dart,Embedder,GC',
+  );
+  static const int perfFlingCount = int.fromEnvironment(
+    'PERF_FLING_COUNT',
+    defaultValue: 3,
+  );
+
+  static bool _flag(String value) => value == '1' || value == 'true';
+
+  static bool get perfSemantics =>
+      _flag(const String.fromEnvironment('PERF_SEMANTICS'));
+
+  static String get perfWidgetEvents {
+    const String raw = String.fromEnvironment('PERF_WIDGET_EVENTS');
+    return raw == '1' || raw == 'true' ? 'both' : raw;
+  }
+
+  static const String personalNotesTitle = 'Personal notes';
+
+  static bool get hasCredentials => email.isNotEmpty && password.isNotEmpty;
+
+  static bool get hasGuildChannel => guildId.isNotEmpty && channelId.isNotEmpty;
+
+  static const Duration shellTimeout = Duration(minutes: 3);
+}

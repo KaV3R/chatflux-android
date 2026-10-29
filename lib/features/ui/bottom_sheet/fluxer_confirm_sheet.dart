@@ -1,0 +1,73 @@
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/features/ui/button/fluxer_button.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/utils/fluxer_haptics.dart';
+
+class FluxerConfirmSheet {
+  FluxerConfirmSheet._();
+
+  static Future<bool?> show(
+    BuildContext context, {
+    required String title,
+    required String confirmLabel,
+    VoidCallback? onConfirm,
+    String? description,
+    Widget? body,
+    bool isDanger = false,
+    bool? useRootNavigator,
+  }) {
+    return FluxerBottomSheet.show<bool>(
+      context,
+      useRootNavigator: useRootNavigator,
+      title: title,
+      builder: (sheetContext, close) {
+        final textStyles = sheetContext.textStyles;
+        final colors = sheetContext.colors;
+        final layout = sheetContext.layout;
+
+        final descriptionWidget = description == null
+            ? null
+            : Text(
+                description,
+                style: textStyles.bodySmall.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.4,
+                ),
+              );
+
+        void confirm() {
+          if (isDanger) {
+            FluxerHaptics.warning();
+          }
+          onConfirm?.call();
+          Navigator.of(sheetContext).pop(true);
+        }
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(layout.s4, 0, layout.s4, 0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ?descriptionWidget,
+                if (descriptionWidget != null && body != null)
+                  SizedBox(height: layout.s4),
+                ?body,
+                SizedBox(height: layout.s4),
+                if (isDanger)
+                  FluxerButton.dangerPrimary(
+                    onPressed: confirm,
+                    label: confirmLabel,
+                  )
+                else
+                  FluxerButton.primary(onPressed: confirm, label: confirmLabel),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

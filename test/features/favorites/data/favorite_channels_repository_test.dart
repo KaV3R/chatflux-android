@@ -1,0 +1,160 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/database/daos/favorite_channels_dao.dart';
+import 'package:fluxer_app/core/database/fluxer_database.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/features/favorites/data/favorite_channels_repository.dart';
+import 'package:fluxer_app/features/favorites/providers/favorite_channels_provider.dart';
+
+import '../../../helpers/open_test_database.dart';
+
+void main() {
+  late FluxerDatabase database;
+  late ProviderContainer container;
+  late FavoriteChannelsRepository repository;
+
+  setUp(() {
+    database = openTestDatabase();
+    container = ProviderContainer(
+      overrides: [fluxerDatabaseProvider.overrideWithValue(database)],
+    );
+    repository = container.read(favoriteChannelsRepositoryProvider);
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  test('addChannel persists channel metadata and ignores duplicates', () async {
+    expect(
+      await repository.addChannel(
+        channelId: 'channel-1',
+        guildId: 'guild-1',
+        nickname: '  General  ',
+      ),
+      isTrue,
+    );
+    expect(
+      await repository.addChannel(channelId: 'channel-1', guildId: 'guild-1'),
+      isFalse,
+    );
+
+    final favorite = await database.favoriteChannelsDao.getChannel('channel-1');
+    expect(favorite, isNotNull);
+    expect(favorite!.guildId, 'guild-1');
+    expect(favorite.nickname, 'General');
+    expect(favorite.position, 0);
+  });
+
+  test('removeChannel compacts remaining positions', () async {
+    await repository.addChannel(channelId: 'channel-1');
+    await repository.addChannel(channelId: 'channel-2');
+    await repository.addChannel(channelId: 'channel-3');
+
+    expect(await repository.removeChannel('channel-2'), isTrue);
+
+    final favorites = await database.favoriteChannelsDao.watchChannels().first;
+    expect(favorites.map((favorite) => favorite.channelId), [
+      'channel-1',
+      'channel-3',
+    ]);
+    expect(favorites.map((favorite) => favorite.position), [0, 1]);
+  });
+
+  test('moveChannel can move channels into categories', () async {
+    await repository.addCategory(id: 'category-1', name: 'Important');
+    await repository.addChannel(channelId: 'channel-1');
+    await repository.addChannel(channelId: 'channel-2');
+
+    await repository.moveChannel(
+      channelId: 'channel-2',
+      parentId: 'category-1',
+      position: 0,
+    );
+
+    final channel1 = await database.favoriteChannelsDao.getChannel('channel-1');
+    final channel2 = await database.favoriteChannelsDao.getChannel('channel-2');
+
+    expect(channel1!.parentId, isNull);
+    expect(channel1.position, 0);
+    expect(channel2!.parentId, 'category-1');
+    expect(channel2.position, 0);
+  });
+
+  test('settings persist collapsed categories and mute flags', () async {
+    await repository.setCollapsedCategoryIds([
+      'category-1',
+      ' category-1 ',
+      '',
+      'category-2',
+    ]);
+    await repository.setHideMuted(value: true);
+    await repository.setMuted(value: true);
+
+    final settings = await database.favoriteChannelsDao.getSettings();
+
+    expect(favoriteSettingsCollapsedCategoryIds(settings), [
+      'category-1',
+      'category-2',
+    ]);
+    expect(settings.hideMuted, isTrue);
+    expect(settings.muted, isTrue);
+  });
+
+  test(
+    'removeCategory keeps its channels as uncategorized favorites',
+    () async {
+      await repository.addCategory(id: 'category-1', name: 'Important');
+      await repository.addCategory(id: 'category-2', name: 'Later');
+      await repository.addChannel(channelId: 'channel-root');
+      await repository.addChannel(
+        channelId: 'channel-a',
+        parentId: 'category-1',
+      );
+      await repository.addChannel(
+        channelId: 'channel-b',
+        parentId: 'category-1',
+      );
+      await repository.setCollapsedCategoryIds(['category-1', 'category-2']);
+
+      expect(await repository.removeCategory('category-1'), isTrue);
+      expect(await repository.removeCategory('category-1'), isFalse);
+
+      final categories = await database.favoriteChannelsDao.getCategories();
+      expect(categories.map((category) => category.id), ['category-2']);
+      expect(categories.single.position, 0);
+
+      final favorites = await database.favoriteChannelsDao.getChannels();
+      expect(
+        favorites.map(
+          (favorite) =>
+              (favorite.channelId, favorite.parentId, favorite.position),
+        ),
+        [
+          ('channel-root', null, 0),
+          ('channel-a', null, 1),
+          ('channel-b', null, 2),
+        ],
+      );
+
+      final settings = await database.favoriteChannelsDao.getSettings();
+      expect(favoriteSettingsCollapsedCategoryIds(settings), ['category-2']);
+    },
+  );
+
+  test('renameCategory updates the category name', () async {
+    await repository.addCategory(id: 'category-1', name: 'Important');
+
+    expect(
+      await repository.renameCategory(id: 'category-1', name: 'Urgent'),
+      isTrue,
+    );
+    expect(
+      await repository.renameCategory(id: 'missing', name: 'Nope'),
+      isFalse,
+    );
+
+    final categories = await database.favoriteChannelsDao.getCategories();
+    expect(categories.single.name, 'Urgent');
+  });
+}

@@ -1,0 +1,308 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/permissions/channel_permission_cache_provider.dart';
+import 'package:fluxer_app/core/permissions/permission.dart';
+import 'package:fluxer_app/core/providers/database_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/features/channels/domain/channel.dart';
+import 'package:fluxer_app/features/channels/providers/channel_providers.dart';
+import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
+import 'package:fluxer_app/features/dm/domain/dm_conversation.dart';
+import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_list_view_model.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_sync_provider.dart';
+import 'package:fluxer_app/features/members/providers/member_providers.dart';
+import 'package:fluxer_app/shared/utils/chat_context_utils.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'channel_message_permissions_provider.g.dart';
+
+class ChannelMessagePermissions {
+  final bool isResolved;
+  final bool canSendMessages;
+  final bool canAttachFiles;
+  final bool canEmbedLinks;
+  final bool canUseExternalEmojis;
+  final bool canUseExternalStickers;
+
+  const ChannelMessagePermissions({
+    required this.isResolved,
+    required this.canSendMessages,
+    required this.canAttachFiles,
+    required this.canEmbedLinks,
+    required this.canUseExternalEmojis,
+    required this.canUseExternalStickers,
+  });
+
+  static const ChannelMessagePermissions unresolved = ChannelMessagePermissions(
+    isResolved: false,
+    canSendMessages: true,
+    canAttachFiles: true,
+    canEmbedLinks: true,
+    canUseExternalEmojis: true,
+    canUseExternalStickers: true,
+  );
+
+  static const ChannelMessagePermissions none = ChannelMessagePermissions(
+    isResolved: true,
+    canSendMessages: false,
+    canAttachFiles: false,
+    canEmbedLinks: false,
+    canUseExternalEmojis: false,
+    canUseExternalStickers: false,
+  );
+
+  static const ChannelMessagePermissions all = ChannelMessagePermissions(
+    isResolved: true,
+    canSendMessages: true,
+    canAttachFiles: true,
+    canEmbedLinks: true,
+    canUseExternalEmojis: true,
+    canUseExternalStickers: true,
+  );
+
+  bool get isComposerEnabled => isResolved && canSendMessages;
+
+  bool get showsNoSendPermissionHint => isResolved && !canSendMessages;
+
+  bool get canShowAttachControls =>
+      isComposerEnabled && (!isResolved || canAttachFiles);
+
+  bool get isAttachEnabled => canShowAttachControls;
+
+  bool get canShowEmbedControls =>
+      isComposerEnabled && (!isResolved || canEmbedLinks);
+
+  bool get isVoiceEnabled =>
+      isComposerEnabled && (!isResolved || canAttachFiles);
+}
+
+ChannelMessagePermissions channelMessagePermissionsFromBits({
+  required int bits,
+  required ChannelType channelType,
+}) {
+  final bool threadOnly =
+      channelType == ChannelType.guildForum ||
+      channelType == ChannelType.guildMedia;
+  return ChannelMessagePermissions(
+    isResolved: true,
+    canSendMessages:
+        !threadOnly && hasPermission(bits, Permission.sendMessages),
+    canAttachFiles: hasPermission(bits, Permission.attachFiles),
+    canEmbedLinks: hasPermission(bits, Permission.embedLinks),
+    canUseExternalEmojis: hasPermission(bits, Permission.useExternalEmojis),
+    canUseExternalStickers: hasPermission(bits, Permission.useExternalStickers),
+  );
+}
+
+@riverpod
+Future<ChannelMessagePermissions> channelMessagePermissions(
+  Ref ref,
+  String channelId,
+) async {
+  if (channelId.isEmpty) {
+    return ChannelMessagePermissions.none;
+  }
+  final bool isDmChannel = ref.watch(
+    dmViewModelProvider.select(
+      (state) => findDmById(state.conversations, channelId) != null,
+    ),
+  );
+  if (isDmChannel) {
+    final dm = findDmById(
+      ref.watch(dmViewModelProvider.select((state) => state.conversations)),
+      channelId,
+    );
+    if (dm != null && isSystemDmConversation(dm)) {
+      return ChannelMessagePermissions.none;
+    }
+    return ChannelMessagePermissions.all;
+  }
+  final String? currentUserId = ref.watch(currentUserIdProvider);
+  if (isPersonalNotesChannelRoute(
+    channelId: channelId,
+    currentUserId: currentUserId,
+  )) {
+    return ChannelMessagePermissions.all;
+  }
+  final dmRow = await ref
+      .read(fluxerDatabaseProvider)
+      .dmChannelDao
+      .getDmChannelById(channelId);
+  if (dmRow != null) {
+    if (isDmPersonalNotesType(dmRow.type)) {
+      return ChannelMessagePermissions.all;
+    }
+    if (!isDmGroupType(dmRow.type) && dmRow.recipientId == fluxerBotUserId) {
+      return ChannelMessagePermissions.none;
+    }
+    return ChannelMessagePermissions.all;
+  }
+  await ref.watch(channelPermissionIdentityProvider(channelId).future);
+  final channelRow = await ref
+      .read(fluxerDatabaseProvider)
+      .channelDao
+      .getChannelById(channelId);
+  if (channelRow == null) {
+    return ChannelMessagePermissions.unresolved;
+  }
+  final Channel channel = Channel.fromRow(channelRow);
+  if (channel.guildId.isEmpty) {
+    return ChannelMessagePermissions.none;
+  }
+  final String guildId = channel.guildId;
+  final AsyncValue<CurrentUserMemberIdentity?> memberIdentity = ref.watch(
+    currentUserMemberIdentityProvider(guildId),
+  );
+  ref
+    ..watch(guildListViewModelProvider)
+    ..watch(guildRolePermissionsIdentityProvider(guildId))
+    ..watch(
+      channelPermissionCacheProvider.select(
+        (ChannelPermissionCaches caches) => caches.effective[channelId],
+      ),
+    );
+  await ref
+      .read(channelPermissionCacheProvider.notifier)
+      .rebuildChannel(channelId);
+  final int? bits = ref
+      .read(channelPermissionCacheProvider.notifier)
+      .getChannelBits(channelId);
+  final GuildSync guildSync = ref.read(guildSyncProvider.notifier);
+  if (memberIdentity.value != null) {
+    guildSync.ownMemberPresent(guildId);
+  }
+  if (bits == null) {
+    if (memberIdentity.hasValue && memberIdentity.value == null) {
+      guildSync.requestOwnMemberSync(guildId);
+    }
+    return ChannelMessagePermissions.unresolved;
+  }
+  return channelMessagePermissionsFromBits(
+    bits: bits,
+    channelType: channel.type,
+  );
+}
+
+ChannelMessagePermissions channelMessagePermissionsForComposer(
+  AsyncValue<ChannelMessagePermissions> async,
+) {
+  return async.when(
+    skipLoadingOnReload: true,
+    data: (ChannelMessagePermissions value) => value,
+    error: (Object _, StackTrace _) => ChannelMessagePermissions.unresolved,
+    loading: () => ChannelMessagePermissions.unresolved,
+  );
+}
+
+ChannelMessagePermissions? syncDmChannelMessagePermissions(
+  WidgetRef ref,
+  String channelId, {
+  required bool watch,
+}) {
+  if (channelId.isEmpty) {
+    return ChannelMessagePermissions.none;
+  }
+  final DmViewState dmState = watch
+      ? ref.watch(dmViewModelProvider)
+      : ref.read(dmViewModelProvider);
+  final DmConversation? dm = findDmById(dmState.conversations, channelId);
+  if (dm != null) {
+    if (isSystemDmConversation(dm)) {
+      return ChannelMessagePermissions.none;
+    }
+    return ChannelMessagePermissions.all;
+  }
+  final String? currentUserId = watch
+      ? ref.watch(currentUserIdProvider)
+      : ref.read(currentUserIdProvider);
+  if (isPersonalNotesChannelRoute(
+    channelId: channelId,
+    currentUserId: currentUserId,
+  )) {
+    return ChannelMessagePermissions.all;
+  }
+  return null;
+}
+
+ChannelMessagePermissions? syncChannelMessagePermissions(
+  WidgetRef ref,
+  String channelId, {
+  required bool watch,
+}) {
+  final ChannelMessagePermissions? dm = syncDmChannelMessagePermissions(
+    ref,
+    channelId,
+    watch: watch,
+  );
+  if (dm != null) {
+    return dm;
+  }
+  final int? cachedBits = watch
+      ? ref.watch(
+          channelPermissionCacheProvider.select(
+            (ChannelPermissionCaches caches) => caches.effective[channelId],
+          ),
+        )
+      : ref.read(
+          channelPermissionCacheProvider.select(
+            (ChannelPermissionCaches caches) => caches.effective[channelId],
+          ),
+        );
+  if (cachedBits == null) {
+    return null;
+  }
+  final ChannelType channelType = _guildChannelTypeForPermissionSync(
+    ref,
+    channelId,
+    watch: watch,
+  );
+  return channelMessagePermissionsFromBits(
+    bits: cachedBits,
+    channelType: channelType,
+  );
+}
+
+ChannelType _guildChannelTypeForPermissionSync(
+  WidgetRef ref,
+  String channelId, {
+  required bool watch,
+}) {
+  final AsyncValue<Channel?> channel = watch
+      ? ref.watch(channelByIdProvider(channelId))
+      : ref.read(channelByIdProvider(channelId));
+  return channel.value?.type ?? ChannelType.guildText;
+}
+
+ChannelMessagePermissions watchChannelMessagePermissionsForComposer(
+  WidgetRef ref,
+  String channelId,
+) {
+  final ChannelMessagePermissions? dmSync = syncDmChannelMessagePermissions(
+    ref,
+    channelId,
+    watch: true,
+  );
+  if (dmSync != null) {
+    return dmSync;
+  }
+  return channelMessagePermissionsForComposer(
+    ref.watch(channelMessagePermissionsProvider(channelId)),
+  );
+}
+
+ChannelMessagePermissions readChannelMessagePermissionsForComposer(
+  WidgetRef ref,
+  String channelId,
+) {
+  final ChannelMessagePermissions? dmSync = syncDmChannelMessagePermissions(
+    ref,
+    channelId,
+    watch: false,
+  );
+  if (dmSync != null) {
+    return dmSync;
+  }
+  return channelMessagePermissionsForComposer(
+    ref.read(channelMessagePermissionsProvider(channelId)),
+  );
+}

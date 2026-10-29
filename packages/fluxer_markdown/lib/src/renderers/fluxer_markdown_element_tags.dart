@@ -1,0 +1,16 @@
+abstract final class FluxerMarkdownElementTags {
+  static const String spoiler = 'spoiler';
+  static const String emojiUnicode = 'emoji-unicode';
+  static const String emojiCustom = 'emoji-custom';
+  static const String jumpLink = 'jump-link';
+  static const String mentionUser = 'mention-user';
+  static const String mentionChannel = 'mention-channel';
+  static const String mentionRole = 'mention-role';
+  static const String mentionEveryone = 'mention-everyone';
+  static const String mentionCommand = 'mention-command';
+  static const String mentionGuildNav = 'mention-guild-nav';
+  static const String timestamp = 'timestamp';
+  static const String blankLines = 'blank-lines';
+}
+
+const int kFluxerMarkdownMaxListNestingDepth = 9;

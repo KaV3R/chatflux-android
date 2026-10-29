@@ -1,0 +1,130 @@
+import 'dart:async';
+
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/forward_message_sheet.dart';
+import 'package:fluxer_app/features/chat/utils/embeds/embed_animated_image_url.dart';
+import 'package:fluxer_app/features/ui/media_viewer/attachment_media_viewer.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+String embedMediaEffectiveUrl(EmbedMedia media) {
+  return media.proxyUrl ?? media.url;
+}
+
+String embedMediaShareableUrl({
+  required EmbedMedia media,
+  String? embedPageUrl,
+}) {
+  final String pageUrl = embedPageUrl?.trim() ?? '';
+  if (pageUrl.isNotEmpty) {
+    return pageUrl;
+  }
+  final String mediaUrl = media.url.trim();
+  if (mediaUrl.isNotEmpty) {
+    return mediaUrl;
+  }
+  return embedMediaEffectiveUrl(media);
+}
+
+String? embedMediaDownloadUrl(EmbedMedia media) {
+  final String url = embedMediaEffectiveUrl(media).trim();
+  return url.isEmpty ? null : url;
+}
+
+bool canOpenEmbedMediaViewer(EmbedMedia media) {
+  return embedMediaEffectiveUrl(media).isNotEmpty;
+}
+
+bool isPlayableEmbedAudio(EmbedMedia? media) {
+  if (media == null || media.url.trim().isEmpty) {
+    return false;
+  }
+  final String? proxyUrl = media.proxyUrl?.trim();
+  return proxyUrl != null && proxyUrl.isNotEmpty;
+}
+
+void openEmbedMediaViewer(
+  BuildContext context, {
+  required EmbedMedia media,
+  String? title,
+  String? embedPageUrl,
+  bool animated = false,
+  int? embedIndex,
+  EmbedMedia? downloadMedia,
+  String? channelId,
+  String? messageId,
+  MessageMediaActionScope? actionScope,
+  List<EmbedMedia>? gallery,
+  int initialIndex = 0,
+}) {
+  final List<EmbedMedia> images = gallery ?? <EmbedMedia>[media];
+  final List<AttachmentMediaViewerItem> items = images
+      .where(canOpenEmbedMediaViewer)
+      .map(
+        (EmbedMedia item) => buildEmbedMediaViewerItem(
+          media: item,
+          title: title,
+          embedPageUrl: embedPageUrl,
+          animated: animated || item.isAnimated,
+          embedIndex: embedIndex,
+          downloadMedia: identical(item, media) ? downloadMedia : null,
+        ),
+      )
+      .toList();
+  if (items.isEmpty) {
+    return;
+  }
+  unawaited(
+    showAttachmentMediaViewer(
+      context,
+      items: items,
+      initialIndex: initialIndex.clamp(0, items.length - 1),
+      onForward: (channelId != null && messageId != null && embedIndex != null)
+          ? (int _) => showForwardMediaSheet(
+              context,
+              sourceChannelId: channelId,
+              sourceMessageId: messageId,
+              embedIndices: <int>[embedIndex],
+            )
+          : null,
+      actionScope: actionScope,
+    ),
+  );
+}
+
+AttachmentMediaViewerItem buildEmbedMediaViewerItem({
+  required EmbedMedia media,
+  String? title,
+  String? embedPageUrl,
+  bool animated = false,
+  int? embedIndex,
+  EmbedMedia? downloadMedia,
+}) {
+  final String url = animated
+      ? animatedEmbedImageUrl(embedMediaEffectiveUrl(media))
+      : embedMediaEffectiveUrl(media);
+  return AttachmentMediaViewerItem(
+    url: url,
+    linkUrl: embedMediaShareableUrl(media: media, embedPageUrl: embedPageUrl),
+    filename: resolveEmbedMediaViewerFilename(url: url, title: title),
+    width: media.width,
+    height: media.height,
+    embedIndex: embedIndex,
+    proxyUrl: media.proxyUrl,
+    contentType: media.contentType,
+    downloadUrl: embedMediaDownloadUrl(downloadMedia ?? media),
+    contentHash: media.contentHash,
+  );
+}
+
+String resolveEmbedMediaViewerFilename({required String url, String? title}) {
+  if (title != null && title.isNotEmpty) {
+    return title;
+  }
+  final Uri? uri = Uri.tryParse(url);
+  final List<String> segments = uri?.pathSegments ?? const <String>[];
+  if (segments.isNotEmpty) {
+    return segments.last;
+  }
+  return 'image';
+}

@@ -1,0 +1,746 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/features/chat/utils/composer/bottom_input_slot_layout.dart';
+
+void main() {
+  group('bottomInputSlotContentHeight', () {
+    test('subtracts safe area for panel slot below composer inset', () {
+      expect(
+        bottomInputSlotContentHeight(rawHeight: 336, safeAreaBottom: 34),
+        302,
+      );
+    });
+
+    test('returns gross height when safe area is zero', () {
+      expect(
+        bottomInputSlotContentHeight(rawHeight: 336, safeAreaBottom: 0),
+        336,
+      );
+    });
+
+    test('never zeroes out a positive raw height', () {
+      expect(
+        bottomInputSlotContentHeight(rawHeight: 30, safeAreaBottom: 34),
+        30,
+      );
+    });
+  });
+
+  group('resolveBottomInputSlotHeight', () {
+    test('locks net slot height during panel transition', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: true,
+          transition: BottomInputTransition.lockingToPanel,
+          lockedHeight: 302,
+          anchorHeight: 336,
+          panelHeight: 302,
+          liveKeyboardHeight: 120,
+          isKeyboardVisible: true,
+        ),
+        302,
+      );
+    });
+
+    test('uses full keyboard height while open (no safe-area netting)', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 0,
+          liveKeyboardHeight: 336,
+          isKeyboardVisible: true,
+        ),
+        336,
+      );
+    });
+
+    test('uses full keyboard height when safe area is zero (button nav)', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 0,
+          liveKeyboardHeight: 336,
+          isKeyboardVisible: true,
+        ),
+        336,
+      );
+    });
+
+    test(
+      'uses full keyboard anchor when panel is open (no safe-area netting)',
+      () {
+        expect(
+          resolveBottomInputSlotHeight(
+            isPanelOpen: true,
+            transition: BottomInputTransition.idle,
+            lockedHeight: 0,
+            anchorHeight: 336,
+            panelHeight: 640,
+            liveKeyboardHeight: 0,
+            isKeyboardVisible: false,
+          ),
+          336,
+        );
+      },
+    );
+
+    test('returns zero when panel and keyboard are closed', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 0,
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+        ),
+        0,
+      );
+    });
+
+    test('reserves anchor height when keyboard is focused but unmeasured', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 302,
+          panelHeight: 0,
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+          unmeasuredKeyboardReserved: true,
+        ),
+        302,
+      );
+    });
+
+    test('live keyboard height replaces unmeasured reservation', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 302,
+          panelHeight: 0,
+          liveKeyboardHeight: 318,
+          isKeyboardVisible: true,
+          unmeasuredKeyboardReserved: true,
+        ),
+        318,
+      );
+    });
+  });
+
+  group('shouldClearUnmeasuredKeyboardReservation', () {
+    test('clears after live height drops to zero', () {
+      expect(
+        shouldClearUnmeasuredKeyboardReservation(
+          unmeasuredKeyboardReserved: true,
+          previousLiveHeight: 302,
+          mergedHeight: 0,
+          hadKeyboardInsetWhileReserved: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'keeps reservation when composer stays focused during inset flicker',
+      () {
+        expect(
+          shouldClearUnmeasuredKeyboardReservation(
+            unmeasuredKeyboardReserved: true,
+            previousLiveHeight: 302,
+            mergedHeight: 0,
+            hadKeyboardInsetWhileReserved: true,
+            composerEntryFocused: true,
+            nativeKeyboardVisible: true,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('clears when keyboard is dismissed with composer still focused', () {
+      expect(
+        shouldClearUnmeasuredKeyboardReservation(
+          unmeasuredKeyboardReserved: true,
+          previousLiveHeight: 302,
+          mergedHeight: 0,
+          hadKeyboardInsetWhileReserved: true,
+          composerEntryFocused: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'clears when inset was seen then keyboard hides without live height',
+      () {
+        expect(
+          shouldClearUnmeasuredKeyboardReservation(
+            unmeasuredKeyboardReserved: true,
+            previousLiveHeight: 0,
+            mergedHeight: 0,
+            hadKeyboardInsetWhileReserved: true,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test('keeps reservation before any inset while opening', () {
+      expect(
+        shouldClearUnmeasuredKeyboardReservation(
+          unmeasuredKeyboardReserved: true,
+          previousLiveHeight: 0,
+          mergedHeight: 0,
+          hadKeyboardInsetWhileReserved: false,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('resolvePanelReservedLayoutHeight', () {
+    test('prefers provider slot height when positive', () {
+      expect(
+        resolvePanelReservedLayoutHeight(
+          slotHeight: 336,
+          netAnchorHeight: 302,
+          grossAnchorHeight: 336,
+        ),
+        336,
+      );
+    });
+
+    test('falls back to net anchor when slot height is zero', () {
+      expect(
+        resolvePanelReservedLayoutHeight(
+          slotHeight: 0,
+          netAnchorHeight: 302,
+          grossAnchorHeight: 336,
+        ),
+        302,
+      );
+    });
+
+    test('uses zero slot height while held during panel close', () {
+      expect(
+        resolvePanelReservedLayoutHeight(
+          slotHeight: 0,
+          netAnchorHeight: 302,
+          grossAnchorHeight: 336,
+          useExactSlotHeight: true,
+        ),
+        0,
+      );
+    });
+
+    test('falls back to gross anchor as last resort', () {
+      expect(
+        resolvePanelReservedLayoutHeight(
+          slotHeight: 0,
+          netAnchorHeight: 0,
+          grossAnchorHeight: 291,
+        ),
+        291,
+      );
+    });
+  });
+
+  group('inlineExpressionPanelAnchorHeight', () {
+    test('uses a captured IME height', () {
+      expect(
+        inlineExpressionPanelAnchorHeight(
+          anchoredKeyboardHeight: 336,
+          fallbackHeight: 291,
+        ),
+        336,
+      );
+    });
+
+    test('falls back when the captured height is a shortcut bar', () {
+      expect(
+        inlineExpressionPanelAnchorHeight(
+          anchoredKeyboardHeight: 55,
+          fallbackHeight: 291,
+        ),
+        291,
+      );
+    });
+
+    test('falls back when no keyboard has been measured', () {
+      expect(
+        inlineExpressionPanelAnchorHeight(
+          anchoredKeyboardHeight: null,
+          fallbackHeight: 291,
+        ),
+        291,
+      );
+    });
+  });
+
+  group('isImeKeyboardHeight', () {
+    test('rejects shortcut bars and accepts a real IME', () {
+      expect(isImeKeyboardHeight(0), isFalse);
+      expect(isImeKeyboardHeight(55), isFalse);
+      expect(isImeKeyboardHeight(119), isFalse);
+      expect(isImeKeyboardHeight(120), isTrue);
+      expect(isImeKeyboardHeight(291), isTrue);
+    });
+  });
+
+  group('resolveNativeImeOnlyHeight', () {
+    test(
+      'strips paired native safe area from Android gross keyboard height',
+      () {
+        expect(
+          resolveNativeImeOnlyHeight(
+            nativeKeyboardHeight: 336,
+            nativeSafeAreaBottom: 34,
+          ),
+          302,
+        );
+      },
+    );
+
+    test('returns raw height when native safe area is zero', () {
+      expect(
+        resolveNativeImeOnlyHeight(
+          nativeKeyboardHeight: 336,
+          nativeSafeAreaBottom: 0,
+        ),
+        336,
+      );
+    });
+
+    test('returns zero for hidden native keyboard', () {
+      expect(
+        resolveNativeImeOnlyHeight(
+          nativeKeyboardHeight: 0,
+          nativeSafeAreaBottom: 34,
+        ),
+        0,
+      );
+    });
+  });
+
+  group('resolvedKeyboardInsetBottomFrom', () {
+    test('converts physical view insets to logical pixels', () {
+      expect(
+        resolvedKeyboardInsetBottomFrom(
+          mediaQueryInsetBottom: 0,
+          physicalViewInsetBottom: 906,
+          devicePixelRatio: 3,
+        ),
+        302,
+      );
+      expect(
+        resolvedKeyboardInsetBottomFrom(
+          mediaQueryInsetBottom: 302,
+          physicalViewInsetBottom: 906,
+          devicePixelRatio: 3,
+        ),
+        302,
+      );
+    });
+  });
+
+  group('resolveDualSourceLiveKeyboardHeight', () {
+    test('viewInsets wins over a taller native height', () {
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 336,
+          viewInsetsHeight: 302,
+        ),
+        302,
+      );
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 302,
+          viewInsetsHeight: 180,
+        ),
+        180,
+      );
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 120,
+          viewInsetsHeight: 302,
+        ),
+        302,
+      );
+    });
+
+    test('uses gross native height only while viewInsets is hidden', () {
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 336,
+          viewInsetsHeight: 0,
+        ),
+        336,
+      );
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 0,
+          viewInsetsHeight: 0,
+        ),
+        0,
+      );
+    });
+
+    test('follows viewInsets down while the keyboard closes', () {
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 200,
+          viewInsetsHeight: 180,
+        ),
+        180,
+      );
+      expect(
+        resolveDualSourceLiveKeyboardHeight(
+          nativeHeight: 0,
+          viewInsetsHeight: 90,
+        ),
+        90,
+      );
+    });
+  });
+
+  group('keyboard panel transition helpers', () {
+    test('transition lock uses the live keyboard height', () {
+      expect(
+        resolveTransitionLockHeight(liveKeyboardHeight: 336, anchorHeight: 291),
+        336,
+      );
+      expect(
+        resolveTransitionLockHeight(liveKeyboardHeight: 291, anchorHeight: 371),
+        291,
+      );
+      expect(
+        resolveTransitionLockHeight(liveKeyboardHeight: 0, anchorHeight: 336),
+        336,
+      );
+    });
+
+    test('keyboard dismiss waits for inset to settle', () {
+      expect(
+        hasKeyboardFullyDismissed(
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+        ),
+        isTrue,
+      );
+      expect(
+        hasKeyboardFullyDismissed(
+          liveKeyboardHeight: 120,
+          isKeyboardVisible: false,
+        ),
+        isFalse,
+      );
+      expect(
+        hasKeyboardFullyDismissed(
+          liveKeyboardHeight: 120,
+          isKeyboardVisible: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('keyboard reveal waits for locked net height', () {
+      const double safeAreaBottom = 34;
+      const double lockedNetHeight = 302;
+
+      expect(
+        hasKeyboardReachedLockedNetHeight(
+          liveKeyboardHeight: 120,
+          lockedNetHeight: lockedNetHeight,
+          safeAreaBottom: safeAreaBottom,
+          isKeyboardVisible: true,
+        ),
+        isFalse,
+      );
+      expect(
+        hasKeyboardReachedLockedNetHeight(
+          liveKeyboardHeight: 336,
+          lockedNetHeight: lockedNetHeight,
+          safeAreaBottom: safeAreaBottom,
+          isKeyboardVisible: true,
+        ),
+        isTrue,
+      );
+      expect(
+        hasKeyboardReachedLockedNetHeight(
+          liveKeyboardHeight: 335.4,
+          lockedNetHeight: 336,
+          safeAreaBottom: 0,
+          isKeyboardVisible: true,
+        ),
+        isFalse,
+      );
+      expect(
+        hasKeyboardReachedLockedNetHeight(
+          liveKeyboardHeight: 335.6,
+          lockedNetHeight: 336,
+          safeAreaBottom: 0,
+          isKeyboardVisible: true,
+        ),
+        isTrue,
+      );
+      expect(
+        hasKeyboardReachedLockedNetHeight(
+          liveKeyboardHeight: 336,
+          lockedNetHeight: lockedNetHeight,
+          safeAreaBottom: safeAreaBottom,
+          isKeyboardVisible: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('panel open prefers captured panel height over session anchor', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: true,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 335,
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+        ),
+        335,
+      );
+    });
+
+    test('held slot height keeps layout stable while keyboard dismisses', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 0,
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+          heldSlotHeightOverride: 302,
+        ),
+        302,
+      );
+    });
+
+    test('held slot height override can collapse to zero', () {
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: true,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 336,
+          liveKeyboardHeight: 0,
+          isKeyboardVisible: false,
+          heldSlotHeightOverride: 0,
+        ),
+        0,
+      );
+    });
+
+    test('slot heights quantize to whole pixels', () {
+      expect(quantizeBottomInputHeight(335.4), 335);
+      expect(quantizeBottomInputHeight(335.6), 336);
+      expect(
+        resolveBottomInputSlotHeight(
+          isPanelOpen: false,
+          transition: BottomInputTransition.idle,
+          lockedHeight: 0,
+          anchorHeight: 336,
+          panelHeight: 0,
+          liveKeyboardHeight: 335.6,
+          isKeyboardVisible: true,
+        ),
+        336,
+      );
+    });
+
+    test(
+      'locking keyboard transition keeps locked height while inset animates',
+      () {
+        const double lockedNetHeight = 302;
+
+        expect(
+          resolveBottomInputSlotHeight(
+            isPanelOpen: false,
+            transition: BottomInputTransition.lockingToKeyboard,
+            lockedHeight: lockedNetHeight,
+            anchorHeight: 336,
+            panelHeight: lockedNetHeight,
+            liveKeyboardHeight: 180,
+            isKeyboardVisible: true,
+          ),
+          lockedNetHeight,
+        );
+      },
+    );
+  });
+
+  group('inlineExpressionPanelSnapTarget', () {
+    test('resolves snap targets', () {
+      const double anchorHeight = 291;
+      const double expandedHeight = 640;
+      const double midpoint =
+          anchorHeight +
+          (expandedHeight - anchorHeight) *
+              kInlineExpressionPanelExpandedSnapMidpointFraction;
+
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: 120,
+          velocity: 0,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.close,
+      );
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: 250,
+          velocity: 400,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.anchor,
+      );
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: midpoint - 1,
+          velocity: 0,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.anchor,
+      );
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: midpoint + 1,
+          velocity: 0,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.expanded,
+      );
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: anchorHeight,
+          velocity: -700,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.expanded,
+      );
+      expect(
+        inlineExpressionPanelSnapTarget(
+          currentHeight: anchorHeight + 20,
+          velocity: 700,
+          anchorHeight: anchorHeight,
+          expandedHeight: expandedHeight,
+        ),
+        InlineExpressionPanelSnapTarget.anchor,
+      );
+    });
+  });
+
+  group('bottomInputKeyboardSpacerHeight', () {
+    test('keeps the composer gap above the home indicator inset', () {
+      expect(
+        bottomInputKeyboardSpacerHeight(slotHeight: 20, homeIndicatorInset: 34),
+        24,
+      );
+      expect(
+        bottomInputKeyboardSpacerHeight(
+          slotHeight: 336,
+          homeIndicatorInset: 34,
+        ),
+        336,
+      );
+      expect(
+        bottomInputKeyboardSpacerHeight(slotHeight: 0, homeIndicatorInset: 34),
+        24,
+      );
+      expect(
+        bottomInputKeyboardSpacerHeight(slotHeight: 0, homeIndicatorInset: 0),
+        0,
+      );
+      expect(
+        bottomInputKeyboardSpacerHeight(slotHeight: 0, homeIndicatorInset: 6),
+        0,
+      );
+    });
+  });
+
+  group('wideLayoutKeyboardSlotOccupied', () {
+    test('is true when view insets reserve keyboard space', () {
+      expect(
+        wideLayoutKeyboardSlotOccupied(
+          bottomInputSlotHeight: 0,
+          keyboardInsetBottom: 280,
+        ),
+        isTrue,
+      );
+    });
+
+    test('is false when neither slot nor inset is active', () {
+      expect(
+        wideLayoutKeyboardSlotOccupied(
+          bottomInputSlotHeight: 0,
+          keyboardInsetBottom: 0,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('chatLayoutReservesBottomSafeArea', () {
+    test(
+      'mobile defers bottom inset to composer safe bar when keyboard is closed',
+      () {
+        expect(
+          chatLayoutReservesBottomSafeArea(
+            isMobile: true,
+            keyboardSlotOccupied: false,
+          ),
+          isFalse,
+        );
+        expect(
+          chatLayoutReservesBottomSafeArea(
+            isMobile: true,
+            keyboardSlotOccupied: true,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('desktop reserves safe area when keyboard slot is closed', () {
+      expect(
+        chatLayoutReservesBottomSafeArea(
+          isMobile: false,
+          keyboardSlotOccupied: false,
+        ),
+        isTrue,
+      );
+      expect(
+        chatLayoutReservesBottomSafeArea(
+          isMobile: false,
+          keyboardSlotOccupied: true,
+        ),
+        isFalse,
+      );
+    });
+  });
+}

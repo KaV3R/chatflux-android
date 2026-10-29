@@ -1,0 +1,67 @@
+name: Merge Canary to Beta
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  merge-canary-to-beta:
+    name: Merge canary into beta
+    runs-on: ubuntu-latest
+    environment: release-builds
+    steps:
+      - name: Create token
+        id: create-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.FLUXER_CI_APP_ID }}
+          private-key: ${{ secrets.FLUXER_CI_APP_KEY }}
+          owner: fluxerapp
+          repositories: flutter_client
+          permission-contents: write
+
+      - name: Checkout beta
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: beta
+          token: ${{ steps.create-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Fast-forward or merge canary into beta
+        run: |
+          set -euo pipefail
+          git config user.name "fluxer-ci[bot]"
+          git config user.email "${{ vars.FLUXER_CI_APP_USER_ID }}+fluxer-ci[bot]@users.noreply.github.com"
+          git fetch origin canary
+          if git merge-base --is-ancestor origin/canary HEAD; then
+            echo "::notice::beta already contains canary. Nothing to merge."
+            exit 0
+          fi
+          resolve_canary_merge_conflicts() {
+            local file
+            while IFS= read -r file; do
+              [ -n "$file" ] || continue
+              if git cat-file -e "origin/canary:${file}" 2>/dev/null; then
+                git checkout --theirs -- "$file"
+                git add -- "$file"
+              else
+                git rm -f -- "$file"
+              fi
+            done < <(git diff --name-only --diff-filter=U)
+            [ -z "$(git diff --name-only --diff-filter=U)" ]
+          }
+          if git merge --ff-only origin/canary; then
+            echo "::notice::Fast-forwarded beta to canary at $(git rev-parse --short HEAD)"
+          elif git merge --no-ff -X theirs origin/canary --no-edit -m "Merge branch 'canary' into beta"; then
+            echo "::notice::Merged canary into beta (conflicts resolved in favor of canary) at $(git rev-parse --short HEAD)"
+          elif resolve_canary_merge_conflicts; then
+            git commit --no-edit
+            echo "::notice::Merged canary into beta (remaining conflicts auto-resolved in favor of canary) at $(git rev-parse --short HEAD)"
+          else
+            echo "::error::Merge conflict while merging canary into beta. Could not auto-resolve."
+            git merge --abort || true
+            exit 1
+          fi
+          git push origin HEAD:beta

@@ -1,0 +1,870 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/router/route_state_providers.dart';
+import 'package:fluxer_app/features/bookmarks/utils/saved_message_actions.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chat/domain/message_translation.dart';
+import 'package:fluxer_app/features/chat/presentation/modals/pin_message_confirm_modal.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/message_debug_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/message_reactions_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/publish_message_sheets.dart';
+import 'package:fluxer_app/features/chat/presentation/sheets/unpin_message_confirm_sheet.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/message_actions/double_tap_reaction_hint.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/message_actions/quick_reaction_loader.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/message_actions/quick_reaction_row.dart';
+import 'package:fluxer_app/features/chat/providers/core/chat_providers.dart';
+import 'package:fluxer_app/features/chat/providers/core/chat_view_model.dart';
+import 'package:fluxer_app/features/chat/providers/messages/message_translation_provider.dart';
+import 'package:fluxer_app/features/chat/providers/messages/saved_message_provider.dart';
+import 'package:fluxer_app/features/chat/utils/media/favorite_media_utils.dart';
+import 'package:fluxer_app/features/chat/utils/media/media_favorite_state.dart';
+import 'package:fluxer_app/features/chat/utils/media/save_message_media_favorite.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_action_permissions.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_link.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_translate_offer.dart';
+import 'package:fluxer_app/features/chat/utils/messages/message_web_translation.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/advanced_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/threads/presentation/create_thread_sheet.dart';
+import 'package:fluxer_app/features/ui/bottom_sheet/fluxer_bottom_sheet.dart';
+import 'package:fluxer_app/features/ui/toast/fluxer_toast.dart';
+import 'package:fluxer_app/features/ui/toast/toast_provider.dart';
+import 'package:fluxer_app/features/voice/tts/fluxer_tts_provider.dart';
+import 'package:fluxer_app/features/voice/tts/tts_locale_utils.dart';
+import 'package:fluxer_app/l10n/app_locale_provider.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/external_links/external_link_handler.dart';
+import 'package:fluxer_app/shared/utils/clipboard_utils.dart';
+import 'package:fluxer_app/shared/utils/fluxer_haptics.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+enum MessageAction {
+  addReaction,
+  viewReactions,
+  removeAllReactions,
+  retry,
+  edit,
+  reply,
+  forward,
+  copyText,
+  copyEmbedText,
+  pin,
+  publish,
+  bookmark,
+  markAsUnread,
+  copyMessageLink,
+  suppressEmbeds,
+  delete,
+  deleteFailed,
+  copyMessageId,
+  report,
+  debugMessage,
+  speak,
+  translate,
+  createThread,
+}
+
+Future<MessageAction?> showMessageBottomSheet(
+  BuildContext context, {
+  required Message message,
+  required bool isOwnMessage,
+  required bool isDmChannel,
+  required bool canDelete,
+  required bool canReport,
+  required bool canAddReactions,
+  required bool canPinMessage,
+  required bool canManageMessages,
+  required bool canSendMessages,
+  required bool developerMode,
+  bool canPublish = false,
+  List<QuickReactionItem>? quickItems,
+  String? quickReactionChannelId,
+  String? quickReactionGuildId,
+  ValueChanged<QuickReactionItem>? onQuickReaction,
+  MessageActionCallbacks? attachmentCallbacks,
+  bool isSendDisabled = false,
+  String? linkUrl,
+}) {
+  final MessageActionPermissions permissions = MessageActionPermissions(
+    isOwnMessage: isOwnMessage,
+    isDmChannel: isDmChannel,
+    canDelete: canDelete,
+    canReport: canReport,
+    canAddReactions: canAddReactions,
+    canPinMessage: canPinMessage,
+    canManageMessages: canManageMessages,
+    canSendMessages: canSendMessages,
+    developerMode: developerMode,
+    isSendDisabled: isSendDisabled,
+    canPublish: canPublish,
+  );
+  return FluxerBottomSheet.showScrollable<MessageAction>(
+    context,
+    initialChildSize: FluxerBottomSheet.scrollableSheetHalfSize,
+    minChildSize: 0.3,
+    builder: (sheetContext, scrollController, _) => _MessageBottomSheetBody(
+      message: message,
+      permissions: permissions,
+      quickItems: quickItems,
+      quickReactionChannelId: quickReactionChannelId,
+      quickReactionGuildId: quickReactionGuildId,
+      onQuickReaction: onQuickReaction,
+      attachmentCallbacks: attachmentCallbacks,
+      scrollController: scrollController,
+      hostContext: context,
+      linkUrl: linkUrl,
+    ),
+  );
+}
+
+void _runAfterModalSettles(BuildContext context, VoidCallback action) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) {
+      return;
+    }
+    action();
+  });
+}
+
+Future<void> dispatchMessageAction({
+  required WidgetRef ref,
+  required BuildContext context,
+  required Message message,
+  required MessageAction action,
+  required MessageActionCallbacks callbacks,
+  String? previewRoleGuildId,
+}) async {
+  switch (action) {
+    case MessageAction.reply:
+      callbacks.onReply?.call();
+    case MessageAction.forward:
+      await handOffFluxerSheet(context);
+      if (context.mounted) {
+        callbacks.onForward?.call();
+      }
+    case MessageAction.edit:
+      callbacks.onEdit?.call();
+    case MessageAction.delete:
+      _runAfterModalSettles(context, () => callbacks.onDelete?.call());
+    case MessageAction.retry:
+      callbacks.onRetry?.call();
+    case MessageAction.deleteFailed:
+      callbacks.onDeleteFailed?.call();
+    case MessageAction.copyText:
+      unawaited(
+        copyToClipboard(context: context, value: message.displayedContent),
+      );
+    case MessageAction.copyEmbedText:
+      unawaited(
+        copyToClipboard(context: context, value: message.embedsCopyableText),
+      );
+    case MessageAction.copyMessageId:
+      unawaited(copyToClipboard(context: context, value: message.id));
+    case MessageAction.copyMessageLink:
+      final String? guildId =
+          previewRoleGuildId ?? ref.read(contextualGuildIdProvider);
+      unawaited(
+        copyToClipboard(
+          context: context,
+          value: messageLink(
+            channelId: message.channelId,
+            messageId: message.id,
+            guildId: guildId,
+          ),
+        ),
+      );
+    case MessageAction.bookmark:
+      await toggleSavedMessageBookmark(
+        ref: ref,
+        l10n: FluxerLocalizations.of(context),
+        channelId: message.channelId,
+        messageId: message.id,
+      );
+    case MessageAction.publish:
+      unawaited(publishMessage(ref: ref, context: context, message: message));
+    case MessageAction.pin:
+      if (message.isPinned) {
+        unawaited(
+          showUnpinMessageConfirmSheet(
+            context,
+            ref,
+            channelId: message.channelId,
+            messageId: message.id,
+          ),
+        );
+      } else {
+        unawaited(
+          showPinMessageConfirmModal(
+            context,
+            ref,
+            message: message,
+            guildId: previewRoleGuildId ?? ref.read(contextualGuildIdProvider),
+          ),
+        );
+      }
+    case MessageAction.addReaction:
+      await handOffFluxerSheet(context);
+      if (context.mounted) {
+        callbacks.onAddReaction?.call();
+      }
+    case MessageAction.markAsUnread:
+      callbacks.onMarkAsUnread?.call();
+    case MessageAction.suppressEmbeds:
+      final repo = ref.read(messageRepositoryProvider);
+      final String channelId = message.channelId;
+      final String messageId = message.id;
+      final int nextFlags = message.suppressEmbeds
+          ? message.flags & ~messageFlagSuppressEmbeds
+          : message.flags | messageFlagSuppressEmbeds;
+      unawaited(
+        repo.setMessageFlags(
+          channelId: channelId,
+          messageId: messageId,
+          flags: nextFlags,
+        ),
+      );
+    case MessageAction.viewReactions:
+      _runAfterModalSettles(
+        context,
+        () => unawaited(showMessageReactionsSheet(context, message: message)),
+      );
+    case MessageAction.removeAllReactions:
+      callbacks.onRemoveAllReactions?.call();
+    case MessageAction.report:
+      callbacks.onReport?.call();
+    case MessageAction.debugMessage:
+      unawaited(showMessageDebugSheet(context, message: message));
+    case MessageAction.speak:
+      final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+      final FluxerTtsService tts = ref.read(fluxerTtsServiceProvider.notifier);
+      if (!ref.read(fluxerTtsServiceProvider).isSpeakingMessage(message.id) &&
+          !await tts.isSupported()) {
+        ref
+            .read(toastProvider.notifier)
+            .show(
+              FluxerToast(
+                message: l10n.accessibilityTtsUnsupportedDescription,
+                variant: FluxerToastVariant.warning,
+              ),
+            );
+        return;
+      }
+      final AppearancePreferencesState appearance = ref.read(
+        appearancePreferencesProvider,
+      );
+      unawaited(
+        tts.speakMessage(
+          message: message,
+          rate: appearance.ttsRate,
+          locale: formatTtsLocaleTag(ref.read(effectiveAppLocaleProvider)),
+        ),
+      );
+    case MessageAction.translate:
+      unawaited(
+        _translateMessage(ref: ref, context: context, message: message),
+      );
+    case MessageAction.createThread:
+      unawaited(
+        showCreateThreadSheetForMessage(context, ref, message: message),
+      );
+  }
+}
+
+Future<bool> _openWebTranslationFallback({
+  required WidgetRef ref,
+  required BuildContext context,
+  required String query,
+}) async {
+  if (!isWebMessageTranslationAvailable(
+    ref.read(advancedPreferencesProvider).searchEngines,
+  )) {
+    return false;
+  }
+  if (!context.mounted) {
+    return false;
+  }
+  return openMessageWebTranslation(context: context, ref: ref, query: query);
+}
+
+Future<void> _translateMessage({
+  required WidgetRef ref,
+  required BuildContext context,
+  required Message message,
+}) async {
+  final String query = translatableMessageText(message.content);
+  if (query.isEmpty) {
+    return;
+  }
+  final TranslatingMessageIds translating = ref.read(
+    translatingMessageIdsProvider.notifier,
+  );
+  if (ref.read(translatingMessageIdsProvider).contains(message.id)) {
+    return;
+  }
+  final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+  final bool localAvailable = await ref.read(
+    messageTranslationAvailableProvider.future,
+  );
+
+  if (!localAvailable) {
+    if (!context.mounted) {
+      return;
+    }
+    if (!await _openWebTranslationFallback(
+      ref: ref,
+      context: context,
+      query: query,
+    )) {
+      ref
+          .read(toastProvider.notifier)
+          .show(
+            FluxerToast(
+              message: l10n.chatMessageTranslateUnavailable,
+              variant: FluxerToastVariant.warning,
+            ),
+          );
+    }
+    return;
+  }
+
+  translating.add(message.id);
+  try {
+    final Message updated = await ref
+        .read(messageTranslationServiceProvider)
+        .translateMessage(
+          message: message,
+          targetLanguage: ref.read(effectiveAppLocaleProvider).languageCode,
+        );
+    ref
+        .read(chatViewModelProvider.notifier)
+        .applyMessageTranslation(
+          messageId: updated.id,
+          translation: updated.translation,
+        );
+    FluxerHaptics.light();
+  } on MessageTranslationCancelledException {
+    return;
+  } on MessageTranslationUnavailableException {
+    if (!context.mounted) {
+      return;
+    }
+    if (await _openWebTranslationFallback(
+      ref: ref,
+      context: context,
+      query: query,
+    )) {
+      return;
+    }
+    ref
+        .read(toastProvider.notifier)
+        .show(
+          FluxerToast(
+            message: l10n.chatMessageTranslateUnavailable,
+            variant: FluxerToastVariant.warning,
+          ),
+        );
+  } on MessageTranslationUnsupportedLanguageException {
+    if (!context.mounted) {
+      return;
+    }
+    if (await _openWebTranslationFallback(
+      ref: ref,
+      context: context,
+      query: query,
+    )) {
+      return;
+    }
+    ref
+        .read(toastProvider.notifier)
+        .show(
+          FluxerToast(
+            message: l10n.chatMessageTranslateFailed,
+            variant: FluxerToastVariant.danger,
+          ),
+        );
+  } on MessageTranslationFailedException {
+    ref
+        .read(toastProvider.notifier)
+        .show(
+          FluxerToast(
+            message: l10n.chatMessageTranslateFailed,
+            variant: FluxerToastVariant.danger,
+          ),
+        );
+  } finally {
+    translating.remove(message.id);
+  }
+}
+
+List<Widget> buildMessageActionMenuGroups({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Message message,
+  required MessageActionPermissions permissions,
+  required ValueChanged<MessageAction> onAction,
+  MessageActionCallbacks? attachmentCallbacks,
+  String? attachmentIdFilter,
+  bool includeAttachmentFavoriteActions = true,
+  VoidCallback? onCloseMenu,
+}) {
+  final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+
+  if (message.hasFailed) {
+    return <Widget>[
+      FluxerMenuGroup(
+        children: <Widget>[
+          FluxerBottomSheetMenuItem(
+            icon: PhosphorIconsBold.arrowClockwise,
+            label: l10n.retry,
+            onTap: () => onAction(MessageAction.retry),
+          ),
+          if (message.content.isNotEmpty)
+            FluxerBottomSheetMenuItem(
+              icon: PhosphorIconsFill.copy,
+              label: l10n.chatMessageCopyText,
+              onTap: () => onAction(MessageAction.copyText),
+            ),
+        ],
+      ),
+      FluxerMenuGroup(
+        children: <Widget>[
+          FluxerBottomSheetMenuItem(
+            icon: PhosphorIconsFill.trash,
+            label: l10n.chatMessageDeleteFailed,
+            isDanger: true,
+            onTap: () => onAction(MessageAction.deleteFailed),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  final bool isSaved =
+      ref.watch(isMessageSavedProvider(message.id)).value ?? false;
+  final bool hasReactions = message.reactions.isNotEmpty;
+  final bool isEmbedsSuppressed = message.suppressEmbeds;
+  final bool isUserMessage = message.isUserMessage;
+  final bool supportsInteractiveActions = message.supportsInteractiveActions;
+  final bool canShowAddReaction =
+      permissions.canAddReactions && supportsInteractiveActions;
+  final bool showMediaDeleteButton = ref.watch(
+    appearancePreferencesProvider.select((s) => s.showMediaDeleteButton),
+  );
+  final bool showSuppressEmbedsButton = ref.watch(
+    appearancePreferencesProvider.select((s) => s.showSuppressEmbedsButton),
+  );
+  final bool canShowReply =
+      isUserMessage &&
+      supportsInteractiveActions &&
+      permissions.canSendMessages;
+  final bool canShowForward = isUserMessage && supportsInteractiveActions;
+  final bool canShowEdit =
+      permissions.isOwnMessage &&
+      isUserMessage &&
+      message.messageSnapshots.isEmpty;
+  final bool canShowPin = isUserMessage && permissions.canPinMessage;
+  final bool canShowPublish = permissions.canPublish;
+  final bool canShowBookmark = isUserMessage && supportsInteractiveActions;
+  final bool canShowSuppressEmbeds = canSuppressEmbedsOnMessage(
+    message: message,
+    isOwnMessage: permissions.isOwnMessage,
+    isDmChannel: permissions.isDmChannel,
+    canDelete: permissions.canDelete,
+  );
+  final bool canShowRemoveAllReactions =
+      permissions.canManageMessages && hasReactions;
+
+  final List<Widget> reactionItems = <Widget>[
+    if (canShowAddReaction)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.smiley,
+        label: l10n.chatMessageAddReaction,
+        onTap: () => onAction(MessageAction.addReaction),
+      ),
+    if (hasReactions)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.users,
+        label: l10n.chatMessageViewReactions,
+        onTap: () => onAction(MessageAction.viewReactions),
+      ),
+    if (watchCanOfferMessageTranslate(ref, message))
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsBold.translate,
+        label: l10n.chatMessageTranslate,
+        onTap: () => onAction(MessageAction.translate),
+      ),
+    if (canShowRemoveAllReactions)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsBold.x,
+        label: l10n.chatMessageRemoveAllReactions,
+        isDanger: true,
+        onTap: () => onAction(MessageAction.removeAllReactions),
+      ),
+  ];
+
+  final List<Widget> interactionItems = <Widget>[
+    FluxerBottomSheetMenuItem(
+      icon: PhosphorIconsFill.envelopeOpen,
+      label: l10n.chatMessageMarkAsUnread,
+      onTap: () => onAction(MessageAction.markAsUnread),
+    ),
+    if (canShowReply)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.arrowBendUpLeft,
+        label: l10n.chatMessageReply,
+        onTap: () => onAction(MessageAction.reply),
+      ),
+    if (canShowForward)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.shareFat,
+        label: l10n.chatMessageForward,
+        onTap: () => onAction(MessageAction.forward),
+      ),
+    if (supportsInteractiveActions &&
+        watchCanCreateThreadFromMessage(ref, message))
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.chatsCircle,
+        label: l10n.threadCreate,
+        onTap: () => onAction(MessageAction.createThread),
+      ),
+    if (canShowEdit)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.pencilSimple,
+        label: l10n.chatMessageEdit,
+        onTap: () => onAction(MessageAction.edit),
+      ),
+  ];
+
+  final List<Widget> managementItems = <Widget>[
+    if (canShowPublish)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.megaphone,
+        label: message.isCrossposted
+            ? l10n.chatMessagePublished
+            : l10n.chatMessagePublish,
+        onTap: () => onAction(MessageAction.publish),
+      ),
+    if (canShowPin)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.pushPin,
+        label: message.isPinned ? l10n.chatMessageUnpin : l10n.chatMessagePin,
+        onTap: () => onAction(MessageAction.pin),
+      ),
+    if (canShowBookmark)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.bookmarkSimple,
+        label: isSaved
+            ? l10n.chatMessageRemoveBookmark
+            : l10n.chatMessageBookmark,
+        onTap: () => onAction(MessageAction.bookmark),
+      ),
+    if (canShowSuppressEmbeds && showSuppressEmbedsButton)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsBold.eyeSlash,
+        label: isEmbedsSuppressed
+            ? l10n.chatMessageUnsuppressEmbeds
+            : l10n.chatMessageSuppressEmbeds,
+        onTap: () => onAction(MessageAction.suppressEmbeds),
+      ),
+    if (permissions.canDelete)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.trash,
+        label: l10n.chatMessageDelete,
+        isDanger: true,
+        onTap: () => onAction(MessageAction.delete),
+      ),
+  ];
+
+  final void Function() closeMenu =
+      onCloseMenu ?? () => Navigator.of(context).pop();
+
+  final List<Widget> attachmentItems = <Widget>[
+    for (final Attachment attachment in message.attachments)
+      if (attachmentIdFilter == null || attachment.id == attachmentIdFilter)
+        ..._buildAttachmentMenuItems(
+          context: context,
+          ref: ref,
+          l10n: l10n,
+          message: message,
+          attachment: attachment,
+          showMediaDeleteButton: showMediaDeleteButton,
+          permissions: permissions,
+          attachmentCallbacks: attachmentCallbacks,
+          closeMenu: closeMenu,
+          includeFavoriteAction: includeAttachmentFavoriteActions,
+        ),
+  ];
+
+  final bool isSpeakingMessage = ref.read(
+    fluxerTtsServiceProvider.select(
+      (FluxerTtsSpeakingState state) => state.isSpeakingMessage(message.id),
+    ),
+  );
+
+  final List<Widget> utilityItems = <Widget>[
+    FluxerBottomSheetMenuItem(
+      icon: PhosphorIconsBold.link,
+      label: l10n.chatMessageCopyMessageLink,
+      onTap: () => onAction(MessageAction.copyMessageLink),
+    ),
+    if (message.speakableContent.trim().isNotEmpty)
+      FluxerBottomSheetMenuItem(
+        icon: isSpeakingMessage
+            ? PhosphorIconsFill.stop
+            : PhosphorIconsFill.speakerHigh,
+        label: isSpeakingMessage
+            ? l10n.chatMessageStopSpeaking
+            : l10n.chatMessageSpeak,
+        onTap: () => onAction(MessageAction.speak),
+      ),
+    if (message.content.isNotEmpty)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.copy,
+        label: l10n.chatMessageCopyText,
+        onTap: () => onAction(MessageAction.copyText),
+      ),
+    if (message.embedsCopyableText.isNotEmpty)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.textAlignLeft,
+        label: l10n.chatMessageCopyEmbedText,
+        onTap: () => onAction(MessageAction.copyEmbedText),
+      ),
+    FluxerBottomSheetMenuItem(
+      icon: PhosphorIconsBold.snowflake,
+      label: l10n.chatMessageCopyMessageId,
+      onTap: () => onAction(MessageAction.copyMessageId),
+    ),
+    if (permissions.developerMode)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.bug,
+        label: l10n.chatMessageDebug,
+        onTap: () => onAction(MessageAction.debugMessage),
+      ),
+  ];
+
+  final List<Widget> reportItems = <Widget>[
+    if (permissions.canReport)
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.flag,
+        label: l10n.chatMessageReport,
+        isDanger: true,
+        onTap: () => onAction(MessageAction.report),
+      ),
+  ];
+
+  return <Widget>[
+    for (final List<Widget> items in <List<Widget>>[
+      reactionItems,
+      interactionItems,
+      managementItems,
+      attachmentItems,
+      utilityItems,
+      reportItems,
+    ])
+      if (items.isNotEmpty) FluxerMenuGroup(children: items),
+  ];
+}
+
+List<Widget> _buildAttachmentMenuItems({
+  required BuildContext context,
+  required WidgetRef ref,
+  required FluxerLocalizations l10n,
+  required Message message,
+  required Attachment attachment,
+  required bool showMediaDeleteButton,
+  required MessageActionPermissions permissions,
+  required MessageActionCallbacks? attachmentCallbacks,
+  required void Function() closeMenu,
+  required bool includeFavoriteAction,
+}) {
+  final MessageMediaFavoriteTarget? favoriteTarget =
+      includeFavoriteAction && attachment.isSavableMedia
+      ? MessageMediaFavoriteTarget.forAttachment(attachment)
+      : null;
+  final MediaFavoriteState favoriteState = watchMediaFavoriteState(
+    ref,
+    target: favoriteTarget,
+  );
+
+  return <Widget>[
+    ...buildMediaFavoriteMenuItems(
+      l10n: l10n,
+      state: favoriteState,
+      hint: attachment.filename,
+      onAction: (MediaFavoriteMenuAction action) {
+        scheduleMediaFavoriteMenuAction(
+          ref: ref,
+          context: context,
+          message: message,
+          state: favoriteState,
+          action: action,
+          beforeAction: closeMenu,
+        );
+      },
+    ),
+    if (showMediaDeleteButton &&
+        canDeleteAttachmentOnMessage(
+          message: message,
+          isOwnMessage: permissions.isOwnMessage,
+          isSendDisabled: permissions.isSendDisabled,
+        ))
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.trash,
+        label: l10n.chatMessageDeleteAttachment,
+        hint: attachment.filename,
+        isDanger: true,
+        onTap: () {
+          attachmentCallbacks?.onDeleteAttachment?.call(attachment);
+          closeMenu();
+        },
+      ),
+    if (canEditAttachmentAltText(
+      message: message,
+      isOwnMessage: permissions.isOwnMessage,
+      attachment: attachment,
+      canManageMessages: permissions.canManageMessages,
+      isDmChannel: permissions.isDmChannel,
+    ))
+      FluxerBottomSheetMenuItem(
+        icon: PhosphorIconsFill.pencilSimple,
+        label: l10n.chatMessageEditAttachmentAltText,
+        hint: attachment.filename,
+        onTap: () {
+          closeMenu();
+          attachmentCallbacks?.onEditAttachmentAltText?.call(attachment);
+        },
+      ),
+  ];
+}
+
+class _MessageBottomSheetBody extends ConsumerWidget {
+  const _MessageBottomSheetBody({
+    required this.message,
+    required this.permissions,
+    required this.scrollController,
+    required this.hostContext,
+    this.quickItems,
+    this.quickReactionChannelId,
+    this.quickReactionGuildId,
+    this.onQuickReaction,
+    this.attachmentCallbacks,
+    this.linkUrl,
+  });
+
+  final Message message;
+  final MessageActionPermissions permissions;
+  final List<QuickReactionItem>? quickItems;
+  final String? quickReactionChannelId;
+  final String? quickReactionGuildId;
+  final ValueChanged<QuickReactionItem>? onQuickReaction;
+  final MessageActionCallbacks? attachmentCallbacks;
+  final ScrollController scrollController;
+  final BuildContext hostContext;
+  final String? linkUrl;
+
+  void _pop(BuildContext context, MessageAction action) =>
+      Navigator.of(context).pop(action);
+
+  Future<void> _openLink(BuildContext context, String url) async {
+    Navigator.of(context).pop();
+    if (!hostContext.mounted) {
+      return;
+    }
+    await handleExternalLinkTap(hostContext, url);
+  }
+
+  Future<void> _copyLink(BuildContext context, String url) async {
+    Navigator.of(context).pop();
+    if (!hostContext.mounted) {
+      return;
+    }
+    await copyToClipboard(context: hostContext, value: url);
+  }
+
+  Widget _linkGroup(BuildContext context, String url) {
+    final FluxerLocalizations l10n = FluxerLocalizations.of(context);
+    return FluxerMenuGroup(
+      children: [
+        FluxerBottomSheetMenuItem(
+          icon: PhosphorIconsFill.arrowSquareOut,
+          label: l10n.chatMessageOpenLink,
+          onTap: () => unawaited(_openLink(context, url)),
+        ),
+        FluxerBottomSheetMenuItem(
+          icon: PhosphorIconsBold.link,
+          label: l10n.chatMessageCopyLink,
+          onTap: () => unawaited(_copyLink(context, url)),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final String? url = linkUrl;
+    final List<Widget> groups = buildMessageActionMenuGroups(
+      context: context,
+      ref: ref,
+      message: message,
+      permissions: permissions,
+      onAction: (MessageAction action) => _pop(context, action),
+      attachmentCallbacks: attachmentCallbacks,
+    );
+    final bool showQuickReactions =
+        !message.hasFailed && !message.isSending && permissions.canAddReactions;
+
+    return SingleChildScrollView(
+      controller: scrollController,
+      padding: FluxerBottomSheet.scrollViewPadding(
+        context,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showQuickReactions) ...[
+            if (quickReactionChannelId != null)
+              MessageQuickReactionRow(
+                channelId: quickReactionChannelId!,
+                guildId: quickReactionGuildId,
+                onReaction: (item) {
+                  onQuickReaction?.call(item);
+                  Navigator.of(context).pop();
+                },
+                onAddMore: () => _pop(context, MessageAction.addReaction),
+              )
+            else
+              QuickReactionRow(
+                items: quickItems ?? kQuickReactionDefaults,
+                onReaction: (item) {
+                  onQuickReaction?.call(item);
+                  Navigator.of(context).pop();
+                },
+                onAddMore: () => _pop(context, MessageAction.addReaction),
+              ),
+            DoubleTapReactionHint(channelId: message.channelId),
+          ],
+          FluxerBottomSheetGroupColumn(
+            children: [if (url != null) _linkGroup(context, url), ...groups],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+bool shouldCloseMediaViewerForMessageAction(MessageAction action) {
+  return switch (action) {
+    MessageAction.reply ||
+    MessageAction.forward ||
+    MessageAction.edit ||
+    MessageAction.delete ||
+    MessageAction.report ||
+    MessageAction.viewReactions ||
+    MessageAction.addReaction => true,
+    _ => false,
+  };
+}

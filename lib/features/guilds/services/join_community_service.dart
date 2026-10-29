@@ -1,0 +1,116 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/api/fluxer_client_provider.dart';
+import 'package:fluxer_app/core/providers/instance/well_known_provider.dart';
+import 'package:fluxer_app/core/router/navigate_to_content.dart';
+import 'package:fluxer_app/core/router/route_names.dart';
+import 'package:fluxer_app/features/channels/providers/channel_list_view_model.dart';
+import 'package:fluxer_app/features/guilds/domain/guild.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_providers.dart';
+import 'package:fluxer_app/features/guilds/utils/invites/invite_code.dart';
+import 'package:fluxer_app/features/guilds/utils/invites/invite_link_parser.dart';
+import 'package:fluxer_app/features/shell/utils/shell_popup_navigation.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_dart/export.dart';
+
+class JoinCommunityException implements Exception {
+  const JoinCommunityException({required this.message});
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+Future<void> joinCommunityViaInvite({
+  required WidgetRef ref,
+  required String rawInput,
+  required FluxerLocalizations l10n,
+}) async {
+  final client = ref.read(fluxerClientProvider);
+  await ref.read(wellKnownProvider.future);
+  final String inviteBase = ref.read(instanceInviteBaseUrlProvider);
+  final String? parsedCode = parseInviteCode(
+    rawInput,
+    inviteUrlBases: <String>[inviteBase],
+  );
+  if (parsedCode == null || parsedCode.isEmpty) {
+    throw JoinCommunityException(message: l10n.addGuildInviteInvalid);
+  }
+  final InviteResponseSchema schema = await client.invites.getInvite(
+    inviteCode: parsedCode,
+  );
+  if (inviteResponseIsGuild(schema)) {
+    await _joinGuildInvite(
+      ref: ref,
+      invite: schema.toGuildInviteResponse(),
+      code: parsedCode,
+    );
+  } else {
+    await _joinGroupDmInvite(
+      ref: ref,
+      invite: schema.toGroupDmInviteResponse(),
+      code: parsedCode,
+    );
+  }
+}
+
+Future<void> _joinGuildInvite({
+  required WidgetRef ref,
+  required InviteResponseSchemaGuildInviteResponse invite,
+  required String code,
+}) async {
+  final String guildId = invite.guild.id;
+  final String channelId = invite.channel.id;
+  final Guild? existingGuild = await ref.read(
+    guildByIdProvider(guildId).future,
+  );
+  if (existingGuild == null) {
+    final client = ref.read(fluxerClientProvider);
+    await client.invites.acceptInvite(inviteCode: code);
+    await ref.read(guildRepositoryProvider).stageGuildJoinFromInvite(invite);
+    final Guild? stagedGuild = await ref.refresh(
+      guildByIdProvider(guildId).future,
+    );
+    if (stagedGuild != null) {
+      ref
+          .read(channelListViewModelProvider.notifier)
+          .loadChannels(guildId, guild: stagedGuild);
+    }
+  }
+  _navigateToJoinedContent(
+    ref,
+    guildInviteNavigationPath(
+      guildId: guildId,
+      channelType: invite.channel.type,
+      channelId: channelId,
+    ),
+  );
+}
+
+String guildInviteNavigationPath({
+  required String guildId,
+  required ChannelType channelType,
+  required String channelId,
+}) {
+  if (channelType == ChannelType.guildCategory ||
+      channelType == ChannelType.guildLink) {
+    return RoutePaths.guild(guildId);
+  }
+  return RoutePaths.guildChannel(guildId, channelId);
+}
+
+Future<void> _joinGroupDmInvite({
+  required WidgetRef ref,
+  required InviteResponseSchemaGroupDmInviteResponse invite,
+  required String code,
+}) async {
+  final client = ref.read(fluxerClientProvider);
+  await client.invites.acceptInvite(inviteCode: code);
+  _navigateToJoinedContent(ref, RoutePaths.dmChannel(invite.channel.id));
+}
+
+void _navigateToJoinedContent(WidgetRef ref, String path) {
+  final ProviderContainer container = ref.container;
+  popShellCoveringPages();
+  navigateToContentViaContainer(container, path);
+}

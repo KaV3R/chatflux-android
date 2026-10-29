@@ -1,0 +1,800 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluxer_app/core/api/dio_error_message.dart';
+import 'package:fluxer_app/core/api/service_unavailable.dart';
+import 'package:fluxer_app/core/constants/external_urls.dart';
+import 'package:fluxer_app/core/instance/instance_compatibility_messages.dart';
+import 'package:fluxer_app/core/instance/instance_discovery_service.dart';
+import 'package:fluxer_app/core/providers/app/app_startup_provider.dart';
+import 'package:fluxer_app/core/providers/app/splash_exit_allowed_provider.dart';
+import 'package:fluxer_app/core/providers/gateway/gateway_ready_provider.dart';
+import 'package:fluxer_app/core/providers/instance/active_instance_compatibility_provider.dart';
+import 'package:fluxer_app/core/providers/instance/active_instance_provider.dart';
+import 'package:fluxer_app/core/providers/instance/well_known_provider.dart';
+import 'package:fluxer_app/core/router/fluxer_router.dart';
+import 'package:fluxer_app/core/theme/color_utils.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/auth/presentation/widgets/instance_domain_icon.dart';
+import 'package:fluxer_app/features/auth/presentation/widgets/offline_account_switcher_link.dart';
+import 'package:fluxer_app/features/auth/providers/account_manager_provider.dart';
+import 'package:fluxer_app/features/dm/providers/unread_dm_provider.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_read_state_provider.dart';
+import 'package:fluxer_app/features/guilds/providers/guild_read_state_ready_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
+import 'package:fluxer_app/features/settings/providers/preferences/local_settings_provider.dart';
+import 'package:fluxer_app/features/shell/domain/service_status_incident.dart';
+import 'package:fluxer_app/features/shell/presentation/splash_reveal_overlay.dart';
+import 'package:fluxer_app/features/shell/presentation/widgets/service_status_connection_footer.dart';
+import 'package:fluxer_app/features/shell/providers/service_status/service_status_incident_provider.dart';
+import 'package:fluxer_app/features/shell/utils/splash_quotes.dart';
+import 'package:fluxer_app/features/ui/animation/animation_controller_visibility_extension.dart';
+import 'package:fluxer_app/features/ui/background/starfield_background.dart';
+import 'package:fluxer_app/features/ui/button/fluxer_button.dart';
+import 'package:fluxer_app/features/ui/icons/instance_branding_image.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_gesture_detector.dart';
+import 'package:fluxer_app/features/ui/tappable/fluxer_tappable.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+import 'package:fluxer_app/shared/external_links/external_link_handler.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with TickerProviderStateMixin {
+  static const double _logoHeight = 85;
+  static const Duration _pulseDuration = Duration(milliseconds: 1300);
+  static const Duration _statusPageDisplayDelay = Duration(seconds: 5);
+  static const Duration _statusPrefetchDelay = Duration(milliseconds: 3500);
+  static const Duration _problemsDelay = Duration(seconds: 10);
+  static const Duration _hydrationWaitLimit = Duration(milliseconds: 1500);
+  static const Duration _footerFadeDuration = Duration(milliseconds: 400);
+  static const Color _splashMutedText = Color(0xFF9B94B8);
+  static const Color _splashLinkText = Color(0xFFC4B8F0);
+  static const Color _splashQuoteText = Color(0xFFD6D0EC);
+
+  late final AnimationController _pulseController;
+  SplashQuote? _selectedQuote;
+  Timer? _statusTimer;
+  Timer? _statusPrefetchTimer;
+  Timer? _problemsTimer;
+  Timer? _outageRetryTimer;
+  bool _showStatusData = false;
+  bool _showProblems = false;
+  bool _timersStarted = false;
+  bool _serviceUnavailableOutage = false;
+  bool _exitRevealStarted = false;
+  bool _hydrationWaitExpired = false;
+  Timer? _hydrationWaitTimer;
+  bool _enteredForAccountSwitch = false;
+  SplashRevealComplete? _revealComplete;
+  final GlobalKey _logoKey = GlobalKey();
+  ServiceStatusIncident? _frozenIncident;
+  String _frozenDisplayText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: _pulseDuration,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(splashExitAllowedProvider.notifier).reset();
+      if (ref.read(localSettingsProvider).splashQuotesEnabled) {
+        _selectedQuote = pickRandomSplashQuote();
+      }
+      _enteredForAccountSwitch = ref.read(accountManagerProvider).isSwitching;
+      final SplashRevealComplete revealComplete = ref.read(
+        splashRevealCompleteProvider.notifier,
+      );
+      _revealComplete = revealComplete;
+      revealComplete.reset();
+      final AsyncValue<void> startup = ref.read(appStartupProvider);
+      if (startup is AsyncError<dynamic>) {
+        revealComplete.complete();
+        if (isHttpServiceUnavailable(startup.error)) {
+          _activateServiceUnavailableUi();
+        }
+        return;
+      }
+      _ensureSplashTimers();
+      _cancelSplashIfReady();
+      _scheduleExitReveal();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cancelSplashTimers();
+    _hydrationWaitTimer?.cancel();
+    _pulseController.dispose();
+    final SplashRevealComplete? revealComplete = _revealComplete;
+    if (!_exitRevealStarted && revealComplete != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        revealComplete.complete();
+      });
+    }
+    super.dispose();
+  }
+
+  void _cancelSplashTimers() {
+    _statusPrefetchTimer?.cancel();
+    _statusPrefetchTimer = null;
+    _statusTimer?.cancel();
+    _statusTimer = null;
+    _problemsTimer?.cancel();
+    _problemsTimer = null;
+    _outageRetryTimer?.cancel();
+    _outageRetryTimer = null;
+  }
+
+  void _cancelSplashIfReady() {
+    final AsyncValue<void> startup = ref.read(appStartupProvider);
+    final bool gatewayReady = ref.read(gatewayReadyProvider);
+    if (startup is AsyncData<void> && gatewayReady) {
+      _cancelSplashTimers();
+    }
+  }
+
+  void _allowSplashExit() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(splashExitAllowedProvider.notifier).allow();
+    });
+  }
+
+  void _prepareForRelaunch() {
+    _exitRevealStarted = false;
+    _hydrationWaitExpired = false;
+    _hydrationWaitTimer?.cancel();
+    _hydrationWaitTimer = null;
+    _enteredForAccountSwitch = ref.read(accountManagerProvider).isSwitching;
+    _revealComplete ??= ref.read(splashRevealCompleteProvider.notifier);
+    _revealComplete?.reset();
+    ref.read(splashExitAllowedProvider.notifier).reset();
+    _pulseController
+      ..reset()
+      ..repeat();
+    _cancelSplashTimers();
+    _timersStarted = false;
+    _showStatusData = false;
+    _showProblems = false;
+    if (mounted) {
+      setState(() {});
+    }
+    _scheduleExitReveal();
+  }
+
+  void _scheduleExitReveal() {
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _maybeStartExitReveal();
+      })
+      ..ensureVisualUpdate();
+  }
+
+  void _maybeStartExitReveal() {
+    if (_exitRevealStarted) {
+      return;
+    }
+    _revealComplete ??= ref.read(splashRevealCompleteProvider.notifier);
+    final AsyncValue<void> startup = ref.read(appStartupProvider);
+    if (startup is! AsyncData<void> ||
+        !ref.read(gatewayReadyProvider) ||
+        ref.read(accountManagerProvider).isSwitching) {
+      return;
+    }
+    if (!ref.read(authStateProvider)) {
+      _revealComplete?.complete();
+      return;
+    }
+    if (!_unreadsHydrated() && !_hydrationWaitExpired) {
+      _hydrationWaitTimer ??= Timer(_hydrationWaitLimit, () {
+        _hydrationWaitExpired = true;
+        _scheduleExitReveal();
+      });
+      return;
+    }
+
+    _hydrationWaitTimer?.cancel();
+    _hydrationWaitTimer = null;
+    _exitRevealStarted = true;
+    _cancelSplashTimers();
+    _pulseController.stop();
+
+    final bool useLogoZoomTransition =
+        !_enteredForAccountSwitch &&
+        ref.read(
+          appearancePreferencesProvider.select(
+            (AppearancePreferencesState state) =>
+                state.mobileSplashZoomAnimation,
+          ),
+        );
+    ref
+        .read(splashRevealZoomProvider.notifier)
+        .setZoom(value: useLogoZoomTransition);
+    final Color brand = context.colors.brandPrimary;
+    SplashRevealOverlay.show(
+      context: context,
+      coverColor: context.colors.backgroundPrimary,
+      logoBrandColor: brand,
+      logoBrandSymbolColor: ColorUtils.bestContrastColor(brand.toARGB32()),
+      logoCenterGlobal:
+          _logoCenterGlobal() ?? MediaQuery.sizeOf(context).center(Offset.zero),
+      useLogoZoomTransition: useLogoZoomTransition,
+      animationsEnabled: !MediaQuery.disableAnimationsOf(context),
+      onComplete: _revealComplete?.complete,
+    );
+    _allowSplashExit();
+    setState(() {});
+  }
+
+  bool _unreadsHydrated() =>
+      ref.read(guildReadStateReadyProvider) &&
+      ref.read(unreadDmChannelsProvider).loaded;
+
+  Offset? _logoCenterGlobal() {
+    final RenderObject? renderObject = _logoKey.currentContext
+        ?.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return null;
+    }
+    return renderObject.localToGlobal(renderObject.size.center(Offset.zero));
+  }
+
+  Widget _fadeExitContent({required Widget child}) {
+    if (_exitRevealStarted) {
+      return const SizedBox.shrink();
+    }
+    return child;
+  }
+
+  void _ensureSplashTimers() {
+    if (_timersStarted) {
+      return;
+    }
+    final AsyncValue<void> startup = ref.read(appStartupProvider);
+    if (startup is AsyncError<dynamic>) {
+      return;
+    }
+    _timersStarted = true;
+    _statusPrefetchTimer = Timer(_statusPrefetchDelay, () {
+      if (!mounted) {
+        return;
+      }
+      unawaited(ref.read(serviceStatusIncidentReadProvider.notifier).refresh());
+    });
+    _statusTimer = Timer(_statusPageDisplayDelay, () {
+      if (mounted) {
+        setState(() => _showStatusData = true);
+      }
+    });
+    _problemsTimer = Timer(_problemsDelay, () {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _showProblems = true);
+      unawaited(ref.read(serviceStatusIncidentReadProvider.notifier).refresh());
+    });
+  }
+
+  void _activateServiceUnavailableUi() {
+    _serviceUnavailableOutage = true;
+    _statusPrefetchTimer?.cancel();
+    _statusTimer?.cancel();
+    _problemsTimer?.cancel();
+    _timersStarted = false;
+    _showStatusData = true;
+    _showProblems = true;
+    if (mounted) {
+      setState(() {});
+    }
+    unawaited(ref.read(serviceStatusIncidentReadProvider.notifier).refresh());
+    _scheduleOutageRetry();
+  }
+
+  void _clearServiceUnavailableUi() {
+    _outageRetryTimer?.cancel();
+    _outageRetryTimer = null;
+    _serviceUnavailableOutage = false;
+  }
+
+  void _scheduleOutageRetry() {
+    _outageRetryTimer?.cancel();
+    _outageRetryTimer = Timer(kServiceUnavailableRetryDelay, () {
+      if (!mounted || !_serviceUnavailableOutage) {
+        return;
+      }
+      unawaited(ref.read(appStartupProvider.notifier).retry());
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulseController.syncWithVisibility(
+      isVisible: true,
+      animationsEnabled: !MediaQuery.disableAnimationsOf(context),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final FluxerLocalizations strings = FluxerLocalizations.of(context);
+    final AsyncValue<void> startup = ref.watch(appStartupProvider);
+    final bool serviceUnavailable =
+        _serviceUnavailableOutage ||
+        (startup is AsyncError<dynamic> &&
+            isHttpServiceUnavailable(startup.error));
+    final AsyncError<dynamic>? startupError = startup is AsyncError<dynamic>
+        ? startup
+        : null;
+    final String displayDomain = ref.watch(activeInstanceDisplayDomainProvider);
+    final ActiveInstanceCompatibilityIssue? compatibilityIssue = ref.watch(
+      activeInstanceCompatibilityProvider,
+    );
+    final bool showCompatibilityIssue =
+        compatibilityIssue != null && !serviceUnavailable;
+    final bool showStartupError =
+        startupError != null && !serviceUnavailable && !showCompatibilityIssue;
+    final String compatibilityStatusText = compatibilityIssue == null
+        ? ''
+        : instanceCompatibilityBody(
+            compatibilityIssue.reason,
+            compatibilityIssue.domain,
+            strings,
+          );
+    final String statusText = compatibilityIssue != null
+        ? compatibilityStatusText
+        : strings.splashStartupFailed(
+            startupError?.error == null
+                ? ''
+                : _startupErrorMessage(
+                    startupError!.error,
+                    strings,
+                    displayDomain,
+                  ),
+          );
+    final bool isStartupComplete = startup is AsyncData<void>;
+    final bool isGatewayReady = ref.watch(gatewayReadyProvider);
+    final bool isReady = isStartupComplete && isGatewayReady;
+    ref
+      ..listen<bool>(
+        accountManagerProvider.select(
+          (AccountManagerState state) => state.isSwitching,
+        ),
+        (bool? previous, bool switching) {
+          if (switching) {
+            _enteredForAccountSwitch = true;
+            return;
+          }
+          _scheduleExitReveal();
+        },
+      )
+      ..listen<bool>(gatewayReadyProvider, (bool? previous, bool _) {
+        _cancelSplashIfReady();
+        _scheduleExitReveal();
+      })
+      ..listen<Map<String, GuildReadStateEntry>>(
+        guildReadStateProvider,
+        (_, _) {},
+      )
+      ..listen<bool>(guildReadStateReadyProvider, (bool? previous, bool _) {
+        _scheduleExitReveal();
+      })
+      ..listen<bool>(
+        unreadDmChannelsProvider.select((UnreadDmState state) => state.loaded),
+        (bool? previous, bool _) {
+          _scheduleExitReveal();
+        },
+      )
+      ..listen<AsyncValue<void>>(appStartupProvider, (
+        AsyncValue<void>? previous,
+        AsyncValue<void> next,
+      ) {
+        if (next is AsyncError<dynamic> &&
+            isHttpServiceUnavailable(next.error)) {
+          _activateServiceUnavailableUi();
+          return;
+        }
+        if (next is AsyncError<dynamic>) {
+          _clearServiceUnavailableUi();
+          _cancelSplashTimers();
+          _timersStarted = false;
+          if (mounted) {
+            setState(() {
+              _showStatusData = false;
+              _showProblems = false;
+            });
+          }
+          return;
+        }
+        if (next is AsyncLoading<void> && _serviceUnavailableOutage) {
+          return;
+        }
+        if (next is AsyncLoading<void> && previous is AsyncData<void>) {
+          _prepareForRelaunch();
+        }
+        if (next is AsyncData<void>) {
+          _clearServiceUnavailableUi();
+        }
+        _ensureSplashTimers();
+        _cancelSplashIfReady();
+        _scheduleExitReveal();
+      });
+    final bool splashQuotesEnabled = ref.watch(
+      localSettingsProvider.select((state) => state.splashQuotesEnabled),
+    );
+    final ServiceStatusIncident? liveIncident = _showStatusData
+        ? ref.watch(serviceStatusIncidentReadProvider)
+        : null;
+    final String liveText = liveIncident != null
+        ? liveIncident.name
+        : (splashQuotesEnabled ? (_selectedQuote?.text ?? '') : '');
+    if (!isReady) {
+      _frozenIncident = liveIncident;
+      _frozenDisplayText = liveText;
+    }
+    final ServiceStatusIncident? visibleIncident = isReady
+        ? liveIncident
+        : _frozenIncident;
+    final String displayText = isReady ? liveText : _frozenDisplayText;
+    final bool isOfficialInstance = ref.watch(isActiveInstanceOfficialProvider);
+    final bool showConnectionProblemsFooter =
+        !isReady &&
+        (serviceUnavailable || (_showProblems && visibleIncident == null));
+    final bool showConnectionFooter =
+        showConnectionProblemsFooter && isOfficialInstance;
+    final bool showSelfHostedAccountSwitcher =
+        showConnectionProblemsFooter &&
+        !isOfficialInstance &&
+        !serviceUnavailable &&
+        !showStartupError &&
+        !showCompatibilityIssue;
+    final TextStyle footerPromptStyle = context.textStyles.bodySmall.copyWith(
+      fontSize: 13,
+      height: 1.4,
+      color: _splashMutedText,
+    );
+    final TextStyle footerLinkStyle = footerPromptStyle.copyWith(
+      color: _splashLinkText,
+    );
+    final TextStyle incidentCtaStyle = context.textStyles.smallText.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: _splashLinkText,
+    );
+    final TextStyle instanceFooterStyle = context.textStyles.bodySmall.copyWith(
+      fontSize: 12,
+      color: _splashMutedText,
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: StarfieldBackground(
+        child: SafeArea(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 512),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: _logoHeight * 2,
+                        width: _logoHeight * 2,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (!_exitRevealStarted &&
+                                MediaQuery.disableAnimationsOf(context))
+                              Transform.scale(
+                                scale: 1.25,
+                                child: Container(
+                                  width: _logoHeight,
+                                  height: _logoHeight,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: context.colors.brandPrimary
+                                        .withValues(alpha: 0.35),
+                                  ),
+                                ),
+                              )
+                            else if (!_exitRevealStarted)
+                              AnimatedBuilder(
+                                animation: _pulseController,
+                                builder: (BuildContext context, Widget? child) {
+                                  const double startScale = 0.4;
+                                  const double endScale = 1.4;
+                                  final double scale =
+                                      startScale +
+                                      (endScale - startScale) *
+                                          Curves.easeOut.transform(
+                                            _pulseController.value,
+                                          );
+                                  final double opacity =
+                                      (1 -
+                                          Curves.easeIn.transform(
+                                            _pulseController.value,
+                                          )) *
+                                      0.5;
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Container(
+                                      width: _logoHeight,
+                                      height: _logoHeight,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: context.colors.brandPrimary
+                                            .withValues(alpha: opacity),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            if (!_exitRevealStarted)
+                              ExcludeSemantics(
+                                child: KeyedSubtree(
+                                  key: _logoKey,
+                                  child: InstanceBrandMark(
+                                    size: _logoHeight,
+                                    backgroundColor:
+                                        context.colors.brandPrimary,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      _fadeExitContent(
+                        child: Semantics(
+                          container: true,
+                          liveRegion: true,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: serviceUnavailable
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        strings.splashConnectionLost,
+                                        style: context.textStyles.smallText
+                                            .copyWith(
+                                              color: _splashQuoteText,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        strings.reconnectingBody,
+                                        style: context.textStyles.smallText
+                                            .copyWith(color: _splashMutedText),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  )
+                                : showStartupError || showCompatibilityIssue
+                                ? Text(
+                                    statusText,
+                                    style: context.textStyles.smallText
+                                        .copyWith(
+                                          color: context.colors.textDanger,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : _buildNormalMessageArea(
+                                    context,
+                                    strings,
+                                    visibleIncident,
+                                    displayText,
+                                    incidentCtaStyle,
+                                    splashQuotesEnabled: splashQuotesEnabled,
+                                  ),
+                          ),
+                        ),
+                      ),
+                      if (serviceUnavailable ||
+                          showStartupError ||
+                          showCompatibilityIssue)
+                        _fadeExitContent(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 16),
+                              FluxerButton.primary(
+                                onPressed: () {
+                                  if (showCompatibilityIssue) {
+                                    unawaited(
+                                      ref
+                                          .read(wellKnownProvider.notifier)
+                                          .refresh(silent: false),
+                                    );
+                                    return;
+                                  }
+                                  if (serviceUnavailable) {
+                                    _scheduleOutageRetry();
+                                  }
+                                  unawaited(
+                                    ref
+                                        .read(appStartupProvider.notifier)
+                                        .retry(),
+                                  );
+                                },
+                                label: strings.retry,
+                                fitContent: true,
+                              ),
+                              const SizedBox(height: 12),
+                              const OfflineAccountSwitcherLink(),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 24,
+                child: _fadeExitContent(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (showConnectionFooter)
+                        AnimatedOpacity(
+                          opacity: 1,
+                          duration: _footerFadeDuration,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ServiceStatusConnectionFooter(
+                                  promptStyle: footerPromptStyle,
+                                  linkStyle: footerLinkStyle,
+                                ),
+                                if (!serviceUnavailable &&
+                                    !showStartupError) ...[
+                                  const SizedBox(height: 12),
+                                  const OfflineAccountSwitcherLink(),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (showSelfHostedAccountSwitcher) ...[
+                        const OfflineAccountSwitcherLink(),
+                        const SizedBox(height: 16),
+                      ],
+                      if (showConnectionFooter) const SizedBox(height: 16),
+                      FluxerTappable(
+                        onTap: () =>
+                            unawaited(openOfflineInstanceEscape(context, ref)),
+                        semanticLabel: displayDomain,
+                        builder:
+                            (BuildContext context, Set<WidgetState> states) {
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InstanceDomainIcon(
+                                    isOfficial: isOfficialInstance,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    displayDomain,
+                                    style: instanceFooterStyle,
+                                  ),
+                                ],
+                              );
+                            },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNormalMessageArea(
+    BuildContext context,
+    FluxerLocalizations strings,
+    ServiceStatusIncident? visibleIncident,
+    String displayText,
+    TextStyle incidentCtaStyle, {
+    required bool splashQuotesEnabled,
+  }) {
+    if (visibleIncident != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: FluxerGestureDetector(
+              onTap: () => handleExternalLinkTap(context, visibleIncident.url),
+              child: Text(
+                displayText,
+                style: context.textStyles.quoteLink.copyWith(
+                  color: _splashQuoteText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: FluxerGestureDetector(
+              onTap: () =>
+                  handleExternalLinkTap(context, ExternalUrls.serviceStatus),
+              child: Text(
+                strings.splashViewOnStatusPage,
+                style: incidentCtaStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    if (!splashQuotesEnabled || _selectedQuote == null) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          displayText,
+          style: context.textStyles.quote.copyWith(color: _splashQuoteText),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _selectedQuote!.source,
+          style: context.textStyles.quoteLink.copyWith(
+            color: _splashMutedText,
+            fontStyle: FontStyle.normal,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+String _startupErrorMessage(
+  Object error,
+  FluxerLocalizations strings,
+  String displayDomain,
+) {
+  if (error is InstanceDiscoveryException) {
+    final InstanceDiscoveryFailureReason? reason = error.reason;
+    if (reason != null && isInstanceCompatibilityError(error)) {
+      return instanceCompatibilityBody(reason, displayDomain, strings);
+    }
+  }
+  return userFacingErrorMessage(error, strings.networkErrorMessage);
+}

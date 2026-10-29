@@ -1,0 +1,167 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:fluxer_fcm/fcm_message_mapper.dart';
+
+class FluxerFcmPushService {
+  factory FluxerFcmPushService() => instance;
+
+  FluxerFcmPushService._();
+
+  static final FluxerFcmPushService instance = FluxerFcmPushService._();
+
+  final StreamController<String> _ciphertext =
+      StreamController<String>.broadcast();
+  final StreamController<String> _tokenRefresh =
+      StreamController<String>.broadcast();
+
+  bool _initialized = false;
+  Future<void>? _initializeFuture;
+  void Function(Map<String, String> payload)? _onNotificationTap;
+  Map<String, String>? _pendingNotificationTapPayload;
+  StreamSubscription<RemoteMessage>? _onMessageSubscription;
+  StreamSubscription<RemoteMessage>? _onMessageOpenedAppSubscription;
+  StreamSubscription<String>? _onTokenRefreshSubscription;
+
+  Stream<String> get tokenRefreshStream => _tokenRefresh.stream;
+
+  void setNotificationTapCallback(
+    void Function(Map<String, String> payload)? callback,
+  ) {
+    _onNotificationTap = callback;
+    if (callback == null) {
+      return;
+    }
+    final Map<String, String>? pendingPayload = _pendingNotificationTapPayload;
+    if (pendingPayload == null) {
+      return;
+    }
+    _pendingNotificationTapPayload = null;
+    callback(pendingPayload);
+  }
+
+  Future<void> initialize({FirebaseOptions? firebaseOptions}) async {
+    if (_initialized) {
+      return;
+    }
+    final Future<void>? inFlight = _initializeFuture;
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final Future<void> run = _initializeOnce(firebaseOptions: firebaseOptions);
+    _initializeFuture = run;
+    try {
+      await run;
+    } finally {
+      if (identical(_initializeFuture, run)) {
+        _initializeFuture = null;
+      }
+    }
+  }
+
+  Future<void> _initializeOnce({FirebaseOptions? firebaseOptions}) async {
+    if (_initialized) {
+      return;
+    }
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: firebaseOptions);
+    }
+    _onMessageSubscription = FirebaseMessaging.onMessage.listen(
+      _onForegroundMessage,
+    );
+    _onMessageOpenedAppSubscription = FirebaseMessaging.onMessageOpenedApp
+        .listen(_onMessageOpenedApp);
+    _onTokenRefreshSubscription = FirebaseMessaging.instance.onTokenRefresh
+        .listen((String token) {
+          if (token.isNotEmpty) {
+            _tokenRefresh.add(token);
+          }
+        });
+    final RemoteMessage? initialMessage = await FirebaseMessaging.instance
+        .getInitialMessage();
+    if (initialMessage != null) {
+      if (kDebugMode) {
+        debugPrint(
+          '[FluxerFcmPushService] getInitialMessage '
+          'id=${initialMessage.messageId} data=${initialMessage.data}',
+        );
+      }
+      _dispatchTap(initialMessage);
+    }
+    _initialized = true;
+    if (kDebugMode) {
+      debugPrint('[FluxerFcmPushService] initialized');
+    }
+  }
+
+  Future<String?> getToken() async {
+    return FirebaseMessaging.instance.getToken();
+  }
+
+  Stream<String> watchCiphertext() => _ciphertext.stream;
+
+  void _onForegroundMessage(RemoteMessage message) {
+    final String? ciphertext = extractFcmCiphertext(message.data);
+    if (ciphertext == null) {
+      return;
+    }
+    if (kDebugMode) {
+      debugPrint('[FluxerFcmPushService] foreground ciphertext');
+    }
+    _ciphertext.add(ciphertext);
+  }
+
+  void _onMessageOpenedApp(RemoteMessage message) {
+    if (kDebugMode) {
+      debugPrint(
+        '[FluxerFcmPushService] onMessageOpenedApp '
+        'id=${message.messageId} data=${message.data}',
+      );
+    }
+    _dispatchTap(message);
+  }
+
+  void _dispatchTap(RemoteMessage message) {
+    final String? ciphertext = extractFcmCiphertext(message.data);
+    final Map<String, String> payload = ciphertext == null
+        ? <String, String>{}
+        : <String, String>{'p': ciphertext};
+    if (kDebugMode) {
+      debugPrint(
+        '[FluxerFcmPushService] tap hasCiphertext=${ciphertext != null}',
+      );
+    }
+    _dispatchTapPayload(payload);
+  }
+
+  void _dispatchTapPayload(Map<String, String> payload) {
+    final void Function(Map<String, String> payload)? callback =
+        _onNotificationTap;
+    if (callback != null) {
+      callback(payload);
+      return;
+    }
+    _pendingNotificationTapPayload = Map<String, String>.unmodifiable(payload);
+  }
+
+  @visibleForTesting
+  void dispatchTapPayloadForTesting(Map<String, String> payload) {
+    _dispatchTapPayload(payload);
+  }
+
+  @visibleForTesting
+  void resetForTesting() {
+    _initialized = false;
+    _initializeFuture = null;
+    _onNotificationTap = null;
+    _pendingNotificationTapPayload = null;
+    unawaited(_onMessageSubscription?.cancel());
+    unawaited(_onMessageOpenedAppSubscription?.cancel());
+    unawaited(_onTokenRefreshSubscription?.cancel());
+    _onMessageSubscription = null;
+    _onMessageOpenedAppSubscription = null;
+    _onTokenRefreshSubscription = null;
+  }
+}

@@ -1,0 +1,265 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_text_theme.dart';
+import 'package:fluxer_app/core/theme/fluxer_theme.dart';
+import 'package:fluxer_app/core/theme/themes/dark.dart';
+import 'package:fluxer_app/features/chat/domain/chat_fullscreen_video_launch_context.dart';
+import 'package:fluxer_app/features/chat/domain/chat_video_source.dart';
+import 'package:fluxer_app/features/chat/domain/favorite_meme.dart';
+import 'package:fluxer_app/features/chat/presentation/widgets/media/chat_mobile_fullscreen_video.dart';
+import 'package:fluxer_app/features/chat/providers/pickers/favorite_media_provider.dart';
+import 'package:fluxer_app/features/ui/media_viewer/media_viewer_dismissible.dart';
+import 'package:fluxer_app/l10n/fluxer_localizations_delegates.dart';
+import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
+import 'package:fluxer_app/material_ui.dart';
+
+Widget _wrap(Widget child) {
+  final colorTheme = buildDarkColorTheme();
+  return ProviderScope(
+    overrides: [
+      favoriteMemesProvider.overrideWith(
+        (Ref ref) => Stream<List<FavoriteMeme>>.value(const <FavoriteMeme>[]),
+      ),
+    ],
+    child: MaterialApp(
+      theme: buildFluxerTheme(
+        colorTheme: colorTheme,
+        textTheme: FluxerTextTheme.fromColors(colorTheme),
+        layoutTheme: FluxerLayoutTheme.scaled(),
+      ),
+      localizationsDelegates: fluxerLocalizationsDelegates,
+      supportedLocales: FluxerLocalizations.supportedLocales,
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
+const ChatVideoSource _source = ChatVideoSource(
+  directMediaUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+  fallbackUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+);
+
+const String _chatBeneath = 'chat beneath';
+
+Future<void> _openSettledFullscreenVideo(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(400, 800);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(
+    _wrap(
+      Builder(
+        builder: (BuildContext context) {
+          return Center(
+            child: TextButton(
+              onPressed: () {
+                unawaited(
+                  showChatMobileFullscreenVideo(
+                    context,
+                    launchContext: const ChatFullscreenVideoLaunchContext(
+                      source: _source,
+                    ),
+                  ),
+                );
+              },
+              child: const Text(_chatBeneath),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+  await tester.tap(find.text(_chatBeneath));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+}
+
+Future<TestGesture> _startShortDismissDrag(WidgetTester tester) async {
+  final TestGesture gesture = await tester.startGesture(
+    tester.getCenter(find.byType(MediaViewerDismissible)),
+  );
+  await gesture.moveBy(const Offset(0, 30));
+  await gesture.moveBy(const Offset(0, 30));
+  await tester.pump();
+  return gesture;
+}
+
+void main() {
+  testWidgets('chat beneath the fullscreen video stops painting once the open '
+      'transition settles', (tester) async {
+    await _openSettledFullscreenVideo(tester);
+
+    expect(find.text(_chatBeneath), findsNothing);
+    expect(find.text(_chatBeneath, skipOffstage: false), findsOneWidget);
+  });
+
+  testWidgets('dismiss drag paints the chat beneath the fullscreen video', (
+    tester,
+  ) async {
+    await _openSettledFullscreenVideo(tester);
+
+    final TestGesture gesture = await _startShortDismissDrag(tester);
+
+    expect(find.text(_chatBeneath), findsOneWidget);
+    await gesture.up();
+  });
+
+  testWidgets('cancelled dismiss drag stops painting the chat beneath again', (
+    tester,
+  ) async {
+    await _openSettledFullscreenVideo(tester);
+    final TestGesture gesture = await _startShortDismissDrag(tester);
+
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(MediaViewerDismissible), findsOneWidget);
+    expect(find.text(_chatBeneath), findsNothing);
+  });
+
+  testWidgets('dismiss animation keeps the chat beneath painted', (
+    tester,
+  ) async {
+    await _openSettledFullscreenVideo(tester);
+    final TestGesture gesture = await tester.startGesture(
+      tester.getCenter(find.byType(MediaViewerDismissible)),
+    );
+    await gesture.moveBy(const Offset(0, 100));
+    await gesture.moveBy(const Offset(0, 100));
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+
+    expect(find.byType(MediaViewerDismissible), findsOneWidget);
+    expect(find.text(_chatBeneath), findsOneWidget);
+  });
+
+  testWidgets('HUD time label follows position updates', (tester) async {
+    final ValueNotifier<Duration> position = ValueNotifier<Duration>(
+      Duration.zero,
+    );
+    final ValueNotifier<Duration> duration = ValueNotifier<Duration>(
+      const Duration(seconds: 90),
+    );
+    addTearDown(position.dispose);
+    addTearDown(duration.dispose);
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 300,
+          child: MobileVideoHudProgress(
+            position: position,
+            duration: duration,
+            onSeekFromGlobalDx: (_, _) async {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text('0:00 / 1:30'), findsOneWidget);
+
+    position.value = const Duration(seconds: 42);
+    await tester.pump();
+
+    expect(find.text('0:42 / 1:30'), findsOneWidget);
+  });
+
+  testWidgets('closes after a vertical dismiss fling', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const ChatVideoSource source = ChatVideoSource(
+      directMediaUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+      fallbackUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (BuildContext context) {
+            return Center(
+              child: TextButton(
+                onPressed: () {
+                  unawaited(
+                    showChatMobileFullscreenVideo(
+                      context,
+                      launchContext: const ChatFullscreenVideoLaunchContext(
+                        source: source,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('open'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byType(MediaViewerDismissible), findsOneWidget);
+
+    final Finder dismissFinder = find.byType(MediaViewerDismissible);
+    final Offset center = tester.getCenter(dismissFinder);
+    await tester.dragFrom(center, const Offset(0, 200));
+    await tester.pump();
+    await tester.fling(dismissFinder, const Offset(0, 1), 2000);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MediaViewerDismissible), findsNothing);
+    expect(find.text('open'), findsOneWidget);
+  });
+
+  testWidgets('long-pressing the video opens the options sheet', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const ChatVideoSource source = ChatVideoSource(
+      directMediaUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+      fallbackUrl: 'https://fluxerusercontent.com/attachments/1/2/clip.mp4',
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (BuildContext context) {
+            return Center(
+              child: TextButton(
+                onPressed: () {
+                  unawaited(
+                    showChatMobileFullscreenVideo(
+                      context,
+                      launchContext: const ChatFullscreenVideoLaunchContext(
+                        source: source,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('open'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text('Copy link'), findsNothing);
+
+    await tester.longPress(find.byType(MediaViewerDismissible));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Copy link'), findsOneWidget);
+  });
+}

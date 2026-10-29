@@ -1,0 +1,31 @@
+import 'dart:collection';
+
+const int kMarkdownParseCacheMaxEntries = 2048;
+
+String markdownParseCacheKey(String text, String? parseCacheKey) {
+  if (parseCacheKey == null || parseCacheKey.isEmpty) {
+    return text;
+  }
+  return '$parseCacheKey:$text';
+}
+
+class MarkdownParseCache<K, V extends Object> {
+  MarkdownParseCache({this.maxEntries = kMarkdownParseCacheMaxEntries});
+
+  final int maxEntries;
+  final LinkedHashMap<K, V> _entries = LinkedHashMap<K, V>();
+
+  V resolve(K key, V Function() compute) {
+    final existing = _entries.remove(key);
+    if (existing != null) {
+      _entries[key] = existing;
+      return existing;
+    }
+    final value = compute();
+    _entries[key] = value;
+    if (_entries.length > maxEntries) {
+      _entries.remove(_entries.keys.first);
+    }
+    return value;
+  }
+}
