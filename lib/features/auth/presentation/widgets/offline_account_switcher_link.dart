@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/auth/presentation/sheets/account_switcher_sheet.dart';
-import 'package:fluxer_app/features/auth/presentation/sheets/instance_selector_sheet.dart';
 import 'package:fluxer_app/features/auth/providers/account_manager_provider.dart';
 import 'package:fluxer_app/features/ui/text_link/fluxer_text_link.dart';
 import 'package:fluxer_app/l10n/generated/fluxer_localizations.dart';
@@ -17,8 +16,8 @@ Future<void> openOfflineInstanceEscape(
   if (!context.mounted) {
     return;
   }
+  // ChatFlux: no instance switching, only the account switcher.
   if (ref.read(accountManagerProvider).accounts.isEmpty) {
-    await showInstanceSelectorSheet(context);
     return;
   }
   await AccountSwitcherSheet.show(context);

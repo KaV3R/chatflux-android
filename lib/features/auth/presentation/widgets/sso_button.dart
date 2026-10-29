@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
-import 'package:fluxer_app/features/auth/presentation/sheets/instance_selector_sheet.dart';
-import 'package:fluxer_app/features/auth/presentation/widgets/instance_selector.dart';
 import 'package:fluxer_app/features/auth/providers/auth_instance_snapshot_provider.dart';
 import 'package:fluxer_app/features/auth/providers/instance_selector_provider.dart';
 import 'package:fluxer_app/features/auth/providers/login_error_l10n.dart';
@@ -85,11 +83,6 @@ class SsoLoginPanel extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        InstanceSelectorLoginEntry(
-          enabled: !vm.isLoggingIn && !vm.isStartingSso,
-          onOpenSheet: () => unawaited(showInstanceSelectorSheet(context)),
-        ),
-        SizedBox(height: context.layout.s6),
         Text(
           providerName,
           textAlign: TextAlign.center,

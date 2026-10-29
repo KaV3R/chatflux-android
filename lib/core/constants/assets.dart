@@ -1,4 +1,6 @@
 class Assets {
+  static const String chatfluxLogo = 'assets/images/chatflux_logo.png';
+
   static const String fluxerLogoMonochrome =
       'assets/images/fluxer-logo-monochrome.svg';
 

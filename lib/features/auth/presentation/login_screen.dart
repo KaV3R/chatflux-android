@@ -103,11 +103,9 @@ class LoginScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const InstanceBrandMark(size: 128),
-                          SizedBox(height: layout.s4),
-                          InstanceWordmark(
-                            height: 36,
-                            color: context.colors.textPrimary,
+                          Padding(
+                            padding: EdgeInsets.all(layout.s5),
+                            child: const ChatFluxLogo(height: 64),
                           ),
                         ],
                       ),
@@ -144,7 +142,7 @@ class LoginScreen extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              InstanceWordmark(height: 32, color: context.colors.textPrimary),
+              const ChatFluxLogo(height: 56),
               SizedBox(height: layout.s8),
               _buildAuthContent(context, ref),
             ],

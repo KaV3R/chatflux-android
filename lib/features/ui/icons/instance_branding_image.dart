@@ -157,6 +157,29 @@ bool _isSvgUrl(String url) {
   return path.toLowerCase().endsWith('.svg');
 }
 
+/// The ChatFlux logo (cat + "ChatFlux" text), bundled with the app.
+class ChatFluxLogo extends StatelessWidget {
+  const ChatFluxLogo({required this.height, super.key});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: InstanceConstants.defaultProductName,
+      image: true,
+      child: ExcludeSemantics(
+        child: Image.asset(
+          Assets.chatfluxLogo,
+          height: height,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+        ),
+      ),
+    );
+  }
+}
+
 class _FallbackWordmark extends StatelessWidget {
   const _FallbackWordmark({
     required this.height,
@@ -171,17 +194,7 @@ class _FallbackWordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (productName == InstanceConstants.defaultProductName) {
-      return Semantics(
-        label: productName,
-        image: true,
-        child: ExcludeSemantics(
-          child: SvgPicture.asset(
-            Assets.fluxerWordmarkMonochrome,
-            height: height,
-            theme: SvgTheme(currentColor: color),
-          ),
-        ),
-      );
+      return ChatFluxLogo(height: height);
     }
     return Text(
       productName,
