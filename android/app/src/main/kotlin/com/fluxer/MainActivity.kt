@@ -64,6 +64,7 @@ class MainActivity : AudioServiceActivity() {
         NotificationReplyBridge(applicationContext).register(flutterEngine)
         VoiceSpeakerRouteBridge(applicationContext).register(flutterEngine)
         AppRestartBridge(this).register(flutterEngine)
+        ChatFluxApkInstallerBridge(this).register(flutterEngine)
         UploadKeepAliveBridge(applicationContext).register(flutterEngine)
         imeEditingShortcutBridge.register(flutterEngine)
         MeasureReporting.register(flutterEngine, application)

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ChatFlux: downloaded update APKs live in the app cache (see ChatFluxApkInstallerBridge). -->
+<paths>
+    <cache-path name="chatflux_updates" path="chatflux_updates/" />
+</paths>
