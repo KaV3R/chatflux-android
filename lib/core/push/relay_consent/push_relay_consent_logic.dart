@@ -5,7 +5,8 @@ bool isPushRelayConsentRequired({
   required bool isConsentGranted,
   required bool isOfficialInstance,
 }) {
-  if (isOfficialInstance) {
+  // ChatFlux: pushes go through our own server, no third-party relay to consent to.
+  if (isOfficialInstance || relayUrl.isNotEmpty) {
     return false;
   }
   if (!isFluxerPushRelayUrl(relayUrl)) {

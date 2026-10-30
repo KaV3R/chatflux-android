@@ -1,4 +1,4 @@
-# ChatFlux: builds the Android APK (OSS / UnifiedPush flavour, no Firebase) and publishes it
+# ChatFlux: builds the Android APK (FCM flavour, own Firebase project chatflux-99e20) and publishes it
 # as a GitHub Release. Simplified from android-beta-oss.yml (no Fluxer build service / telemetry).
 name: ChatFlux Android APK
 
@@ -60,8 +60,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Configure OSS build tree
-        run: dart tool/configure_build.dart --profile=oss
+      - name: Configure Android FCM build tree
+        run: dart tool/configure_build.dart --profile=android-fcm
+
+      - name: Write Firebase config
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::GOOGLE_SERVICES_JSON_BASE64 secret is missing (run chatflux-signing/set-firebase-secret.ps1)"; exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+          FIREBASE_OPTIONS_JSON=$(jq -c '
+            .project_info as $p
+            | (.client[] | select(.client_info.android_client_info.package_name == "hu.catflux.chatflux")) as $c
+            | {android: {
+                apiKey: $c.api_key[0].current_key,
+                appId: $c.client_info.mobilesdk_app_id,
+                messagingSenderId: $p.project_number,
+                projectId: $p.project_id,
+                storageBucket: $p.storage_bucket
+              }}' android/app/google-services.json)
+          FIREBASE_OPTIONS_JSON="$FIREBASE_OPTIONS_JSON" dart tool/write_firebase_options.dart --environment=stable
 
       - name: Set up Rust for the native markdown parser
         run: |
@@ -105,7 +126,7 @@ jobs:
       - name: Build APKs
         run: |
           set -euo pipefail
-          COMMON="--release --flavor stableUnifiedpush --build-name ${{ steps.v.outputs.name }} --build-number ${{ steps.v.outputs.code }} --dart-define-from-file=tool/dart_defines/stable.json --dart-define=PUSH_PROVIDER=unifiedpush --dart-define=BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          COMMON="--release --flavor stableFcm --build-name ${{ steps.v.outputs.name }} --build-number ${{ steps.v.outputs.code }} --dart-define-from-file=tool/dart_defines/stable.json --dart-define=PUSH_PROVIDER=fcm --dart-define=BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           flutter build apk $COMMON
           flutter build apk $COMMON --split-per-abi
 
@@ -115,9 +136,9 @@ jobs:
           mkdir -p release
           APK_DIR=build/app/outputs/flutter-apk
           ls -la "$APK_DIR"
-          cp "$APK_DIR/app-stableunifiedpush-release.apk" "release/ChatFlux-${{ steps.v.outputs.name }}.apk"
+          cp "$APK_DIR/app-stablefcm-release.apk" "release/ChatFlux-${{ steps.v.outputs.name }}.apk"
           for abi in arm64-v8a armeabi-v7a x86_64; do
-            f="$APK_DIR/app-${abi}-stableunifiedpush-release.apk"
+            f="$APK_DIR/app-${abi}-stablefcm-release.apk"
             [ -f "$f" ] && cp "$f" "release/ChatFlux-${{ steps.v.outputs.name }}-${abi}.apk"
           done
           ls -la release

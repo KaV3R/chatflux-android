@@ -1,4 +1,6 @@
-const String kPushRelayOrigin = 'https://push.fluxer.com';
+// ChatFlux: the chat.catflux.hu push service sends these itself with its own Firebase
+// project (FLUXER_PUSH_SERVICE_OWN_RELAY_HOSTS=chat.catflux.hu), nothing goes via fluxer.com.
+const String kPushRelayOrigin = 'https://chat.catflux.hu';
 
 const String kPushRelayNoticeUrl = 'https://fluxer.com/push-relay';
 
