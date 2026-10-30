@@ -1,0 +1,128 @@
+# ChatFlux: builds an UNSIGNED iOS .ipa and publishes it as a GitHub Release.
+# Install it with Sideloadly / AltStore using your own Apple ID (they sign it on install).
+# No Apple Developer account needed; push notifications (APNs) will not work this way.
+name: ChatFlux iOS IPA (unsigned)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chatflux-ios
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build IPA
+    runs-on: macos-26
+    timeout-minutes: 120
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+
+      - name: Select newest Xcode
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app || true
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -n 1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
+
+      - name: Resolve version
+        id: v
+        run: |
+          set -euo pipefail
+          echo "name=$(date -u +%Y).$((10#$(date -u +%m))).${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "code=$(( $(date -u +%s) / 60 ))" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Flutter
+        uses: axi92/flutter-action@72633a794ba0b23276fa4fc465a6cacb758a90c5
+        with:
+          channel: stable
+
+      - name: Restore pub cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-ios-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-ios-pub-
+
+      - name: Configure iOS build tree
+        run: dart tool/configure_build.dart --profile=ios-store
+
+      - name: Set up Rust and native asset build hooks
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --default-toolchain stable
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            . "$HOME/.cargo/env"
+          fi
+          rustup target add aarch64-apple-ios
+          flutter config --enable-native-assets
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: dart run build_runner build
+
+      - name: Build iOS app (no code signing)
+        run: |
+          set -euo pipefail
+          flutter build ios --release --flavor stable --no-codesign \
+            --build-name ${{ steps.v.outputs.name }} \
+            --build-number ${{ steps.v.outputs.code }} \
+            --dart-define-from-file=tool/dart_defines/stable.json \
+            --dart-define=PUSH_PROVIDER=apns \
+            --dart-define=BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP=$(ls -d build/ios/iphoneos/*.app | head -n 1)
+          echo "App bundle: $APP"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist" || true
+          ls "$APP/PlugIns" || true
+          mkdir -p release/Payload
+          cp -R "$APP" release/Payload/
+          (cd release && zip -qry "ChatFlux-${{ steps.v.outputs.name }}-unsigned.ipa" Payload)
+          rm -rf release/Payload
+          ls -la release
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="ios-v${{ steps.v.outputs.name }}"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "ChatFlux iOS ${{ steps.v.outputs.name }}" \
+            --notes "Aláíratlan iPhone app. Telepítés: Sideloadly (sideloadly.io) vagy AltStore segítségével, a saját Apple ID-ddel. Ingyenes Apple ID-vel 7 naponta újra kell aláírni (az AltStore ezt automatikusan megcsinálja). Push értesítések így nem működnek." \
+            --draft
+          for f in release/*.ipa; do
+            for attempt in 1 2 3 4 5; do
+              if gh release upload "$TAG" "$f" --repo "$GITHUB_REPOSITORY" --clobber; then
+                break
+              fi
+              if [ "$attempt" = 5 ]; then
+                echo "::error::Upload failed: $f"; exit 1
+              fi
+              sleep $((attempt * 15))
+            done
+          done
+          # Not marked as latest, so the Android APK stays on the /releases/latest page.
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=false

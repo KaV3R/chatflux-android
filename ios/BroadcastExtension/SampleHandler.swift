@@ -8,9 +8,9 @@
 import ReplayKit
 import OSLog
 
-let broadcastLogger = OSLog(subsystem: "com.fluxer", category: "Broadcast")
+let broadcastLogger = OSLog(subsystem: "hu.catflux.chatflux", category: "Broadcast")
 private enum Constants {
-    static let appGroupIdentifier = "group.com.fluxer"
+    static let appGroupIdentifier = "group.hu.catflux.chatflux"
 }
 
 class SampleHandler: RPBroadcastSampleHandler {

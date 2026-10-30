@@ -6,12 +6,12 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.fluxer</string>
+		<string>group.hu.catflux.chatflux</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.fluxer</string>
-		<string>$(AppIdentifierPrefix)com.fluxer.canary</string>
+		<string>$(AppIdentifierPrefix)hu.catflux.chatflux</string>
+		<string>$(AppIdentifierPrefix)hu.catflux.chatflux.canary</string>
 	</array>
 </dict>
 </plist>

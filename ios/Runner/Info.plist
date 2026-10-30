@@ -220,7 +220,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.fluxer.receive_sharing_intent</string>
+			<string>hu.catflux.chatflux.receive_sharing_intent</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>ShareMedia-$(PRODUCT_BUNDLE_IDENTIFIER)</string>
@@ -248,9 +248,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Take photos to send in a chat.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Fluxer does not use your location. A bundled library references location APIs, which requires this entry for App Store submission.</string>
+	<string>ChatFlux does not use your location. A bundled library references location APIs, which requires this entry for App Store submission.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Fluxer does not use your location. A bundled library references location APIs, which requires this entry for App Store submission.</string>
+	<string>ChatFlux does not use your location. A bundled library references location APIs, which requires this entry for App Store submission.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Leave voice messages, audio, and video calls.</string>
 	<key>NSMotionUsageDescription</key>
@@ -268,7 +268,7 @@
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true/>
 	<key>RTCAppGroupIdentifier</key>
-	<string>group.com.fluxer</string>
+	<string>group.hu.catflux.chatflux</string>
 	<key>RTCScreenSharingExtension</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER).BroadcastExtension</string>
 	<key>UIApplicationSceneManifest</key>

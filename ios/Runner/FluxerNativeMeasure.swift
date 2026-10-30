@@ -34,7 +34,7 @@ enum FluxerNativeMeasure {
       return
     }
     let error = NSError(
-      domain: "com.fluxer.native",
+      domain: "hu.catflux.chatflux.native",
       code: 1,
       userInfo: [NSLocalizedDescriptionKey: trimmedMessage]
     )

@@ -1,7 +1,7 @@
 import Foundation
 
 enum AssistantDefaults {
-  static let suiteName = "group.com.fluxer"
+  static let suiteName = "group.hu.catflux.chatflux"
 
   static var store: UserDefaults {
     UserDefaults(suiteName: suiteName) ?? .standard
