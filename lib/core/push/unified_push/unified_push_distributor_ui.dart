@@ -26,7 +26,8 @@ Future<void> showUnifiedPushDistributorSetup(
     context: context,
     instances: instances,
     unifiedPushFunctions: FluxerUnifiedPushFunctions(),
-    showNoDistribDialog: !dismissed,
+    // ChatFlux: never nag about a missing push distributor.
+    showNoDistribDialog: false && !dismissed,
     onNoDistribDialogDismissed: () {
       unawaited(dismissalStorage.dismiss());
     },
