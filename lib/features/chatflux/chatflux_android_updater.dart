@@ -130,7 +130,8 @@ class ChatFluxAndroidUpdater {
       // Fall back to the universal APK.
     }
     for (final String abi in abis) {
-      final String? url = release.assets['ChatFlux-${release.version}-$abi.apk'];
+      final String? url =
+          release.assets['ChatFlux-${release.version}-$abi.apk'];
       if (url != null) {
         return url;
       }

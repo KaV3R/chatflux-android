@@ -1,6 +1,7 @@
 import 'package:fluxer_app/core/constants/media_proxy_sizes.dart';
 import 'package:fluxer_app/core/media/fluxer_media_cdn.dart';
 import 'package:fluxer_app/core/media/fluxer_media_hash.dart';
+import 'package:fluxer_app/features/chatflux/chatflux_prefs.dart';
 
 enum GuildMemberMediaType {
   avatar('avatars'),
@@ -56,7 +57,9 @@ abstract final class FluxerMediaUrl {
     if (hash == null || hash.isEmpty) {
       return null;
     }
-    if (animated && isAnimatedMediaHash(hash)) {
+    // ChatFlux: GIF avatars/banners play everywhere unless turned off in settings.
+    if ((animated || ChatFluxPrefs.animateProfiles.value) &&
+        isAnimatedMediaHash(hash)) {
       return _url(
         path: 'avatars/$userId/$hash.gif',
         query: <String, String>{'animated': 'true', 'size': '$size'},
@@ -80,7 +83,9 @@ abstract final class FluxerMediaUrl {
     if (hash == null || hash.isEmpty) {
       return null;
     }
-    if (animated && isAnimatedMediaHash(hash)) {
+    // ChatFlux: GIF avatars/banners play everywhere unless turned off in settings.
+    if ((animated || ChatFluxPrefs.animateProfiles.value) &&
+        isAnimatedMediaHash(hash)) {
       return _url(
         path: 'banners/$userId/$hash.gif',
         query: <String, String>{'animated': 'true', 'size': '$size'},
@@ -149,7 +154,9 @@ abstract final class FluxerMediaUrl {
     int size = MediaProxySizes.avatarProfile,
     bool animated = false,
   }) {
-    if (animated && isAnimatedMediaHash(hash)) {
+    // ChatFlux: GIF avatars/banners play everywhere unless turned off in settings.
+    if ((animated || ChatFluxPrefs.animateProfiles.value) &&
+        isAnimatedMediaHash(hash)) {
       return _url(
         path: 'guilds/$guildId/users/$userId/${type.path}/$hash.gif',
         query: <String, String>{'animated': 'true', 'size': '$size'},

@@ -20,8 +20,9 @@ import 'package:fluxer_app/core/zoom/fluxer_app_zoom.dart';
 import 'package:fluxer_app/features/accessibility/domain/resolve_reduced_motion.dart';
 import 'package:fluxer_app/features/accessibility/domain/text_scale.dart';
 import 'package:fluxer_app/features/accessibility/presentation/reduced_motion_scope.dart';
-import 'package:fluxer_app/features/chatflux/chatflux_android_updater.dart';
 import 'package:fluxer_app/features/accessibility/providers/effective_motion_preferences_provider.dart';
+import 'package:fluxer_app/features/chatflux/chatflux_android_updater.dart';
+import 'package:fluxer_app/features/chatflux/chatflux_prefs.dart';
 import 'package:fluxer_app/features/recovery_kit/presentation/recovery_kit_gate.dart';
 import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
 import 'package:fluxer_app/features/shell/hosted_ui/iphone_duo_app_background.dart';
@@ -63,6 +64,7 @@ class _FluxerAppState extends ConsumerState<FluxerApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ref.read(voiceMediaDevicesProvider.notifier).refresh());
       ChatFluxAndroidUpdater.start();
+      unawaited(ChatFluxPrefs.load());
     });
   }
 

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
 import 'package:fluxer_app/features/accessibility/domain/motion_preferences.dart';
 import 'package:fluxer_app/features/accessibility/providers/effective_motion_preferences_provider.dart';
+import 'package:fluxer_app/features/chatflux/chatflux_prefs.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_store.dart'
+    show chatFluxTr;
 import 'package:fluxer_app/features/settings/providers/preferences/appearance_preferences_provider.dart';
 import 'package:fluxer_app/features/settings/providers/view_models/user_settings_view_model.dart';
 import 'package:fluxer_app/features/shell/presentation/responsive_layout.dart';
@@ -111,6 +114,32 @@ class UserAccessibilityAnimationSection extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+        ValueListenableBuilder<bool>(
+          valueListenable: ChatFluxPrefs.animateProfiles,
+          builder: (BuildContext context, bool animate, Widget? _) =>
+              FluxerSettingsSwitchGroup(
+                children: [
+                  FluxerSettingsSwitchItem.grouped(
+                    label: chatFluxTr(
+                      context,
+                      'Animált avatarok és bannerek lejátszása',
+                      'Play animated avatars and banners',
+                    ),
+                    description: chatFluxTr(
+                      context,
+                      'A GIF profilképek és bannerek mindenhol mozognak. '
+                          'Kikapcsolva kevesebb adatot és akkumulátort használ.',
+                      'GIF avatars and banners play everywhere. '
+                          'Turning this off saves data and battery.',
+                    ),
+                    value: animate,
+                    onChanged: (value) => unawaited(
+                      ChatFluxPrefs.setAnimateProfiles(value: value),
+                    ),
+                  ),
+                ],
+              ),
         ),
         FluxerSettingsSubsection(
           title: l10n.accessibilityStickerAnimationsTitle,
