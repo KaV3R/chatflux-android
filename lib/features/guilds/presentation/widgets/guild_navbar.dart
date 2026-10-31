@@ -334,7 +334,7 @@ class _GuildNavbarState extends ConsumerState<GuildNavbar> {
         const _NavbarListEntry(kind: _NavbarListEntryKind.addCommunity),
       );
     }
-    entries.add(const _NavbarListEntry(kind: _NavbarListEntryKind.help));
+    // ChatFlux: no Fluxer help button (it only linked to help.fluxer.app).
     return entries;
   }
 
