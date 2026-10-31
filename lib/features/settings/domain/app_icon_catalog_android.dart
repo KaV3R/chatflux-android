@@ -32,12 +32,20 @@ AppIconChoice _androidDefaultBrutalistAppIconChoice() {
 }
 
 List<AppIconChoice> androidAppIconChoiceCatalog() {
+  // ChatFlux: only the cat icon. The other launcher icons are Fluxer-branded.
   return [
     AppIconChoice(
       alternateIconName: null,
       previewAssetPath: appIconPreviewAndroidDefault(),
       label: (FluxerLocalizations l10n) => l10n.appIconOptionDefault,
     ),
+  ];
+}
+
+// Upstream Fluxer alternate icons, kept for reference.
+// ignore: unused_element
+List<AppIconChoice> _fluxerAlternateAppIcons() {
+  return [
     AppIconChoice(
       alternateIconName: kAndroidStarfieldAlternateIconName,
       previewAssetPath: AppIconPreviewAssets.androidStarfield,
