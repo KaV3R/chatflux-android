@@ -6,6 +6,7 @@ import 'package:fluxer_app/core/router/fluxer_router.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/accessibility/domain/text_scale.dart';
 import 'package:fluxer_app/features/accessibility/presentation/allow_image_frame_animation.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
 import 'package:fluxer_app/features/profile/providers/user_presence_provider.dart';
 import 'package:fluxer_app/features/profile/providers/user_settings_status_provider.dart';
 import 'package:fluxer_app/features/ui/avatar/fluxer_avatar_status_badge.dart';
@@ -188,12 +189,16 @@ class FluxerAvatar extends StatelessWidget {
     if (!_isUserAvatar) {
       return avatarContent;
     }
-    return FluxerAvatarStatusBadge(
+    return ChatFluxAvatarDecoration(
+      userId: userId!,
       size: size,
-      status: showStatus ? status : null,
-      isTyping: isTyping,
-      isMobileStatus: isMobileStatus,
-      child: avatarContent,
+      child: FluxerAvatarStatusBadge(
+        size: size,
+        status: showStatus ? status : null,
+        isTyping: isTyping,
+        isMobileStatus: isMobileStatus,
+        child: avatarContent,
+      ),
     );
   }
 

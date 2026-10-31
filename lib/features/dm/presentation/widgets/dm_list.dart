@@ -20,6 +20,7 @@ import 'package:fluxer_app/features/channels/utils/show_channel_debug_sheet.dart
 import 'package:fluxer_app/features/chat/providers/core/chat_providers.dart';
 import 'package:fluxer_app/features/chat/providers/core/chat_view_model.dart';
 import 'package:fluxer_app/features/chat/utils/messages/delete_my_messages_in_channel_action.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_page.dart';
 import 'package:fluxer_app/features/dm/domain/create_dm_restriction.dart';
 import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
 import 'package:fluxer_app/features/dm/domain/dm_conversation.dart';
@@ -348,6 +349,13 @@ class _DMListState extends ConsumerState<DMList> {
                                   )
                                 : null,
                           ),
+                          _buildNavButton(
+                            context,
+                            icon: PhosphorIconsFill.storefront,
+                            label: 'Shop',
+                            onTap: () =>
+                                unawaited(ChatFluxShopPage.open(context)),
+                          ),
                         ],
                       ),
                     );
@@ -545,6 +553,18 @@ class _DMListState extends ConsumerState<DMList> {
                     iconOnly: false,
                   ),
                 ),
+              _buildDmListSurfaceButton(
+                context,
+                onTap: () => unawaited(ChatFluxShopPage.open(context)),
+                semanticLabel: 'Shop',
+                padding: const EdgeInsets.all(8),
+                child: PhosphorIcon(
+                  PhosphorIconsFill.storefront,
+                  size: 20,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
               _buildDmListSurfaceButton(
                 context,
                 onTap: () =>

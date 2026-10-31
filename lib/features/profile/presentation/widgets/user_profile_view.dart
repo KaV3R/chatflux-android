@@ -14,6 +14,7 @@ import 'package:fluxer_app/core/router/route_names.dart' show RoutePaths;
 import 'package:fluxer_app/core/talker.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/chat/domain/message.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
 import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
 import 'package:fluxer_app/features/dm/providers/dm_providers.dart';
 import 'package:fluxer_app/features/friends/domain/friend.dart';
@@ -370,6 +371,15 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                     ),
                   ),
                 ),
+                if (!isWebhook)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: layout.radiusXxl.topLeft,
+                      ),
+                      child: ChatFluxProfileHeaderCosmetics(userId: userId),
+                    ),
+                  ),
                 if (widget.showTopHandle)
                   Positioned(
                     top: 0,

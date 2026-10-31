@@ -5,6 +5,7 @@ import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
 import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/channels/providers/channel_typing_provider.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
 import 'package:fluxer_app/features/friends/providers/friend_providers.dart';
 import 'package:fluxer_app/features/members/domain/member_list_group_names.dart';
 import 'package:fluxer_app/features/members/presentation/menus/guild_member_context_menu.dart';
@@ -136,61 +137,32 @@ class _MemberListSidebarMemberRowState
                     : Colors.transparent,
                 borderRadius: layout.radiusMd,
               ),
-              child: Row(
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: <Widget>[
-                  FluxerAvatar.user(
-                    fallbackText: displayName,
-                    userId: widget.userId,
-                    imageUrl: avatarUrl,
-                    avatarColor: member.user.avatarColor,
-                    status: status,
-                    isMobileStatus: presenceUser?.mobile ?? false,
-                    isTyping: isTyping,
-                    size: 32,
+                  Positioned(
+                    left: -layout.s2,
+                    right: -layout.s2,
+                    top: 0,
+                    bottom: 0,
+                    child: ChatFluxUserNameplate(
+                      userId: widget.userId,
+                      borderRadius: layout.radiusMd,
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Flexible(
-                              child: Text(
-                                displayName,
-                                style: context.textStyles.label.copyWith(
-                                  color: roleColor != null
-                                      ? Color(roleColor)
-                                      : context.colors.textChat,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (widget.isOwner) ...<Widget>[
-                              SizedBox(width: layout.s1),
-                              const PhosphorIcon(
-                                PhosphorIconsFill.crown,
-                                size: 12,
-                                color: Color(0xFFFAA61A),
-                              ),
-                            ],
-                            if (showUserTag) ...<Widget>[
-                              SizedBox(width: layout.s1),
-                              FluxerUserTag(
-                                isSystem: member.user.system ?? false,
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (hasVisibleCustomStatus(customStatus))
-                          CustomStatusDisplay(
-                            stored: customStatus,
-                            maxLines: 1,
-                            emojiSize: 14,
-                          ),
-                      ],
+                  Positioned.fill(
+                    child: _sidebarRowContent(
+                      context,
+                      displayName: displayName,
+                      avatarUrl: avatarUrl,
+                      member: member,
+                      status: status,
+                      presenceUser: presenceUser,
+                      isTyping: isTyping,
+                      roleColor: roleColor,
+                      showUserTag: showUserTag,
+                      customStatus: customStatus,
+                      layout: layout,
                     ),
                   ),
                 ],
@@ -205,6 +177,76 @@ class _MemberListSidebarMemberRowState
     }
     return Opacity(opacity: 0.45, child: row);
   }
+
+  Widget _sidebarRowContent(
+    BuildContext context, {
+    required String displayName,
+    required String? avatarUrl,
+    required GuildMemberResponse member,
+    required String status,
+    required db.User? presenceUser,
+    required bool isTyping,
+    required int? roleColor,
+    required bool showUserTag,
+    required String? customStatus,
+    required FluxerLayoutTheme layout,
+  }) => Row(
+    children: <Widget>[
+      FluxerAvatar.user(
+        fallbackText: displayName,
+        userId: widget.userId,
+        imageUrl: avatarUrl,
+        avatarColor: member.user.avatarColor,
+        status: status,
+        isMobileStatus: presenceUser?.mobile ?? false,
+        isTyping: isTyping,
+        size: 32,
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    displayName,
+                    style: context.textStyles.label.copyWith(
+                      color: roleColor != null
+                          ? Color(roleColor)
+                          : context.colors.textChat,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (widget.isOwner) ...<Widget>[
+                  SizedBox(width: layout.s1),
+                  const PhosphorIcon(
+                    PhosphorIconsFill.crown,
+                    size: 12,
+                    color: Color(0xFFFAA61A),
+                  ),
+                ],
+                if (showUserTag) ...<Widget>[
+                  SizedBox(width: layout.s1),
+                  FluxerUserTag(isSystem: member.user.system ?? false),
+                ],
+              ],
+            ),
+            if (hasVisibleCustomStatus(customStatus))
+              CustomStatusDisplay(
+                stored: customStatus,
+                maxLines: 1,
+                emojiSize: 14,
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 class MemberListDetailsMemberRow extends ConsumerWidget {
@@ -273,61 +315,25 @@ class MemberListDetailsMemberRow extends ConsumerWidget {
             member: member,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: <Widget>[
-              FluxerAvatar.user(
-                fallbackText: displayName,
-                userId: userId,
-                imageUrl: avatarUrl,
-                avatarColor: member.user.avatarColor,
-                status: presenceUser?.status ?? listMember.status ?? 'offline',
-                isMobileStatus: presenceUser?.mobile ?? false,
-                size: 32,
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                child: ChatFluxUserNameplate(userId: userId),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Flexible(
-                          child: Text(
-                            displayName,
-                            style: context.textStyles.username.copyWith(
-                              color: roleColor != null
-                                  ? Color(roleColor)
-                                  : context.colors.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isOwner) ...<Widget>[
-                          const SizedBox(width: 6),
-                          const PhosphorIcon(
-                            PhosphorIconsFill.crown,
-                            size: 14,
-                            color: Color(0xFFFAA61A),
-                          ),
-                        ],
-                        if (showUserTag) ...<Widget>[
-                          const SizedBox(width: 6),
-                          FluxerUserTag(isSystem: member.user.system ?? false),
-                        ],
-                      ],
-                    ),
-                    if (hasVisibleCustomStatus(customStatus)) ...<Widget>[
-                      const SizedBox(height: 2),
-                      CustomStatusDisplay(stored: customStatus, maxLines: 1),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+            _detailsRowContent(
+              context,
+              displayName: displayName,
+              avatarUrl: avatarUrl,
+              member: member,
+              presenceUser: presenceUser,
+              roleColor: roleColor,
+              showUserTag: showUserTag,
+              customStatus: customStatus,
+            ),
+          ],
         ),
       ),
     );
@@ -336,4 +342,70 @@ class MemberListDetailsMemberRow extends ConsumerWidget {
     }
     return Opacity(opacity: 0.45, child: row);
   }
+
+  Widget _detailsRowContent(
+    BuildContext context, {
+    required String displayName,
+    required String? avatarUrl,
+    required GuildMemberResponse member,
+    required db.User? presenceUser,
+    required int? roleColor,
+    required bool showUserTag,
+    required String? customStatus,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Row(
+      children: <Widget>[
+        FluxerAvatar.user(
+          fallbackText: displayName,
+          userId: userId,
+          imageUrl: avatarUrl,
+          avatarColor: member.user.avatarColor,
+          status: presenceUser?.status ?? listMember.status ?? 'offline',
+          isMobileStatus: presenceUser?.mobile ?? false,
+          size: 32,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      displayName,
+                      style: context.textStyles.username.copyWith(
+                        color: roleColor != null
+                            ? Color(roleColor)
+                            : context.colors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isOwner) ...<Widget>[
+                    const SizedBox(width: 6),
+                    const PhosphorIcon(
+                      PhosphorIconsFill.crown,
+                      size: 14,
+                      color: Color(0xFFFAA61A),
+                    ),
+                  ],
+                  if (showUserTag) ...<Widget>[
+                    const SizedBox(width: 6),
+                    FluxerUserTag(isSystem: member.user.system ?? false),
+                  ],
+                ],
+              ),
+              if (hasVisibleCustomStatus(customStatus)) ...<Widget>[
+                const SizedBox(height: 2),
+                CustomStatusDisplay(stored: customStatus, maxLines: 1),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
