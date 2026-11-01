@@ -351,6 +351,19 @@ class _ChatFluxShopPageState extends ConsumerState<ChatFluxShopPage> {
           _sectionTitle(_typeLabel(context, 'bundle', plural: true)),
           _grid(bundles),
         ],
+        for (final ChatFluxCollection other in catalog.collections)
+          if (other.id != collection?.id)
+            if (catalog.items
+                    .where(
+                      (ChatFluxItem i) =>
+                          i.collection == other.id && !i.isBundle,
+                    )
+                    .toList()
+                case final List<ChatFluxItem> items
+                when items.isNotEmpty) ...<Widget>[
+              _sectionTitle(chatFluxLocalize(context, other.name)),
+              _grid(items),
+            ],
         for (final String type in kChatFluxShopSlots) ...<Widget>[
           _sectionTitle(
             _typeLabel(context, type, plural: true),
