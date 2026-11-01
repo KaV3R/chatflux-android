@@ -27,9 +27,15 @@ jobs:
         id: v
         run: |
           set -euo pipefail
-          # versionName: YYYY.M.<run number>; versionCode: minutes since epoch (always increasing)
+          # versionName: YYYY.M.<run number>
+          # versionCode: one step of 5000 per 10 minutes. --split-per-abi adds
+          # 1000/2000/4000 per ABI, so the universal APK gets +4900 and every
+          # APK of a newer build is always above every APK of an older one.
+          # (Old builds used minutes since epoch, max ~29.9M; this starts ~46M.)
+          BASE=$(( ( $(date -u +%s) / 600 - 2980000 ) * 5000 ))
           echo "name=$(date -u +%Y).$((10#$(date -u +%m))).${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          echo "code=$(( $(date -u +%s) / 60 ))" >> "$GITHUB_OUTPUT"
+          echo "code=$BASE" >> "$GITHUB_OUTPUT"
+          echo "universal=$(( BASE + 4900 ))" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
@@ -126,9 +132,9 @@ jobs:
       - name: Build APKs
         run: |
           set -euo pipefail
-          COMMON="--release --flavor stableFcm --build-name ${{ steps.v.outputs.name }} --build-number ${{ steps.v.outputs.code }} --dart-define-from-file=tool/dart_defines/stable.json --dart-define=PUSH_PROVIDER=fcm --dart-define=BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          flutter build apk $COMMON
-          flutter build apk $COMMON --split-per-abi
+          COMMON="--release --flavor stableFcm --build-name ${{ steps.v.outputs.name }} --dart-define-from-file=tool/dart_defines/stable.json --dart-define=PUSH_PROVIDER=fcm --dart-define=BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          flutter build apk $COMMON --build-number ${{ steps.v.outputs.universal }}
+          flutter build apk $COMMON --build-number ${{ steps.v.outputs.code }} --split-per-abi
 
       - name: Collect APKs
         run: |
