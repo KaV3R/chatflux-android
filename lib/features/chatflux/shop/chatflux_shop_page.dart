@@ -10,6 +10,7 @@ import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
 import 'package:fluxer_app/core/media/fluxer_media_url.dart';
 import 'package:fluxer_app/core/router/fluxer_router.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_gift.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_store.dart';
 import 'package:fluxer_app/features/profile/providers/user_presence_provider.dart';
 
@@ -334,6 +335,7 @@ class _ChatFluxShopPageState extends ConsumerState<ChatFluxShopPage> {
     return CustomScrollView(
       slivers: <Widget>[
         SliverToBoxAdapter(child: _notice(context)),
+        const SliverToBoxAdapter(child: ChatFluxGiftNotice()),
         if (collection != null)
           SliverToBoxAdapter(
             child: _Hero(
@@ -421,6 +423,7 @@ class _ChatFluxShopPageState extends ConsumerState<ChatFluxShopPage> {
     return CustomScrollView(
       slivers: <Widget>[
         SliverToBoxAdapter(child: _notice(context)),
+        const SliverToBoxAdapter(child: ChatFluxGiftNotice()),
         _sectionTitle(
           chatFluxTr(context, 'Amit most viselsz', 'Currently wearing'),
         ),
@@ -1136,6 +1139,24 @@ class _ItemSheet extends ConsumerStatefulWidget {
 
 class _ItemSheetState extends ConsumerState<_ItemSheet> {
   String? _error;
+  String? _info;
+
+  Future<void> _gift() async {
+    setState(() {
+      _error = null;
+      _info = null;
+    });
+    final String? name = await showChatFluxGiftSheet(context, widget.item);
+    if (name != null && mounted) {
+      setState(
+        () => _info = chatFluxTr(
+          context,
+          'Elküldve! $name megkapta az ajándékot. 🎁',
+          'Sent! $name received your gift. 🎁',
+        ),
+      );
+    }
+  }
 
   Future<void> _run(Future<void> Function(String token) action) async {
     final String? token = ref.read(fluxerAuthTokenProvider);
@@ -1357,6 +1378,33 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
                       ],
                       const SizedBox(height: 18),
                       action,
+                      if (me != null) ...<Widget>[
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: _kCardBorder),
+                            minimumSize: const Size.fromHeight(46),
+                          ),
+                          onPressed: busy ? null : () => unawaited(_gift()),
+                          icon: const Icon(Icons.card_giftcard_rounded),
+                          label: Text(
+                            chatFluxTr(
+                              context,
+                              'Ajándékba adom valakinek',
+                              'Gift to someone',
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (_info != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            _info!,
+                            style: const TextStyle(color: Color(0xFF86EFAC)),
+                          ),
+                        ),
                       if (_error != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 10),

@@ -237,6 +237,22 @@ class ChatFluxCatalog {
   }
 }
 
+/// A gift someone sent (or coins / items the admins granted).
+@immutable
+class ChatFluxGift {
+  const ChatFluxGift({this.sku, this.coins, this.fromName});
+
+  factory ChatFluxGift.fromJson(Map<dynamic, dynamic> json) => ChatFluxGift(
+    sku: json['sku'] as String?,
+    coins: (json['coins'] as num?)?.toInt(),
+    fromName: json['fromName'] as String?,
+  );
+
+  final String? sku;
+  final int? coins;
+  final String? fromName;
+}
+
 @immutable
 class ChatFluxMe {
   const ChatFluxMe({
@@ -245,6 +261,7 @@ class ChatFluxMe {
     required this.owned,
     required this.equipped,
     required this.wearing,
+    this.gifts = const <ChatFluxGift>[],
   });
 
   factory ChatFluxMe.fromJson(Map<dynamic, dynamic> json) => ChatFluxMe(
@@ -260,6 +277,10 @@ class ChatFluxMe {
           if (e.value is String) e.key.toString(): e.value as String,
     },
     wearing: ChatFluxWorn.fromJson(json['wearing']),
+    gifts: ((json['gifts'] as List<dynamic>?) ?? const <dynamic>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map(ChatFluxGift.fromJson)
+        .toList(),
   );
 
   final String userId;
@@ -267,6 +288,9 @@ class ChatFluxMe {
   final Set<String> owned;
   final Map<String, String> equipped;
   final ChatFluxWorn wearing;
+
+  /// Unseen gifts.
+  final List<ChatFluxGift> gifts;
 }
 
 class ChatFluxShopException implements Exception {
@@ -379,6 +403,30 @@ class ChatFluxShopStore {
       }),
     ),
   );
+
+  /// Buys [sku] for [toUserId]. Returns the recipient's name, if known.
+  Future<String?> gift(String token, String sku, String toUserId) async {
+    String? name;
+    await _pending('gift:$sku', () async {
+      final Map<dynamic, dynamic> json = await _authed(
+        'POST',
+        '/gift',
+        token,
+        <String, Object?>{'sku': sku, 'toUserId': toUserId},
+      );
+      _apply(json);
+      final Object? to = json['giftedTo'];
+      if (to is Map && to['name'] is String) {
+        name = to['name'] as String;
+      }
+    });
+    _fetchedAt.remove(toUserId);
+    return name;
+  }
+
+  Future<void> markGiftsSeen(String token) async {
+    _apply(await _authed('POST', '/gifts/seen', token));
+  }
 
   Future<void> _pending(String key, Future<void> Function() run) async {
     pendingSku.value = key;
