@@ -206,7 +206,10 @@ class _StatusCutoutClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final Path avatar = Path()..addRect(Offset.zero & size);
+    // ChatFlux: leave room around the avatar so a worn shop decoration that
+    // reaches past its edges is not cut off; only the status cutout is removed.
+    final Path avatar = Path()
+      ..addRect((Offset.zero & size).inflate(size.shortestSide));
     if (cutout.width <= 0) {
       return avatar;
     }

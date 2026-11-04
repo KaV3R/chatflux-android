@@ -1391,7 +1391,9 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
                       ],
                       const SizedBox(height: 18),
                       action,
-                      if (me != null) ...<Widget>[
+                      // Gifting is always a new purchase, so items already in
+                      // "My collection" can't be gifted on.
+                      if (me != null && !owned) ...<Widget>[
                         const SizedBox(height: 10),
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
@@ -1404,8 +1406,8 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
                           label: Text(
                             chatFluxTr(
                               context,
-                              'Ajándékba adom valakinek',
-                              'Gift to someone',
+                              'Megveszem ajándékba valakinek',
+                              'Buy it as a gift',
                             ),
                           ),
                         ),

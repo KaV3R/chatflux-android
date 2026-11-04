@@ -189,14 +189,15 @@ class FluxerAvatar extends StatelessWidget {
     if (!_isUserAvatar) {
       return avatarContent;
     }
-    return ChatFluxAvatarDecoration(
-      userId: userId!,
+    // The status badge wraps the decoration so the status dot sits on top of it.
+    return FluxerAvatarStatusBadge(
       size: size,
-      child: FluxerAvatarStatusBadge(
+      status: showStatus ? status : null,
+      isTyping: isTyping,
+      isMobileStatus: isMobileStatus,
+      child: ChatFluxAvatarDecoration(
+        userId: userId!,
         size: size,
-        status: showStatus ? status : null,
-        isTyping: isTyping,
-        isMobileStatus: isMobileStatus,
         child: avatarContent,
       ),
     );
