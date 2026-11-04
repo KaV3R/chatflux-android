@@ -10,6 +10,8 @@ import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
 import 'package:fluxer_app/core/media/fluxer_media_url.dart';
 import 'package:fluxer_app/core/router/fluxer_router.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style_editor.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_gift.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_store.dart';
 import 'package:fluxer_app/features/profile/providers/user_presence_provider.dart';
@@ -51,6 +53,14 @@ String _typeLabel(BuildContext c, String type, {bool plural = false}) =>
         plural
             ? chatFluxTr(c, 'Profilkeretek', 'Profile Frames')
             : chatFluxTr(c, 'Profilkeret', 'Profile Frame'),
+      'namefont' =>
+        plural
+            ? chatFluxTr(c, 'Név betűtípusok', 'Name Fonts')
+            : chatFluxTr(c, 'Név betűtípus', 'Name Font'),
+      'nameeffect' =>
+        plural
+            ? chatFluxTr(c, 'Névhatások', 'Name Effects')
+            : chatFluxTr(c, 'Névhatás', 'Name Effect'),
       _ =>
         plural
             ? chatFluxTr(c, 'Csomagok', 'Bundles')
@@ -433,10 +443,59 @@ class _ChatFluxShopPageState extends ConsumerState<ChatFluxShopPage> {
     final List<ChatFluxItem> owned = catalog.items
         .where((ChatFluxItem i) => !i.isBundle && _store.owns(i))
         .toList();
+    final _Me myself = _watchMe(ref);
+    final ChatFluxNameStyle nameStyle =
+        me?.wearing.nameStyle ?? const ChatFluxNameStyle();
     return CustomScrollView(
       slivers: <Widget>[
         SliverToBoxAdapter(child: _notice(context)),
         const SliverToBoxAdapter(child: ChatFluxGiftNotice()),
+        if (me != null) ...<Widget>[
+          _sectionTitle(chatFluxTr(context, 'Névstílus', 'Display Name Style')),
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kCardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ChatFluxNameStylePreviewRow(
+                    name: myself.name,
+                    avatarUrl: myself.avatarUrl,
+                    nameStyle: me.wearing.nameStyle == null
+                        ? const ChatFluxNameStyle(colors: <String>['#ffffff'])
+                        : nameStyle,
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: _kBrand),
+                    onPressed: () => unawaited(
+                      ChatFluxNameStyleEditor.show(
+                        context,
+                        name: myself.name,
+                        avatarUrl: myself.avatarUrl,
+                        onOpenItem: _openItem,
+                      ),
+                    ),
+                    icon: const Icon(Icons.brush_rounded, size: 18),
+                    label: Text(
+                      chatFluxTr(
+                        context,
+                        'Névstílus módosítása',
+                        'Change Display Name Style',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         _sectionTitle(
           chatFluxTr(context, 'Amit most viselsz', 'Currently wearing'),
         ),
@@ -878,6 +937,24 @@ class _ItemPreview extends ConsumerWidget {
     return ChatFluxWorn(slots);
   }
 
+  /// Fonts are shown with the user's current effect + colours; effects with
+  /// the user's colours (or the item's own preview colours).
+  ChatFluxNameStyle _nameStyle() {
+    final ChatFluxMe? me = ChatFluxShopStore.instance.me.value;
+    final ChatFluxNameStyle? wearing = me?.wearing.nameStyle;
+    final List<String>? myColors = me == null || me.nameColors.isEmpty
+        ? null
+        : me.nameColors;
+    if (item.type == 'namefont') {
+      return ChatFluxNameStyle.compose(
+        item.render,
+        wearing == null ? null : ChatFluxRender(effect: wearing.effect),
+        myColors,
+      );
+    }
+    return ChatFluxNameStyle.compose(null, item.render, myColors);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final _Me me = _watchMe(ref);
@@ -895,6 +972,17 @@ class _ItemPreview extends ConsumerWidget {
         return _miniCard(
           me,
           ChatFluxWorn(<String, ChatFluxRender>{'frame': item.render}),
+        );
+      case 'namefont':
+      case 'nameeffect':
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: ChatFluxNameStylePreviewRow(
+            name: me.name,
+            avatarUrl: me.avatarUrl,
+            nameStyle: _nameStyle(),
+            large: large,
+          ),
         );
       default:
         return _miniCard(me, _bundleWorn());
@@ -1046,16 +1134,33 @@ class _ItemPreview extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(
-                              me.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: large ? 17 : 10,
+                            if (worn.nameFont != null ||
+                                worn.nameEffect != null)
+                              ChatFluxNameText(
+                                text: me.name,
+                                nameStyle: ChatFluxNameStyle.compose(
+                                  worn.nameFont,
+                                  worn.nameEffect,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: large ? 17 : 10,
+                                ),
+                              )
+                            else
+                              Text(
+                                me.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: large ? 17 : 10,
+                                ),
                               ),
-                            ),
                             SizedBox(height: large ? 10 : 5),
                             if (worn.nameplate != null)
                               SizedBox(

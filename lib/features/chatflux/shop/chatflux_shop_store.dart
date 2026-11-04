@@ -8,12 +8,83 @@ import 'package:flutter/widgets.dart';
 
 const String kChatFluxShopBase = 'https://chat.catflux.hu/shop-api';
 
+/// Slots shown as their own shop sections.
 const List<String> kChatFluxShopSlots = <String>[
   'decoration',
   'nameplate',
   'effect',
   'frame',
+  'namefont',
+  'nameeffect',
 ];
+
+/// Effects that use a second colour.
+const List<String> kChatFluxTwoColorEffects = <String>[
+  'gradient',
+  'pop',
+  'gummy',
+  'prism',
+];
+
+Color? chatFluxParseHex(String? hex) {
+  if (hex == null || !hex.startsWith('#') || hex.length != 7) {
+    return null;
+  }
+  final int? value = int.tryParse(hex.substring(1), radix: 16);
+  return value == null ? null : Color(0xFF000000 | value);
+}
+
+String chatFluxToHex(Color color) {
+  String part(double v) =>
+      (v * 255).round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
+  return '#${part(color.r)}${part(color.g)}${part(color.b)}';
+}
+
+List<String> _stringList(Object? raw) =>
+    ((raw as List<dynamic>?) ?? const <dynamic>[]).whereType<String>().toList();
+
+/// Display name style: a bought font + effect, coloured by the user.
+@immutable
+class ChatFluxNameStyle {
+  const ChatFluxNameStyle({
+    this.sku = 'preview',
+    this.font,
+    this.file,
+    this.scale = 1,
+    this.effect = 'solid',
+    this.colors = const <String>[],
+  });
+
+  factory ChatFluxNameStyle.fromJson(Map<dynamic, dynamic> json) =>
+      ChatFluxNameStyle(
+        sku: (json['sku'] as String?) ?? '',
+        font: json['font'] as String?,
+        file: json['file'] as String?,
+        scale: (json['scale'] as num?)?.toDouble() ?? 1,
+        effect: (json['effect'] as String?) ?? 'solid',
+        colors: _stringList(json['colors']),
+      );
+
+  /// Builds a style from shop items, e.g. for previews.
+  factory ChatFluxNameStyle.compose(
+    ChatFluxRender? font,
+    ChatFluxRender? effect, [
+    List<String>? colors,
+  ]) => ChatFluxNameStyle(
+    font: font?.font,
+    file: font?.file,
+    scale: font?.scale ?? 1,
+    effect: effect?.effect ?? 'solid',
+    colors: colors ?? effect?.colors ?? const <String>[],
+  );
+
+  final String sku;
+  final String? font;
+  final String? file;
+  final double scale;
+  final String effect;
+  final List<String> colors;
+}
 
 bool chatFluxIsHungarian(BuildContext context) =>
     Localizations.maybeLocaleOf(context)?.languageCode == 'hu';
@@ -62,6 +133,11 @@ class ChatFluxRender {
     this.bottom,
     this.color,
     this.align,
+    this.font,
+    this.file,
+    this.scale,
+    this.effect,
+    this.colors,
   });
 
   factory ChatFluxRender.fromJson(Map<dynamic, dynamic> json, {String? sku}) =>
@@ -72,6 +148,11 @@ class ChatFluxRender {
         bottom: json['bottom'] as String?,
         color: json['color'] as String?,
         align: json['align'] as String?,
+        font: json['font'] as String?,
+        file: json['file'] as String?,
+        scale: (json['scale'] as num?)?.toDouble(),
+        effect: json['effect'] as String?,
+        colors: json['colors'] is List ? _stringList(json['colors']) : null,
       );
 
   final String? sku;
@@ -81,22 +162,25 @@ class ChatFluxRender {
   final String? color;
   final String? align;
 
-  Color? get parsedColor {
-    final String? hex = color;
-    if (hex == null || !hex.startsWith('#') || hex.length != 7) {
-      return null;
-    }
-    final int? value = int.tryParse(hex.substring(1), radix: 16);
-    return value == null ? null : Color(0xFF000000 | value);
-  }
+  /// namefont: font id, its file and a size correction.
+  final String? font;
+  final String? file;
+  final double? scale;
+
+  /// nameeffect: effect id and the colours used in shop previews.
+  final String? effect;
+  final List<String>? colors;
+
+  Color? get parsedColor => chatFluxParseHex(color);
 }
 
 @immutable
 class ChatFluxWorn {
-  const ChatFluxWorn(this.slots);
+  const ChatFluxWorn(this.slots, {this.nameStyle});
 
   factory ChatFluxWorn.fromJson(Object? json) {
     final Map<String, ChatFluxRender> slots = <String, ChatFluxRender>{};
+    ChatFluxNameStyle? nameStyle;
     if (json is Map) {
       for (final String slot in kChatFluxShopSlots) {
         final Object? raw = json[slot];
@@ -104,22 +188,29 @@ class ChatFluxWorn {
           slots[slot] = ChatFluxRender.fromJson(raw);
         }
       }
+      final Object? rawStyle = json['namestyle'];
+      if (rawStyle is Map) {
+        nameStyle = ChatFluxNameStyle.fromJson(rawStyle);
+      }
     }
-    return ChatFluxWorn(slots);
+    return ChatFluxWorn(slots, nameStyle: nameStyle);
   }
 
   static const ChatFluxWorn empty = ChatFluxWorn(<String, ChatFluxRender>{});
 
   final Map<String, ChatFluxRender> slots;
+  final ChatFluxNameStyle? nameStyle;
 
   ChatFluxRender? get decoration => slots['decoration'];
   ChatFluxRender? get nameplate => slots['nameplate'];
   ChatFluxRender? get effect => slots['effect'];
   ChatFluxRender? get frame => slots['frame'];
+  ChatFluxRender? get nameFont => slots['namefont'];
+  ChatFluxRender? get nameEffect => slots['nameeffect'];
 
-  String get signature => slots.entries
-      .map((MapEntry<String, ChatFluxRender> e) => '${e.key}:${e.value.sku}')
-      .join('|');
+  String get signature =>
+      '${slots.entries.map((MapEntry<String, ChatFluxRender> e) => '${e.key}:${e.value.sku}').join('|')}'
+      '#${nameStyle?.sku ?? ''}';
 }
 
 @immutable
@@ -262,6 +353,7 @@ class ChatFluxMe {
     required this.equipped,
     required this.wearing,
     this.gifts = const <ChatFluxGift>[],
+    this.nameColors = const <String>[],
   });
 
   factory ChatFluxMe.fromJson(Map<dynamic, dynamic> json) => ChatFluxMe(
@@ -281,9 +373,13 @@ class ChatFluxMe {
         .whereType<Map<dynamic, dynamic>>()
         .map(ChatFluxGift.fromJson)
         .toList(),
+    nameColors: _stringList(json['nameColors']),
   );
 
   final String userId;
+
+  /// Colours the user picked for their display name (empty = none yet).
+  final List<String> nameColors;
   final int balance;
   final Set<String> owned;
   final Map<String, String> equipped;
@@ -423,6 +519,23 @@ class ChatFluxShopStore {
     _fetchedAt.remove(toUserId);
     return name;
   }
+
+  /// Saves font + effect + colours of the display name style at once.
+  Future<void> saveNameStyle(
+    String token, {
+    required String? font,
+    required String? effect,
+    required List<String>? colors,
+  }) => _pending(
+    'namestyle',
+    () async => _apply(
+      await _authed('POST', '/namestyle', token, <String, Object?>{
+        'font': font,
+        'effect': effect,
+        'colors': colors,
+      }),
+    ),
+  );
 
   Future<void> markGiftsSeen(String token) async {
     _apply(await _authed('POST', '/gifts/seen', token));

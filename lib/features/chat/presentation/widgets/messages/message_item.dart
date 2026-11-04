@@ -58,6 +58,7 @@ import 'package:fluxer_app/features/chat/utils/messages/message_accessibility_su
 import 'package:fluxer_app/features/chat/utils/messages/message_action_permissions.dart';
 import 'package:fluxer_app/features/chat/utils/messages/message_timestamp_format.dart';
 import 'package:fluxer_app/features/chat/utils/messages/spoiler_utils.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
 import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
 import 'package:fluxer_app/features/dm/providers/dm_view_model.dart';
 import 'package:fluxer_app/features/forum/domain/forum_channel.dart';
@@ -1617,8 +1618,9 @@ class _MessageItemState extends ConsumerState<MessageItem> {
           onTap: _canOpenAuthorProfile(msg)
               ? () => _openAuthorProfile(context, msg)
               : null,
-          child: Text(
-            authorDisplay.displayName,
+          child: ChatFluxStyledName(
+            userId: msg.webhookId == null ? msg.authorId : null,
+            text: authorDisplay.displayName,
             style: nameStyle,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
@@ -1924,8 +1926,11 @@ class _MessageItemState extends ConsumerState<MessageItem> {
                             onTap: _canOpenAuthorProfile(msg)
                                 ? () => _openAuthorProfile(context, msg)
                                 : null,
-                            child: Text(
-                              authorDisplay.displayName,
+                            child: ChatFluxStyledName(
+                              userId: msg.webhookId == null
+                                  ? msg.authorId
+                                  : null,
+                              text: authorDisplay.displayName,
                               style: context.textStyles.username.copyWith(
                                 color: roleColor ?? context.colors.textChat,
                                 fontWeight: FontWeight.w600,

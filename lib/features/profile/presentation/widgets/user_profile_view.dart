@@ -542,6 +542,7 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
           sliver: SliverList(
             delegate: SliverChildListDelegate.fixed(<Widget>[
               UserProfileHeader(
+                userId: isWebhook ? null : userId,
                 username: username,
                 discriminator: discriminator,
                 displayName: displayName,

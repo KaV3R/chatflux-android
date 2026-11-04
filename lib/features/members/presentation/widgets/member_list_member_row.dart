@@ -6,6 +6,7 @@ import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/channels/providers/channel_typing_provider.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
 import 'package:fluxer_app/features/friends/providers/friend_providers.dart';
 import 'package:fluxer_app/features/members/domain/member_list_group_names.dart';
 import 'package:fluxer_app/features/members/presentation/menus/guild_member_context_menu.dart';
@@ -212,13 +213,15 @@ class _MemberListSidebarMemberRowState
             Row(
               children: <Widget>[
                 Flexible(
-                  child: Text(
-                    displayName,
+                  child: ChatFluxStyledName(
+                    userId: widget.userId,
+                    text: displayName,
                     style: context.textStyles.label.copyWith(
                       color: roleColor != null
                           ? Color(roleColor)
                           : context.colors.textChat,
                     ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -374,13 +377,15 @@ class MemberListDetailsMemberRow extends ConsumerWidget {
               Row(
                 children: <Widget>[
                   Flexible(
-                    child: Text(
-                      displayName,
+                    child: ChatFluxStyledName(
+                      userId: userId,
+                      text: displayName,
                       style: context.textStyles.username.copyWith(
                         color: roleColor != null
                             ? Color(roleColor)
                             : context.colors.textPrimary,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

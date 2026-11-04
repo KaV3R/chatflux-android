@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
 import 'package:fluxer_app/features/profile/domain/custom_status_utils.dart';
 import 'package:fluxer_app/features/profile/presentation/widgets/user_profile_badges.dart';
 import 'package:fluxer_app/features/profile/presentation/widgets/user_profile_custom_status.dart';
@@ -23,8 +24,12 @@ class UserProfileHeader extends ConsumerWidget {
     this.isSystem = false,
     this.isCurrentUser = false,
     this.onDisplayNameTap,
+    this.userId,
     super.key,
   });
+
+  /// Used for the ChatFlux display name style.
+  final String? userId;
 
   final String username;
   final String discriminator;
@@ -53,6 +58,12 @@ class UserProfileHeader extends ConsumerWidget {
       fontWeight: FontWeight.w700,
     );
 
+    final Widget displayNameText = ChatFluxStyledName(
+      userId: isBot ? null : userId,
+      text: displayName,
+      style: displayNameStyle,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -69,7 +80,7 @@ class UserProfileHeader extends ConsumerWidget {
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(displayName, style: displayNameStyle),
+                      Flexible(child: displayNameText),
                       SizedBox(width: layout.s1),
                       PhosphorIcon(
                         PhosphorIconsBold.caretDown,
@@ -81,7 +92,7 @@ class UserProfileHeader extends ConsumerWidget {
                 },
               )
             else
-              Text(displayName, style: displayNameStyle),
+              displayNameText,
             if (showUserTag) FluxerUserTag(isSystem: isSystem),
           ],
         ),
