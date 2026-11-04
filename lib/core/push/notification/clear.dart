@@ -2,10 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:fluxer_app/core/badge/app_icon_badge_service.dart';
 import 'package:fluxer_app/core/badge/push_badge_count_parser.dart';
 import 'package:fluxer_app/core/push/android/local_notifications.dart';
 import 'package:fluxer_app/core/push/notification/payload.dart';
+import 'package:fluxer_app/features/voice/utils/callkit/call_ring.dart';
+import 'package:fluxer_app/features/voice/utils/callkit/callkit_policy.dart';
 
 final class PushNotificationClear {
   PushNotificationClear._();
@@ -18,6 +22,9 @@ final class PushNotificationClear {
   );
 
   static Future<void> handleClearPayload(Map<String, String> payload) async {
+    if (Platform.isAndroid) {
+      await _endUnansweredCallRing(payload);
+    }
     final String? channelId = resolvePushChannelId(payload);
     if (channelId != null) {
       await cancelForChannel(
@@ -54,6 +61,36 @@ final class PushNotificationClear {
         channelId,
         upToMessageId: readThrough,
       );
+    }
+  }
+
+  /// ChatFlux: the server sends a clear for the call message when this user stops
+  /// ringing (answered or declined on another device, or the call ended). End the
+  /// ring on this phone too, unless it was already answered here.
+  static Future<void> _endUnansweredCallRing(
+    Map<String, String> payload,
+  ) async {
+    final String? messageId = _nonEmpty(payload['message_id']);
+    if (messageId == null) {
+      return;
+    }
+    try {
+      final List<CallKitParams> calls =
+          await FlutterCallkitIncoming.activeCalls();
+      for (final CallKitParams call in calls) {
+        if (call.isAccepted) {
+          continue;
+        }
+        if (call.extra?[kVoiceCallKitExtraMessageId] != messageId &&
+            call.id != callKitIdForMessageId(messageId)) {
+          continue;
+        }
+        await FlutterCallkitIncoming.endCall(call.id);
+      }
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[PushNotificationClear] ending call ring failed: $e\n$st');
+      }
     }
   }
 
