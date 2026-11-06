@@ -20,6 +20,7 @@ import 'package:fluxer_app/features/channels/utils/show_channel_debug_sheet.dart
 import 'package:fluxer_app/features/chat/providers/core/chat_providers.dart';
 import 'package:fluxer_app/features/chat/providers/core/chat_view_model.dart';
 import 'package:fluxer_app/features/chat/utils/messages/delete_my_messages_in_channel_action.dart';
+import 'package:fluxer_app/features/chatflux/activity/chatflux_dm_subtext.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_shop_page.dart';
 import 'package:fluxer_app/features/dm/domain/create_dm_restriction.dart';
 import 'package:fluxer_app/features/dm/domain/dm_channel_types.dart';
@@ -974,11 +975,16 @@ class _DMListState extends ConsumerState<DMList> {
                             ),
                         ],
                       ),
-                      DmListTileSubtext(
+                      ChatFluxDmSubtext(
                         conversation: c,
                         style: secondaryStyle,
-                        hasUnread: hasUnread,
-                        currentUserId: currentUserId,
+                        showGame: !isBotOrSystemDmRecipient(c),
+                        fallback: DmListTileSubtext(
+                          conversation: c,
+                          style: secondaryStyle,
+                          hasUnread: hasUnread,
+                          currentUserId: currentUserId,
+                        ),
                       ),
                     ],
                   ),

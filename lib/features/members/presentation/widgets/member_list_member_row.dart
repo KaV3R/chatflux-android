@@ -5,6 +5,7 @@ import 'package:fluxer_app/core/database/fluxer_database.dart' as db;
 import 'package:fluxer_app/core/theme/fluxer_layout_theme.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
 import 'package:fluxer_app/features/channels/providers/channel_typing_provider.dart';
+import 'package:fluxer_app/features/chatflux/activity/chatflux_activity.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_cosmetics.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
 import 'package:fluxer_app/features/friends/providers/friend_providers.dart';
@@ -239,12 +240,17 @@ class _MemberListSidebarMemberRowState
                 ],
               ],
             ),
-            if (hasVisibleCustomStatus(customStatus))
-              CustomStatusDisplay(
-                stored: customStatus,
-                maxLines: 1,
-                emojiSize: 14,
-              ),
+            ChatFluxGameActivityLine(
+              userId: (member.user.bot ?? false) ? null : widget.userId,
+              guildId: widget.guildId,
+              fallback: hasVisibleCustomStatus(customStatus)
+                  ? CustomStatusDisplay(
+                      stored: customStatus,
+                      maxLines: 1,
+                      emojiSize: 14,
+                    )
+                  : null,
+            ),
           ],
         ),
       ),
@@ -403,10 +409,19 @@ class MemberListDetailsMemberRow extends ConsumerWidget {
                   ],
                 ],
               ),
-              if (hasVisibleCustomStatus(customStatus)) ...<Widget>[
-                const SizedBox(height: 2),
-                CustomStatusDisplay(stored: customStatus, maxLines: 1),
-              ],
+              ChatFluxGameActivityLine(
+                userId: (member.user.bot ?? false) ? null : userId,
+                guildId: guildId,
+                fallback: hasVisibleCustomStatus(customStatus)
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: CustomStatusDisplay(
+                          stored: customStatus,
+                          maxLines: 1,
+                        ),
+                      )
+                    : null,
+              ),
             ],
           ),
         ),

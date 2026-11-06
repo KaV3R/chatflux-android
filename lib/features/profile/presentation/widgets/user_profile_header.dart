@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluxer_app/core/providers/instance/instance_runtime_config_provider.dart';
 import 'package:fluxer_app/core/theme/fluxer_theme_extension.dart';
+import 'package:fluxer_app/features/chatflux/activity/chatflux_activity.dart';
 import 'package:fluxer_app/features/chatflux/shop/chatflux_name_style.dart';
 import 'package:fluxer_app/features/profile/domain/custom_status_utils.dart';
 import 'package:fluxer_app/features/profile/presentation/widgets/user_profile_badges.dart';
@@ -130,6 +131,10 @@ class UserProfileHeader extends ConsumerWidget {
         ],
         if (hasVisibleCustomStatus(customStatus))
           UserProfileCustomStatus(text: customStatus),
+        ChatFluxGameActivityCard(
+          userId: isBot ? null : userId,
+          padding: EdgeInsets.only(top: layout.s2),
+        ),
       ],
     );
   }
