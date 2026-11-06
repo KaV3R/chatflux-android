@@ -537,6 +537,188 @@ class ChatFluxGameActivityCard extends StatelessWidget {
   );
 }
 
+@immutable
+class ChatFluxRecentGame {
+  const ChatFluxRecentGame({
+    required this.activity,
+    required this.lastPlayed,
+    required this.playing,
+  });
+
+  final ChatFluxGameActivity activity;
+  final int lastPlayed;
+  final bool playing;
+}
+
+Future<List<ChatFluxRecentGame>> chatFluxFetchRecentGames(
+  String userId,
+  String? guildId,
+) async {
+  final Response<dynamic> res = await ChatFluxActivityStore.instance._dio
+      .get<dynamic>(
+        '/activity/recent',
+        queryParameters: <String, String>{
+          'id': userId,
+          if (guildId != null) 'guild': guildId,
+        },
+      );
+  final List<dynamic> list =
+      ((res.data as Map<dynamic, dynamic>?)?['recent'] as List<dynamic>?) ??
+      const <dynamic>[];
+  return <ChatFluxRecentGame>[
+    for (final Object? raw in list)
+      if (raw is Map)
+        ChatFluxRecentGame(
+          activity: ChatFluxGameActivity.fromJson(raw),
+          lastPlayed: (raw['lastPlayed'] as num?)?.toInt() ?? 0,
+          playing: raw['playing'] == true,
+        ),
+  ];
+}
+
+/// "5 perce", "3 napja" / "5m ago", "3d ago"
+String chatFluxFormatAgo(BuildContext context, int timestamp) {
+  final int minutes =
+      DateTime.now()
+          .difference(DateTime.fromMillisecondsSinceEpoch(timestamp))
+          .inMinutes;
+  if (minutes < 1) {
+    return chatFluxTr(context, 'épp most', 'just now');
+  }
+  if (minutes < 60) {
+    return chatFluxTr(context, '$minutes perce', '${minutes}m ago');
+  }
+  final int hours = minutes ~/ 60;
+  if (hours < 24) {
+    return chatFluxTr(context, '$hours órája', '${hours}h ago');
+  }
+  final int days = hours ~/ 24;
+  return chatFluxTr(context, '$days napja', '${days}d ago');
+}
+
+/// Profile section: games played in the last 30 days.
+class ChatFluxRecentGames extends StatefulWidget {
+  const ChatFluxRecentGames({
+    required this.userId,
+    this.guildId,
+    this.padding = EdgeInsets.zero,
+    super.key,
+  });
+
+  final String? userId;
+  final String? guildId;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  State<ChatFluxRecentGames> createState() => _ChatFluxRecentGamesState();
+}
+
+class _ChatFluxRecentGamesState extends State<ChatFluxRecentGames> {
+  List<ChatFluxRecentGame> _recent = const <ChatFluxRecentGame>[];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  @override
+  void didUpdateWidget(ChatFluxRecentGames oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId ||
+        oldWidget.guildId != widget.guildId) {
+      unawaited(_load());
+    }
+  }
+
+  Future<void> _load() async {
+    final String? userId = widget.userId;
+    if (userId == null || !RegExp(r'^\d+$').hasMatch(userId)) {
+      if (mounted) {
+        setState(() => _recent = const <ChatFluxRecentGame>[]);
+      }
+      return;
+    }
+    try {
+      final List<ChatFluxRecentGame> recent = await chatFluxFetchRecentGames(
+        userId,
+        widget.guildId,
+      );
+      if (mounted && widget.userId == userId) {
+        setState(() => _recent = recent);
+      }
+    } on Object {
+      // The activity service is optional.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_recent.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final TextStyle mutedStyle = context.textStyles.timestamp.copyWith(
+      color: context.colors.textPrimaryMuted,
+      fontSize: 12,
+    );
+    return Padding(
+      padding: widget.padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            chatFluxTr(context, 'NEMRÉG JÁTSZOTT', 'RECENTLY PLAYED'),
+            style: mutedStyle.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          for (final ChatFluxRecentGame game in _recent)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: <Widget>[
+                  ChatFluxGameIcon(activity: game.activity, size: 36),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          game.activity.name,
+                          style: context.textStyles.username.copyWith(
+                            color: context.colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          game.playing
+                              ? chatFluxTr(context, 'Most játszik', 'Playing now')
+                              : chatFluxFormatAgo(context, game.lastPlayed),
+                          style: game.playing
+                              ? mutedStyle.copyWith(
+                                  color: context.colors.statusOnline,
+                                )
+                              : mutedStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ElapsedText extends StatefulWidget {
   const _ElapsedText({required this.startedAt, required this.style});
 

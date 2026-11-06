@@ -135,6 +135,10 @@ class UserProfileHeader extends ConsumerWidget {
           userId: isBot ? null : userId,
           padding: EdgeInsets.only(top: layout.s2),
         ),
+        ChatFluxRecentGames(
+          userId: isBot ? null : userId,
+          padding: EdgeInsets.only(top: layout.s3),
+        ),
       ],
     );
   }
