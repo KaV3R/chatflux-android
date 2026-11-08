@@ -51,10 +51,6 @@ class ChatFluxAndroidUpdater {
           !_isNewer(release.version, info.version)) {
         return;
       }
-      final String? apkUrl = await _pickApkUrl(release);
-      if (apkUrl == null) {
-        return;
-      }
       final BuildContext? context = rootNavigatorKey.currentContext;
       if (context == null || !context.mounted) {
         return;
@@ -79,7 +75,18 @@ class ChatFluxAndroidUpdater {
         _dismissedVersion = release.version;
         return;
       }
-      await _downloadAndInstall(apkUrl, release.version);
+      // The dialog may have been open for a while: if an even newer release came out
+      // meanwhile, install that one instead of the one we offered.
+      _Release target = release;
+      try {
+        final _Release? fresher = await _fetchLatestRelease();
+        if (fresher != null && _isNewer(fresher.version, target.version)) {
+          target = fresher;
+        }
+      } on Object {
+        // Keep the release we already have.
+      }
+      await _downloadAndInstall(target.apkUrl, target.version);
     } on Object catch (error) {
       debugPrint('[ChatFluxUpdater] update check failed: $error');
     } finally {
@@ -87,6 +94,9 @@ class ChatFluxAndroidUpdater {
     }
   }
 
+  /// Returns the highest-versioned published release that already has an APK for
+  /// this device, so several releases in a row always resolve to the newest one,
+  /// and a release whose build is still uploading is skipped.
   static Future<_Release?> _fetchLatestRelease() async {
     final Response<List<dynamic>> response = await Dio().get<List<dynamic>>(
       _releasesUrl,
@@ -95,6 +105,15 @@ class ChatFluxAndroidUpdater {
         receiveTimeout: const Duration(seconds: 20),
       ),
     );
+    List<String> abis = const <String>[];
+    try {
+      abis =
+          (await _channel.invokeListMethod<String>('supportedAbis')) ??
+          const <String>[];
+    } on Object {
+      // Fall back to the universal APK.
+    }
+    _Release? best;
     for (final dynamic raw in response.data ?? const <dynamic>[]) {
       if (raw is! Map) {
         continue;
@@ -115,28 +134,30 @@ class ChatFluxAndroidUpdater {
               asset['browser_download_url'] as String;
         }
       }
-      return _Release(tag.substring(_tagPrefix.length), assets);
+      final String version = tag.substring(_tagPrefix.length);
+      final String? apkUrl = _pickApkUrl(version, assets, abis);
+      if (apkUrl == null) {
+        continue;
+      }
+      if (best == null || _isNewer(version, best.version)) {
+        best = _Release(version, apkUrl);
+      }
     }
-    return null;
+    return best;
   }
 
-  static Future<String?> _pickApkUrl(_Release release) async {
-    List<String> abis = const <String>[];
-    try {
-      abis =
-          (await _channel.invokeListMethod<String>('supportedAbis')) ??
-          const <String>[];
-    } on Object {
-      // Fall back to the universal APK.
-    }
+  static String? _pickApkUrl(
+    String version,
+    Map<String, String> assets,
+    List<String> abis,
+  ) {
     for (final String abi in abis) {
-      final String? url =
-          release.assets['ChatFlux-${release.version}-$abi.apk'];
+      final String? url = assets['ChatFlux-$version-$abi.apk'];
       if (url != null) {
         return url;
       }
     }
-    return release.assets['ChatFlux-${release.version}.apk'];
+    return assets['ChatFlux-$version.apk'];
   }
 
   static Future<void> _downloadAndInstall(String url, String version) async {
@@ -274,8 +295,8 @@ class ChatFluxAndroidUpdater {
 }
 
 class _Release {
-  const _Release(this.version, this.assets);
+  const _Release(this.version, this.apkUrl);
 
   final String version;
-  final Map<String, String> assets;
+  final String apkUrl;
 }
