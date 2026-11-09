@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -9201,7 +9201,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} は自社のサービス経由でしかプッシュ通知を配信しないため、このデバイスへの通知は Fluxer のリレーを経由します。",
+    "notificationsPushRelaySectionDescription": "{pushProvider} は自社のサービス経由でしかプッシュ通知を配信しないため、このデバイスへの通知は ChatFlux のリレーを経由します。",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -9210,7 +9210,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Fluxer のプッシュリレーを使う",
+    "notificationsPushRelayConsentLabel": "ChatFlux のプッシュリレーを使う",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -9222,7 +9222,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} は自社のサービス経由でしかプッシュ通知を配信しないため、このデバイスへの通知は Fluxer のリレーを経由します。",
+    "pushRelayConsentDescription": "{pushProvider} は自社のサービス経由でしかプッシュ通知を配信しないため、このデバイスへの通知は ChatFlux のリレーを経由します。",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Fluxer Plutonium を購入するためにアカウントを請求してください。",
-    "premiumVerifyEmailToPurchase": "Fluxer Plutonium を購入するには、メールアドレスの認証が必要です。",
+    "premiumClaimAccountToPurchase": "ChatFlux Plutonium を購入するためにアカウントを請求してください。",
+    "premiumVerifyEmailToPurchase": "ChatFlux Plutonium を購入するには、メールアドレスの認証が必要です。",
     "premiumPerkCommunities": "コミュニティ",
     "premiumPerkMessageCharacterLimit": "メッセージの文字数制限",
     "premiumPerkBookmarkedMessages": "ブックマークしたメッセージ",
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxerでそれを見つけられませんでした。",
+    "assistantNotFound": "ChatFluxでそれを見つけられませんでした。",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxerがその操作を完了できませんでした。",
+    "assistantFailed": "ChatFluxがその操作を完了できませんでした。",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Fluxerを開いています。",
+    "assistantOkOpened": "ChatFluxを開いています。",
     "applicationsTitle": "アプリ",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18194,7 +18194,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Pushリレー",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Pushリレー",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18214,7 +18214,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "新しいホーム画面アイコンを適用するため、Fluxerが再起動します。",
+    "appIconAndroidChangeDescription": "新しいホーム画面アイコンを適用するため、ChatFluxが再起動します。",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18254,7 +18254,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxerが予期せず終了しました。匿名のクラッシュとエラーのデータを共有していただくと、問題をより早く修正できます。",
+    "observabilityReportingConsentSubtitle": "ChatFluxが予期せず終了しました。匿名のクラッシュとエラーのデータを共有していただくと、問題をより早く修正できます。",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },

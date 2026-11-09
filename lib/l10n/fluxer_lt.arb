@@ -4328,7 +4328,7 @@
     "@connectionRemoveFailed": {
         "description": "Toast shown when the delete request fails."
     },
-    "connectionTokenSavedToast": "Fluxer-verification įrašytas",
+    "connectionTokenSavedToast": "ChatFlux-verification įrašytas",
     "@connectionTokenSavedToast": {
         "description": "Toast shown after the token file is saved successfully."
     },
@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -9480,7 +9480,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} pristato tiesioginius pranešimus tik per savo paslaugą, todėl šio įrenginio pranešimai keliauja per Fluxer perdavimą.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} pristato tiesioginius pranešimus tik per savo paslaugą, todėl šio įrenginio pranešimai keliauja per ChatFlux perdavimą.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -9489,7 +9489,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Naudoti Fluxer pranešimų perdavimą",
+    "notificationsPushRelayConsentLabel": "Naudoti ChatFlux pranešimų perdavimą",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -9501,7 +9501,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} pristato tiesioginius pranešimus tik per savo paslaugą, todėl šio įrenginio pranešimai keliauja per Fluxer perdavimą.",
+    "pushRelayConsentDescription": "{pushProvider} pristato tiesioginius pranešimus tik per savo paslaugą, todėl šio įrenginio pranešimai keliauja per ChatFlux perdavimą.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Užbaigti mokėjimą",
-    "premiumCompletePaymentBody": "Dabar būsite nukreipti į „Stripe“, kad užbaigtumėte mokėjimą. Grįžkite į „Fluxer“, kai baigsite.",
+    "premiumCompletePaymentBody": "Dabar būsite nukreipti į „Stripe“, kad užbaigtumėte mokėjimą. Grįžkite į „ChatFlux“, kai baigsite.",
     "premiumChoosePaymentMethodTitle": "Pasirinkite mokėjimo būdą",
     "premiumPixPaymentPromptDescription": "Mokėkite „Pix automático“, kad tiesiogiai įgaliotumėte pasikartojančius mokesčius iš savo Brazilijos banko. Arba pasirinkite „naudoti kortelę“, kad kitame „Stripe“ ekrane įvestumėte kredito kortelę.",
     "premiumUsePix": "Naudoti „Pix“",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Jau esate Visionary",
     "premiumAlreadyVisionaryBody": "„Visionary“ jau apima nuolatinę prieigą, todėl pasikartojanti prenumerata nereikalinga. Vis tiek galite pirkti dovanų kitiems.",
     "premiumExistingSubscriptionTitle": "Prenumerata jau yra",
-    "premiumExistingSubscriptionBody": "Jūsų paskyrai radome galiojančią „Fluxer Plutonium“ prenumeratą. Tvarkykite ją saugiame atsiskaitymo portale, kad atnaujintumėte mokėjimo duomenis arba patikrintumėte atnaujinimo būseną. Jei ką tik sumokėjote, palaukite minutę ir iš naujo atidarykite šį puslapį.",
+    "premiumExistingSubscriptionBody": "Jūsų paskyrai radome galiojančią „ChatFlux Plutonium“ prenumeratą. Tvarkykite ją saugiame atsiskaitymo portale, kad atnaujintumėte mokėjimo duomenis arba patikrintumėte atnaujinimo būseną. Jei ką tik sumokėjote, palaukite minutę ir iš naujo atidarykite šį puslapį.",
     "premiumPurchasesDisabledTitle": "Pirkimai negalimi",
     "premiumPurchasesDisabledBody": "Pirkimai šiai paskyrai yra išjungti. Jei manote, kad tai klaida, susisiekite su {supportEmail}.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Prisijunkite prie savo paskyros, kad įsigytumėte Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Norėdami įsigyti „Fluxer Plutonium“, turite patvirtinti savo el. paštą.",
+    "premiumClaimAccountToPurchase": "Prisijunkite prie savo paskyros, kad įsigytumėte ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Norėdami įsigyti „ChatFlux Plutonium“, turite patvirtinti savo el. paštą.",
     "premiumPerkCommunities": "Bendruomenės",
     "premiumPerkMessageCharacterLimit": "Žinučių simbolių limitas",
     "premiumPerkBookmarkedMessages": "Pažymėtos žinutės",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Sužinokite daugiau apie Visionary.",
     "storePlutoniumDonatePrompt": "Tiesiog norite paremti atvirojo kodo Fluxer kūrimą? ",
     "storePlutoniumDonateLink": "Verčiau paaukoti.",
-    "storePlutoniumHighlightsLead": "Prenumeruodami finansuojate Fluxer ir atrakinate",
+    "storePlutoniumHighlightsLead": "Prenumeruodami finansuojate ChatFlux ir atrakinate",
     "storePlutoniumHighlightEmoji": "Pasirinktiniai jaustukai ir lipdukai bet kuriame pokalbyje",
     "storePlutoniumHighlightProfile": "Animuotas profilis, ženklelis ir pasirinktas 4 skaitmenų numeris",
     "storePlutoniumHighlightFiles": "Įkėlimai iki 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "Ir dar daugiau",
     "storePlutoniumRenewsThroughPlay": "Automatiškai atnaujinama per Google Play, kol neatšauksite.",
     "storePlutoniumRenewsThroughAppStore": "Automatiškai atnaujinama per App Store, kol neatšauksite.",
-    "storePlutoniumAlreadySubscribed": "Jau turite Fluxer Plutonium prenumeratą.",
+    "storePlutoniumAlreadySubscribed": "Jau turite ChatFlux Plutonium prenumeratą.",
     "storePlutoniumSavePercent": "Sutaupykite {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Pirmiausia atidarykite Fluxer ir prisijunkite.",
+    "assistantNeedsLogin": "Pirmiausia atidarykite ChatFlux ir prisijunkite.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer to nerado.",
+    "assistantNotFound": "ChatFlux to nerado.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer negalėjo to atlikti.",
+    "assistantFailed": "ChatFlux negalėjo to atlikti.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Atidaromas Fluxer.",
+    "assistantOkOpened": "Atidaromas ChatFlux.",
     "applicationsTitle": "Programos",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18198,7 +18198,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push perdavimas",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push perdavimas",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18218,7 +18218,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer bus paleista iš naujo, kad būtų pritaikyta nauja pagrindinio ekrano piktograma.",
+    "appIconAndroidChangeDescription": "ChatFlux bus paleista iš naujo, kad būtų pritaikyta nauja pagrindinio ekrano piktograma.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18258,7 +18258,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer netikėtai užsidarė. Anoniminių gedimų ir klaidų duomenų bendrinimas padeda mums greičiau ištaisyti problemas.",
+    "observabilityReportingConsentSubtitle": "ChatFlux netikėtai užsidarė. Anoniminių gedimų ir klaidų duomenų bendrinimas padeda mums greičiau ištaisyti problemas.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18292,7 +18292,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Šis egzempliorius per senas šiai programėlei. Paprašykite {domain} administratoriaus atnaujinti Fluxer.",
+    "instanceOutdatedForClient": "Šis egzempliorius per senas šiai programėlei. Paprašykite {domain} administratoriaus atnaujinti ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18301,7 +18301,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} naudoja naujesnę Fluxer versiją nei ši programėlė. Atnaujinkite programėlę ir bandykite dar kartą.",
+    "instanceRequiresNewerClient": "{domain} naudoja naujesnę ChatFlux versiją nei ši programėlė. Atnaujinkite programėlę ir bandykite dar kartą.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

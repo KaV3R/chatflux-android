@@ -5207,7 +5207,7 @@
             }
         }
     },
-    "connectionSaveTokenDialogTitle": "Fluxer-सत्यापन सहेजें",
+    "connectionSaveTokenDialogTitle": "ChatFlux-सत्यापन सहेजें",
     "@connectionSaveTokenDialogTitle": {
         "description": "Title of the save-file dialog opened by the download button."
     },
@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "भुगतान पूरा करें",
-    "premiumCompletePaymentBody": "आप भुगतान पूरा करने के लिए अब स्ट्राइप पर जा रहे हैं। इसे पूरा करने के बाद Fluxer पर वापस आएं।",
+    "premiumCompletePaymentBody": "आप भुगतान पूरा करने के लिए अब स्ट्राइप पर जा रहे हैं। इसे पूरा करने के बाद ChatFlux पर वापस आएं।",
     "premiumChoosePaymentMethodTitle": "भुगतान का तरीका चुनें",
     "premiumPixPaymentPromptDescription": "अपने ब्राज़ीलियाई बैंक से सीधे आवर्ती शुल्क को अधिकृत करने के लिए Pix ऑटोमैटिको से भुगतान करें। या अगले स्क्रीन पर स्ट्राइप पर क्रेडिट कार्ड दर्ज करने के लिए कार्ड का उपयोग करें।",
     "premiumUsePix": "Pix का उपयोग करें",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "आप पहले से ही विजनरी हैं",
     "premiumAlreadyVisionaryBody": "विजनरी में पहले से ही परमानेंट एक्सेस शामिल है, इसलिए बार-बार सदस्यता लेने की ज़रूरत नहीं है। आप अभी भी दूसरों के लिए उपहार खरीद सकते हैं।",
     "premiumExistingSubscriptionTitle": "सदस्यता पहले से मौजूद है",
-    "premiumExistingSubscriptionBody": "हमें इस खाते के लिए एक मौजूदा Fluxer Plutonium सदस्यता मिली है। भुगतान विवरण अपडेट करने या नवीनीकरण की स्थिति जांचने के लिए इसे सुरक्षित बिलिंग पोर्टल में प्रबंधित करें। यदि आपने अभी भुगतान किया है, तो एक मिनट प्रतीक्षा करें और इस पृष्ठ को पुनः खोलें।",
+    "premiumExistingSubscriptionBody": "हमें इस खाते के लिए एक मौजूदा ChatFlux Plutonium सदस्यता मिली है। भुगतान विवरण अपडेट करने या नवीनीकरण की स्थिति जांचने के लिए इसे सुरक्षित बिलिंग पोर्टल में प्रबंधित करें। यदि आपने अभी भुगतान किया है, तो एक मिनट प्रतीक्षा करें और इस पृष्ठ को पुनः खोलें।",
     "premiumPurchasesDisabledTitle": "खरीदारी उपलब्ध नहीं है",
     "premiumPurchasesDisabledBody": "इस खाते के लिए खरीदारी अक्षम कर दी गई है। यदि यह गलत लगता है तो {supportEmail} पर संपर्क करें।",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Fluxer Plutonium खरीदने के लिए अपना खाता क्लेम करें।",
-    "premiumVerifyEmailToPurchase": "Fluxer Plutonium खरीदने से पहले आपको अपना ईमेल वेरिफाई करना होगा।",
+    "premiumClaimAccountToPurchase": "ChatFlux Plutonium खरीदने के लिए अपना खाता क्लेम करें।",
+    "premiumVerifyEmailToPurchase": "ChatFlux Plutonium खरीदने से पहले आपको अपना ईमेल वेरिफाई करना होगा।",
     "premiumPerkCommunities": "कम्युनिटी",
     "premiumPerkMessageCharacterLimit": "मैसेज वर्ण सीमा",
     "premiumPerkBookmarkedMessages": "बुकमार्क किए गए मैसेज",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "Visionary के बारे में और जानें।",
     "storePlutoniumDonatePrompt": "क्या आप केवल Fluxer के ओपन सोर्स डेवलपमेंट का समर्थन करना चाहते हैं? ",
     "storePlutoniumDonateLink": "इसके बजाय दान करें।",
-    "storePlutoniumHighlightsLead": "सदस्यता Fluxer को फंड करती है और अनलॉक करती है",
+    "storePlutoniumHighlightsLead": "सदस्यता ChatFlux को फंड करती है और अनलॉक करती है",
     "storePlutoniumHighlightEmoji": "किसी भी चैट में कस्टम इमोजी और स्टिकर",
     "storePlutoniumHighlightProfile": "एनिमेटेड प्रोफ़ाइल, बैज और कस्टम 4-अंकीय संख्या",
     "storePlutoniumHighlightFiles": "500 MB तक अपलोड करें",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "और भी बहुत कुछ",
     "storePlutoniumRenewsThroughPlay": "जब तक आप रद्द नहीं करते, Google Play के माध्यम से अपने आप नवीनीकृत हो जाता है।",
     "storePlutoniumRenewsThroughAppStore": "जब तक आप रद्द नहीं करते, तब तक App Store के माध्यम से अपने आप नवीनीकृत होता रहता है।",
-    "storePlutoniumAlreadySubscribed": "आपके पास पहले से ही Fluxer Plutonium की सदस्यता है।",
+    "storePlutoniumAlreadySubscribed": "आपके पास पहले से ही ChatFlux Plutonium की सदस्यता है।",
     "storePlutoniumSavePercent": "{percent}% बचाएं",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} पुश सूचनाएँ केवल अपनी सेवा के ज़रिए भेजता है, इसलिए इस डिवाइस की सूचनाएँ Fluxer रिले से होकर जाती हैं।",
+    "notificationsPushRelaySectionDescription": "{pushProvider} पुश सूचनाएँ केवल अपनी सेवा के ज़रिए भेजता है, इसलिए इस डिवाइस की सूचनाएँ ChatFlux रिले से होकर जाती हैं।",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Fluxer पुश रिले का उपयोग करें",
+    "notificationsPushRelayConsentLabel": "ChatFlux पुश रिले का उपयोग करें",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} पुश सूचनाएँ केवल अपनी सेवा के ज़रिए भेजता है, इसलिए इस डिवाइस की सूचनाएँ Fluxer रिले से होकर जाती हैं।",
+    "pushRelayConsentDescription": "{pushProvider} पुश सूचनाएँ केवल अपनी सेवा के ज़रिए भेजता है, इसलिए इस डिवाइस की सूचनाएँ ChatFlux रिले से होकर जाती हैं।",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "पहले Fluxer खोलें और साइन इन करें।",
+    "assistantNeedsLogin": "पहले ChatFlux खोलें और साइन इन करें।",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer उसे ढूंढ नहीं पाया।",
+    "assistantNotFound": "ChatFlux उसे ढूंढ नहीं पाया।",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer उसे पूरा नहीं कर सका।",
+    "assistantFailed": "ChatFlux उसे पूरा नहीं कर सका।",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "Fluxer खुल रहा है।",
+    "assistantOkOpened": "ChatFlux खुल रहा है।",
     "lookAndFeelChatWallpaperTitle": "चैट वॉलपेपर",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18215,7 +18215,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push रिले",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push रिले",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18235,7 +18235,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "नया होम स्क्रीन आइकॉन लागू करने के लिए Fluxer रीस्टार्ट होगा।",
+    "appIconAndroidChangeDescription": "नया होम स्क्रीन आइकॉन लागू करने के लिए ChatFlux रीस्टार्ट होगा।",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18275,7 +18275,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer अचानक बंद हो गया। गुमनाम क्रैश और एरर डेटा शेयर करने से हमें समस्याएँ जल्दी ठीक करने में मदद मिलती है।",
+    "observabilityReportingConsentSubtitle": "ChatFlux अचानक बंद हो गया। गुमनाम क्रैश और एरर डेटा शेयर करने से हमें समस्याएँ जल्दी ठीक करने में मदद मिलती है।",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18309,7 +18309,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "यह इंस्टेंस इस ऐप के लिए पुराना है। {domain} चलाने वाले से Fluxer अपडेट करने को कहें।",
+    "instanceOutdatedForClient": "यह इंस्टेंस इस ऐप के लिए पुराना है। {domain} चलाने वाले से ChatFlux अपडेट करने को कहें।",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18318,7 +18318,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} पर Fluxer का ऐसा वर्शन चलता है जो इस ऐप से नया है। ऐप अपडेट करें और फिर से कोशिश करें।",
+    "instanceRequiresNewerClient": "{domain} पर ChatFlux का ऐसा वर्शन चलता है जो इस ऐप से नया है। ऐप अपडेट करें और फिर से कोशिश करें।",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

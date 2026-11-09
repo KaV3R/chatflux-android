@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -9005,7 +9005,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} toimittaa push-ilmoituksia vain oman palvelunsa kautta, joten tämän laitteen ilmoitukset kulkevat Fluxerin välityspalvelimen kautta.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} toimittaa push-ilmoituksia vain oman palvelunsa kautta, joten tämän laitteen ilmoitukset kulkevat ChatFluxin välityspalvelimen kautta.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -9014,7 +9014,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Käytä Fluxerin push-välityspalvelinta",
+    "notificationsPushRelayConsentLabel": "Käytä ChatFluxin push-välityspalvelinta",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -9026,7 +9026,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} toimittaa push-ilmoituksia vain oman palvelunsa kautta, joten tämän laitteen ilmoitukset kulkevat Fluxerin välityspalvelimen kautta.",
+    "pushRelayConsentDescription": "{pushProvider} toimittaa push-ilmoituksia vain oman palvelunsa kautta, joten tämän laitteen ilmoitukset kulkevat ChatFluxin välityspalvelimen kautta.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Suorita maksu",
-    "premiumCompletePaymentBody": "Siirryt nyt Stripeen maksun suorittamiseksi. Palaa Fluxeriin, kun olet suorittanut sen.",
+    "premiumCompletePaymentBody": "Siirryt nyt Stripeen maksun suorittamiseksi. Palaa ChatFluxiin, kun olet suorittanut sen.",
     "premiumChoosePaymentMethodTitle": "Valitse maksutapa",
     "premiumPixPaymentPromptDescription": "Maksa automaattisella Pixillä valtuuttaaksesi toistuvat veloitukset suoraan brasilialaiselta pankkitililtäsi. Tai valitse käytä korttia syöttääksesi luottokorttitiedot Stripen seuraavalla näytöllä.",
     "premiumUsePix": "Käytä Pixiä",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Olet jo Visionary",
     "premiumAlreadyVisionaryBody": "Visionary sisältää jo pysyvän käyttöoikeuden, joten toistuvaa tilausta ei tarvita. Voit silti ostaa lahjoja muille.",
     "premiumExistingSubscriptionTitle": "Tilaus on jo olemassa",
-    "premiumExistingSubscriptionBody": "Löysimme tilillesi jo olemassa olevan Fluxer Plutonium -tilauksen. Hallinnoi sitä suojatussa laskutusportaalissa päivittääksesi maksutietoja tai tarkistaaksesi uusimisen tilan. Jos maksoit juuri, odota hetki ja avaa sivu uudelleen.",
+    "premiumExistingSubscriptionBody": "Löysimme tilillesi jo olemassa olevan ChatFlux Plutonium -tilauksen. Hallinnoi sitä suojatussa laskutusportaalissa päivittääksesi maksutietoja tai tarkistaaksesi uusimisen tilan. Jos maksoit juuri, odota hetki ja avaa sivu uudelleen.",
     "premiumPurchasesDisabledTitle": "Ostaminen ei ole käytettävissä",
     "premiumPurchasesDisabledBody": "Ostokset on poistettu käytöstä tältä tililtä. Ota yhteyttä osoitteeseen {supportEmail}, jos tämä näyttää virheelliseltä.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Lunasta tilisi ostaaksesi Fluxer Plutoniumia.",
-    "premiumVerifyEmailToPurchase": "Sinun täytyy vahvistaa sähköpostisi ennen kuin voit ostaa Fluxer Plutoniumia.",
+    "premiumClaimAccountToPurchase": "Lunasta tilisi ostaaksesi ChatFlux Plutoniumia.",
+    "premiumVerifyEmailToPurchase": "Sinun täytyy vahvistaa sähköpostisi ennen kuin voit ostaa ChatFlux Plutoniumia.",
     "premiumPerkCommunities": "Yhteisöt",
     "premiumPerkMessageCharacterLimit": "Viestin merkkirajoitus",
     "premiumPerkBookmarkedMessages": "Kirjanmerkityt viestit",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Lue lisää Visionarysta.",
     "storePlutoniumDonatePrompt": "Haluatko vain tukea Fluxerin avoimen lähdekoodin kehitystä? ",
     "storePlutoniumDonateLink": "Lahjoita sen sijaan.",
-    "storePlutoniumHighlightsLead": "Tilaamalla tuet Fluxeria ja saat käyttöösi",
+    "storePlutoniumHighlightsLead": "Tilaamalla tuet ChatFluxia ja saat käyttöösi",
     "storePlutoniumHighlightEmoji": "Mukautetut emojit ja tarrat missä tahansa chatissa",
     "storePlutoniumHighlightProfile": "Animoitu profiili, merkki ja valitsemasi 4-numeroinen tunniste",
     "storePlutoniumHighlightFiles": "Lähetykset enintään 500 Mt",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "Ja paljon muuta",
     "storePlutoniumRenewsThroughPlay": "Uusiutuu automaattisesti Google Playn kautta, kunnes peruutat tilauksen.",
     "storePlutoniumRenewsThroughAppStore": "Uusiutuu automaattisesti App Storen kautta, kunnes peruutat tilauksen.",
-    "storePlutoniumAlreadySubscribed": "Sinulla on jo Fluxer Plutonium -tilaus.",
+    "storePlutoniumAlreadySubscribed": "Sinulla on jo ChatFlux Plutonium -tilaus.",
     "storePlutoniumSavePercent": "Säästä {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Avaa Fluxer ja kirjaudu ensin sisään.",
+    "assistantNeedsLogin": "Avaa ChatFlux ja kirjaudu ensin sisään.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer ei löytänyt sitä.",
+    "assistantNotFound": "ChatFlux ei löytänyt sitä.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer ei voinut suorittaa sitä.",
+    "assistantFailed": "ChatFlux ei voinut suorittaa sitä.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Avataan Fluxer.",
+    "assistantOkOpened": "Avataan ChatFlux.",
     "applicationsTitle": "Sovellukset",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18190,7 +18190,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push -välityspalvelin",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push -välityspalvelin",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18210,7 +18210,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer käynnistyy uudelleen ottaakseen uuden aloitusnäytön kuvakkeen käyttöön.",
+    "appIconAndroidChangeDescription": "ChatFlux käynnistyy uudelleen ottaakseen uuden aloitusnäytön kuvakkeen käyttöön.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18250,7 +18250,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer sulkeutui odottamatta. Nimettömien kaatumis- ja virhetietojen jakaminen auttaa meitä korjaamaan ongelmat nopeammin.",
+    "observabilityReportingConsentSubtitle": "ChatFlux sulkeutui odottamatta. Nimettömien kaatumis- ja virhetietojen jakaminen auttaa meitä korjaamaan ongelmat nopeammin.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18284,7 +18284,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Tämä instanssi on liian vanha tälle sovellukselle. Pyydä instanssin {domain} ylläpitäjää päivittämään Fluxer.",
+    "instanceOutdatedForClient": "Tämä instanssi on liian vanha tälle sovellukselle. Pyydä instanssin {domain} ylläpitäjää päivittämään ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18293,7 +18293,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} käyttää uudempaa Fluxer-versiota kuin tämä sovellus. Päivitä sovellus ja yritä sitten uudelleen.",
+    "instanceRequiresNewerClient": "{domain} käyttää uudempaa ChatFlux-versiota kuin tämä sovellus. Päivitä sovellus ja yritä sitten uudelleen.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

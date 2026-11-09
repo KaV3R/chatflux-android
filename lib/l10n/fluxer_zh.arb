@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -11791,7 +11791,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} 只通过自家服务投递推送通知，因此本设备的推送会经过 Fluxer 中继。",
+    "notificationsPushRelaySectionDescription": "{pushProvider} 只通过自家服务投递推送通知，因此本设备的推送会经过 ChatFlux 中继。",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11800,7 +11800,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "使用 Fluxer 推送中继",
+    "notificationsPushRelayConsentLabel": "使用 ChatFlux 推送中继",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11812,7 +11812,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} 只通过自家服务投递推送通知，因此本设备的推送会经过 Fluxer 中继。",
+    "pushRelayConsentDescription": "{pushProvider} 只通过自家服务投递推送通知，因此本设备的推送会经过 ChatFlux 中继。",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "完成支付",
-    "premiumCompletePaymentBody": "您即将跳转至 Stripe 完成支付。完成后请返回 Fluxer。",
+    "premiumCompletePaymentBody": "您即将跳转至 Stripe 完成支付。完成后请返回 ChatFlux。",
     "premiumChoosePaymentMethodTitle": "选择付款方式",
     "premiumPixPaymentPromptDescription": "使用 Pix 自动支付，直接从您的巴西银行账户授权定期扣款。或者选择使用银行卡，在 Stripe 的下一个屏幕上输入信用卡信息。",
     "premiumUsePix": "使用 Pix",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "你已经是 Visionary",
     "premiumAlreadyVisionaryBody": "Visionary 已包含永久访问权限，因此无需周期性订阅。你仍然可以为他人购买礼物。",
     "premiumExistingSubscriptionTitle": "订阅已存在",
-    "premiumExistingSubscriptionBody": "我们已在此账号下找到一个现有的 Fluxer Plutonium 订阅。请在安全账单门户中管理它，以更新付款详情或查看续订状态。如果您刚付款，请等待一分钟后重新打开此页面。",
+    "premiumExistingSubscriptionBody": "我们已在此账号下找到一个现有的 ChatFlux Plutonium 订阅。请在安全账单门户中管理它，以更新付款详情或查看续订状态。如果您刚付款，请等待一分钟后重新打开此页面。",
     "premiumPurchasesDisabledTitle": "无法购买",
     "premiumPurchasesDisabledBody": "此账号已禁用购买功能。如果此情况不正确，请联系 {supportEmail}。",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "认领您的账号以购买 Fluxer Plutonium。",
-    "premiumVerifyEmailToPurchase": "您需要先验证您的电子邮件，然后才能购买 Fluxer Plutonium。",
+    "premiumClaimAccountToPurchase": "认领您的账号以购买 ChatFlux Plutonium。",
+    "premiumVerifyEmailToPurchase": "您需要先验证您的电子邮件，然后才能购买 ChatFlux Plutonium。",
     "premiumPerkCommunities": "社区",
     "premiumPerkMessageCharacterLimit": "消息字数限制",
     "premiumPerkBookmarkedMessages": "已添加书签的消息",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "了解 Visionary 详情。",
     "storePlutoniumDonatePrompt": "只想支持 Fluxer 的开源开发？ ",
     "storePlutoniumDonateLink": "改为捐赠。",
-    "storePlutoniumHighlightsLead": "订阅可为 Fluxer 提供资金并解锁",
+    "storePlutoniumHighlightsLead": "订阅可为 ChatFlux 提供资金并解锁",
     "storePlutoniumHighlightEmoji": "在任何聊天中使用自定义表情符号和贴纸",
     "storePlutoniumHighlightProfile": "动态个人资料、徽章和自定义 4 位数字",
     "storePlutoniumHighlightFiles": "上传文件大小上限 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "以及更多",
     "storePlutoniumRenewsThroughPlay": "通过 Google Play 自动续订，直到你取消。",
     "storePlutoniumRenewsThroughAppStore": "通过 App Store 自动续订，直到你取消。",
-    "storePlutoniumAlreadySubscribed": "你已拥有 Fluxer Plutonium 订阅。",
+    "storePlutoniumAlreadySubscribed": "你已拥有 ChatFlux Plutonium 订阅。",
     "storePlutoniumSavePercent": "节省 {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "请先打开 Fluxer 并登录。",
+    "assistantNeedsLogin": "请先打开 ChatFlux 并登录。",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer 找不到该内容。",
+    "assistantNotFound": "ChatFlux 找不到该内容。",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer 无法完成此操作。",
+    "assistantFailed": "ChatFlux 无法完成此操作。",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "正在打开 Fluxer。",
+    "assistantOkOpened": "正在打开 ChatFlux。",
     "applicationsTitle": "应用",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18210,7 +18210,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push 中继",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push 中继",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18230,7 +18230,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer 将重启以应用新的主屏幕图标。",
+    "appIconAndroidChangeDescription": "ChatFlux 将重启以应用新的主屏幕图标。",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18270,7 +18270,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer 意外关闭。共享匿名的崩溃和错误数据可帮助我们更快地修复问题。",
+    "observabilityReportingConsentSubtitle": "ChatFlux 意外关闭。共享匿名的崩溃和错误数据可帮助我们更快地修复问题。",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18304,7 +18304,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "此实例的版本对本应用来说过旧。请联系 {domain} 的运营者更新 Fluxer。",
+    "instanceOutdatedForClient": "此实例的版本对本应用来说过旧。请联系 {domain} 的运营者更新 ChatFlux。",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18313,7 +18313,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} 运行的 Fluxer 版本比本应用更新。请更新应用后重试。",
+    "instanceRequiresNewerClient": "{domain} 运行的 ChatFlux 版本比本应用更新。请更新应用后重试。",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

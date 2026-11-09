@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -8781,7 +8781,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} levererar bara pushaviseringar via sin egen tjänst, så aviseringar till den här enheten går via Fluxers relä.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} levererar bara pushaviseringar via sin egen tjänst, så aviseringar till den här enheten går via ChatFluxs relä.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -8790,7 +8790,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Använd Fluxers pushrelä",
+    "notificationsPushRelayConsentLabel": "Använd ChatFluxs pushrelä",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -8802,7 +8802,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} levererar bara pushaviseringar via sin egen tjänst, så aviseringar till den här enheten går via Fluxers relä.",
+    "pushRelayConsentDescription": "{pushProvider} levererar bara pushaviseringar via sin egen tjänst, så aviseringar till den här enheten går via ChatFluxs relä.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Slutför betalning",
-    "premiumCompletePaymentBody": "Du omdirigeras nu till Stripe för att slutföra betalningen. Återvänd till Fluxer när du är klar.",
+    "premiumCompletePaymentBody": "Du omdirigeras nu till Stripe för att slutföra betalningen. Återvänd till ChatFlux när du är klar.",
     "premiumChoosePaymentMethodTitle": "Välj betalningsmetod",
     "premiumPixPaymentPromptDescription": "Betala med Pix automático för att godkänna återkommande debiteringar direkt från din brasilianska bank. Eller välj använd kort för att ange ett kreditkort på Stripes nästa skärm.",
     "premiumUsePix": "Använd Pix",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Du är redan Visionary",
     "premiumAlreadyVisionaryBody": "Visionary ger redan permanent åtkomst, så ett återkommande abonnemang behövs inte. Du kan fortfarande köpa presenter till andra.",
     "premiumExistingSubscriptionTitle": "Abonnemanget finns redan",
-    "premiumExistingSubscriptionBody": "Vi hittade en befintlig Fluxer Plutonium-prenumeration för det här kontot. Hantera den i den säkra faktureringsportalen för att uppdatera betalningsuppgifter eller kontrollera förnyelsestatus. Om du precis betalade, vänta en minut och öppna sidan igen.",
+    "premiumExistingSubscriptionBody": "Vi hittade en befintlig ChatFlux Plutonium-prenumeration för det här kontot. Hantera den i den säkra faktureringsportalen för att uppdatera betalningsuppgifter eller kontrollera förnyelsestatus. Om du precis betalade, vänta en minut och öppna sidan igen.",
     "premiumPurchasesDisabledTitle": "Köp är inte tillgängliga",
     "premiumPurchasesDisabledBody": "Köp är inaktiverade för det här kontot. Kontakta {supportEmail} om detta verkar fel.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Hämta ditt konto för att köpa Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Du behöver verifiera din e-postadress innan du kan köpa Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Hämta ditt konto för att köpa ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Du behöver verifiera din e-postadress innan du kan köpa ChatFlux Plutonium.",
     "premiumPerkCommunities": "Communities",
     "premiumPerkMessageCharacterLimit": "Teckengräns för meddelanden",
     "premiumPerkBookmarkedMessages": "Bokmärkta meddelanden",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Läs mer om Visionary.",
     "storePlutoniumDonatePrompt": "Vill du bara stödja Fluxers utveckling med öppen källkod? ",
     "storePlutoniumDonateLink": "Donera istället.",
-    "storePlutoniumHighlightsLead": "Genom att prenumerera finansierar du Fluxer och låser upp",
+    "storePlutoniumHighlightsLead": "Genom att prenumerera finansierar du ChatFlux och låser upp",
     "storePlutoniumHighlightEmoji": "Anpassade emojis och klistermärken i alla chattar",
     "storePlutoniumHighlightProfile": "Animerad profil, märke och valfritt fyrsiffrigt nummer",
     "storePlutoniumHighlightFiles": "Uppladdningar upp till 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "Och mer",
     "storePlutoniumRenewsThroughPlay": "Förnyas automatiskt via Google Play tills du säger upp den.",
     "storePlutoniumRenewsThroughAppStore": "Förnyas automatiskt via App Store tills du säger upp den.",
-    "storePlutoniumAlreadySubscribed": "Du har redan en Fluxer Plutonium-prenumeration.",
+    "storePlutoniumAlreadySubscribed": "Du har redan en ChatFlux Plutonium-prenumeration.",
     "storePlutoniumSavePercent": "Spara {percent} %",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Öppna Fluxer och logga in först.",
+    "assistantNeedsLogin": "Öppna ChatFlux och logga in först.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer kunde inte hitta det.",
+    "assistantNotFound": "ChatFlux kunde inte hitta det.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer kunde inte slutföra det.",
+    "assistantFailed": "ChatFlux kunde inte slutföra det.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Öppnar Fluxer.",
+    "assistantOkOpened": "Öppnar ChatFlux.",
     "applicationsTitle": "Appar",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18190,7 +18190,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push-relä",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push-relä",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18210,7 +18210,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer startas om för att använda den nya ikonen på hemskärmen.",
+    "appIconAndroidChangeDescription": "ChatFlux startas om för att använda den nya ikonen på hemskärmen.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18250,7 +18250,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer stängdes oväntat. Om du delar anonym krasch- och feldata kan vi rätta problem snabbare.",
+    "observabilityReportingConsentSubtitle": "ChatFlux stängdes oväntat. Om du delar anonym krasch- och feldata kan vi rätta problem snabbare.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18284,7 +18284,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Den här instansen är för gammal för den här appen. Be den som driver {domain} att uppdatera Fluxer.",
+    "instanceOutdatedForClient": "Den här instansen är för gammal för den här appen. Be den som driver {domain} att uppdatera ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18293,7 +18293,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} kör en nyare version av Fluxer än den här appen. Uppdatera appen och försök igen.",
+    "instanceRequiresNewerClient": "{domain} kör en nyare version av ChatFlux än den här appen. Uppdatera appen och försök igen.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

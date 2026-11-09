@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -11783,7 +11783,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} anlık bildirimleri yalnızca kendi hizmeti üzerinden iletir, bu yüzden bu cihazın bildirimleri Fluxer aktarıcısından geçer.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} anlık bildirimleri yalnızca kendi hizmeti üzerinden iletir, bu yüzden bu cihazın bildirimleri ChatFlux aktarıcısından geçer.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11792,7 +11792,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Fluxer anlık bildirim aktarıcısını kullan",
+    "notificationsPushRelayConsentLabel": "ChatFlux anlık bildirim aktarıcısını kullan",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11804,7 +11804,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} anlık bildirimleri yalnızca kendi hizmeti üzerinden iletir, bu yüzden bu cihazın bildirimleri Fluxer aktarıcısından geçer.",
+    "pushRelayConsentDescription": "{pushProvider} anlık bildirimleri yalnızca kendi hizmeti üzerinden iletir, bu yüzden bu cihazın bildirimleri ChatFlux aktarıcısından geçer.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Ödemeyi tamamla",
-    "premiumCompletePaymentBody": "Ödemeyi tamamlamak için şimdi Stripe'a yönlendiriliyorsunuz. Tamamladıktan sonra Fluxer'a geri dönün.",
+    "premiumCompletePaymentBody": "Ödemeyi tamamlamak için şimdi Stripe'a yönlendiriliyorsunuz. Tamamladıktan sonra ChatFlux'a geri dönün.",
     "premiumChoosePaymentMethodTitle": "Ödeme yöntemi seçin",
     "premiumPixPaymentPromptDescription": "Otomatik Pix ile Brezilya bankanızdan doğrudan yinelenen ödemeleri yetkilendirin. Veya bir sonraki ekranda Stripe'a kredi kartı bilgilerinizi girmek için kart kullanmayı seçin.",
     "premiumUsePix": "Pix'i kullan",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Zaten Visionary'siniz",
     "premiumAlreadyVisionaryBody": "Visionary zaten kalıcı erişim içerir, bu yüzden yinelenen bir aboneliğe gerek yok. Yine de başkalarına hediye alabilirsiniz.",
     "premiumExistingSubscriptionTitle": "Abonelik zaten mevcut",
-    "premiumExistingSubscriptionBody": "Bu hesap için mevcut bir Fluxer Plutonium aboneliği bulduk. Ödeme ayrıntılarını güncellemek veya yenileme durumunu kontrol etmek için güvenli faturalandırma portalında yönetin. Az önce ödeme yaptıysanız, bir dakika bekleyip bu sayfayı yeniden açın.",
+    "premiumExistingSubscriptionBody": "Bu hesap için mevcut bir ChatFlux Plutonium aboneliği bulduk. Ödeme ayrıntılarını güncellemek veya yenileme durumunu kontrol etmek için güvenli faturalandırma portalında yönetin. Az önce ödeme yaptıysanız, bir dakika bekleyip bu sayfayı yeniden açın.",
     "premiumPurchasesDisabledTitle": "Satın alımlar kullanılamıyor",
     "premiumPurchasesDisabledBody": "Bu hesap için satın alımlar devre dışı bırakıldı. Yanlış görünüyorsa {supportEmail} ile iletişime geçin.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Fluxer Plutonium satın almak için hesabını talep et.",
-    "premiumVerifyEmailToPurchase": "Fluxer Plutonium satın almadan önce e-postanı doğrulaman gerekiyor.",
+    "premiumClaimAccountToPurchase": "ChatFlux Plutonium satın almak için hesabını talep et.",
+    "premiumVerifyEmailToPurchase": "ChatFlux Plutonium satın almadan önce e-postanı doğrulaman gerekiyor.",
     "premiumPerkCommunities": "Topluluklar",
     "premiumPerkMessageCharacterLimit": "Mesaj karakter sınırı",
     "premiumPerkBookmarkedMessages": "Yer işaretli mesajlar",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Visionary hakkında daha fazla bilgi edinin.",
     "storePlutoniumDonatePrompt": "Sadece Fluxer'ın açık kaynak geliştirmesini mi desteklemek istiyorsunuz? ",
     "storePlutoniumDonateLink": "Bunun yerine bağış yapın.",
-    "storePlutoniumHighlightsLead": "Abone olmak Fluxer'ı finanse eder ve şunların kilidini açar",
+    "storePlutoniumHighlightsLead": "Abone olmak ChatFlux'ı finanse eder ve şunların kilidini açar",
     "storePlutoniumHighlightEmoji": "Tüm sohbetlerde özel emojiler ve çıkartmalar",
     "storePlutoniumHighlightProfile": "Hareketli profil, rozet ve özel 4 haneli numara",
     "storePlutoniumHighlightFiles": "500 MB'a kadar yükleme",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "Ve daha fazlası",
     "storePlutoniumRenewsThroughPlay": "İptal edene kadar Google Play üzerinden otomatik olarak yenilenir.",
     "storePlutoniumRenewsThroughAppStore": "Siz iptal edene kadar App Store üzerinden otomatik olarak yenilenir.",
-    "storePlutoniumAlreadySubscribed": "Zaten bir Fluxer Plutonium aboneliğiniz var.",
+    "storePlutoniumAlreadySubscribed": "Zaten bir ChatFlux Plutonium aboneliğiniz var.",
     "storePlutoniumSavePercent": "% {percent} tasarruf edin",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Önce Fluxer'ı açın ve oturum açın.",
+    "assistantNeedsLogin": "Önce ChatFlux'ı açın ve oturum açın.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer bunu bulamadı.",
+    "assistantNotFound": "ChatFlux bunu bulamadı.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer bunu tamamlayamadı.",
+    "assistantFailed": "ChatFlux bunu tamamlayamadı.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Fluxer açılıyor.",
+    "assistantOkOpened": "ChatFlux açılıyor.",
     "applicationsTitle": "Uygulamalar",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18190,7 +18190,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push aktarıcısı",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push aktarıcısı",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18210,7 +18210,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Yeni ana ekran simgesini uygulamak için Fluxer yeniden başlatılacak.",
+    "appIconAndroidChangeDescription": "Yeni ana ekran simgesini uygulamak için ChatFlux yeniden başlatılacak.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18250,7 +18250,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer beklenmedik şekilde kapandı. Anonim çökme ve hata verilerini paylaşmak, sorunları daha hızlı düzeltmemize yardımcı olur.",
+    "observabilityReportingConsentSubtitle": "ChatFlux beklenmedik şekilde kapandı. Anonim çökme ve hata verilerini paylaşmak, sorunları daha hızlı düzeltmemize yardımcı olur.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18284,7 +18284,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Bu kurulum, bu uygulama için güncel değil. {domain} yöneticisinden Fluxer'ı güncellemesini isteyin.",
+    "instanceOutdatedForClient": "Bu kurulum, bu uygulama için güncel değil. {domain} yöneticisinden ChatFlux'ı güncellemesini isteyin.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18293,7 +18293,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain}, bu uygulamadan daha yeni bir Fluxer sürümü çalıştırıyor. Uygulamayı güncelleyip tekrar deneyin.",
+    "instanceRequiresNewerClient": "{domain}, bu uygulamadan daha yeni bir ChatFlux sürümü çalıştırıyor. Uygulamayı güncelleyip tekrar deneyin.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -11484,7 +11484,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "A(z) {pushProvider} csak a saját szolgáltatásán keresztül kézbesít push-értesítéseket, ezért az eszköz értesítései a Fluxer továbbítóján haladnak át.",
+    "notificationsPushRelaySectionDescription": "A(z) {pushProvider} csak a saját szolgáltatásán keresztül kézbesít push-értesítéseket, ezért az eszköz értesítései a ChatFlux továbbítóján haladnak át.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11493,7 +11493,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "A Fluxer push-továbbítójának használata",
+    "notificationsPushRelayConsentLabel": "A ChatFlux push-továbbítójának használata",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11505,7 +11505,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "A(z) {pushProvider} csak a saját szolgáltatásán keresztül kézbesít push-értesítéseket, ezért az eszköz értesítései a Fluxer továbbítóján haladnak át.",
+    "pushRelayConsentDescription": "A(z) {pushProvider} csak a saját szolgáltatásán keresztül kézbesít push-értesítéseket, ezért az eszköz értesítései a ChatFlux továbbítóján haladnak át.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Fizetés befejezése",
-    "premiumCompletePaymentBody": "Most a rendszer átirányít a Stripe oldalára a fizetés befejezéséhez. Miután befejezted, térj vissza a Fluxerbe.",
+    "premiumCompletePaymentBody": "Most a rendszer átirányít a Stripe oldalára a fizetés befejezéséhez. Miután befejezted, térj vissza a ChatFluxba.",
     "premiumChoosePaymentMethodTitle": "Fizetési mód kiválasztása",
     "premiumPixPaymentPromptDescription": "Fizess automatikus Pix-szel, hogy jóváhagyd az ismétlődő terheléseket közvetlenül a brazil bankszámládról. Vagy válaszd a kártyás fizetést, hogy megadd a hitelkártya adataidat a Stripe következő képernyőjén.",
     "premiumUsePix": "Használj Pixet",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Már Visionary vagy",
     "premiumAlreadyVisionaryBody": "A Visionary már tartalmazza az állandó hozzáférést, így nincs szükség ismétlődő előfizetésre. Továbbra is vásárolhatsz ajándékokat másoknak.",
     "premiumExistingSubscriptionTitle": "Az előfizetés már létezik",
-    "premiumExistingSubscriptionBody": "Már találtunk egy meglévő Fluxer Plutonium előfizetést ehhez a fiókhoz. Kezeld a biztonságos számlázási portálon a fizetési adatok frissítéséhez vagy az újítási állapot ellenőrzéséhez. Ha most fizettél, várj egy percet, és nyisd meg újra ezt az oldalt.",
+    "premiumExistingSubscriptionBody": "Már találtunk egy meglévő ChatFlux Plutonium előfizetést ehhez a fiókhoz. Kezeld a biztonságos számlázási portálon a fizetési adatok frissítéséhez vagy az újítási állapot ellenőrzéséhez. Ha most fizettél, várj egy percet, és nyisd meg újra ezt az oldalt.",
     "premiumPurchasesDisabledTitle": "Vásárlások nem elérhetők",
     "premiumPurchasesDisabledBody": "A vásárlások le vannak tiltva ehhez a fiókhoz. Ha úgy gondolod, hogy ez hiba, lépj kapcsolatba a {supportEmail} címmel.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Igényeld a fiókodat a Fluxer Plutonium megvásárlásához.",
-    "premiumVerifyEmailToPurchase": "A Fluxer Plutonium megvásárlásához először igazolnod kell az e-mail címedet.",
+    "premiumClaimAccountToPurchase": "Igényeld a fiókodat a ChatFlux Plutonium megvásárlásához.",
+    "premiumVerifyEmailToPurchase": "A ChatFlux Plutonium megvásárlásához először igazolnod kell az e-mail címedet.",
     "premiumPerkCommunities": "Közösségek",
     "premiumPerkMessageCharacterLimit": "Üzenet karakterkorlátja",
     "premiumPerkBookmarkedMessages": "Mentett üzenetek",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Tudj meg többet a Visionaryról.",
     "storePlutoniumDonatePrompt": "Csak a Fluxer nyílt forráskódú fejlesztését szeretnéd támogatni? ",
     "storePlutoniumDonateLink": "Adományozz inkább.",
-    "storePlutoniumHighlightsLead": "Az előfizetéssel támogatod a Fluxert, és feloldod a következőket",
+    "storePlutoniumHighlightsLead": "Az előfizetéssel támogatod a ChatFluxot, és feloldod a következőket",
     "storePlutoniumHighlightEmoji": "Egyéni emojik és matricák bármely csevegésben",
     "storePlutoniumHighlightProfile": "Animált profil, jelvény és egyedi 4 számjegyű szám",
     "storePlutoniumHighlightFiles": "Feltöltések akár 500 MB-ig",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "És még sok más",
     "storePlutoniumRenewsThroughPlay": "A lemondásig automatikusan megújul a Google Playen keresztül.",
     "storePlutoniumRenewsThroughAppStore": "Az App Store-on keresztül automatikusan megújul, amíg le nem mondod.",
-    "storePlutoniumAlreadySubscribed": "Már van Fluxer Plutonium előfizetésed.",
+    "storePlutoniumAlreadySubscribed": "Már van ChatFlux Plutonium előfizetésed.",
     "storePlutoniumSavePercent": "Spórolj {percent}%-ot",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Először nyisd meg a Fluxert, és jelentkezz be.",
+    "assistantNeedsLogin": "Először nyisd meg a ChatFluxot, és jelentkezz be.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "A Fluxer nem találta.",
+    "assistantNotFound": "A ChatFlux nem találta.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "A Fluxer nem tudta befejezni.",
+    "assistantFailed": "A ChatFlux nem tudta befejezni.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Fluxer megnyitása.",
+    "assistantOkOpened": "ChatFlux megnyitása.",
     "applicationsTitle": "Alkalmazások",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18194,7 +18194,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push-továbbító",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push-továbbító",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18214,7 +18214,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "A Fluxer újraindul, hogy alkalmazza az új kezdőképernyő-ikont.",
+    "appIconAndroidChangeDescription": "A ChatFlux újraindul, hogy alkalmazza az új kezdőképernyő-ikont.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18254,7 +18254,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "A Fluxer váratlanul bezárult. Az anonim összeomlási és hibaadatok megosztása segít gyorsabban kijavítanunk a problémákat.",
+    "observabilityReportingConsentSubtitle": "A ChatFlux váratlanul bezárult. Az anonim összeomlási és hibaadatok megosztása segít gyorsabban kijavítanunk a problémákat.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18288,7 +18288,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Ez a példány elavult ehhez az alkalmazáshoz. Kérd meg a(z) {domain} üzemeltetőjét, hogy frissítse a Fluxert.",
+    "instanceOutdatedForClient": "Ez a példány elavult ehhez az alkalmazáshoz. Kérd meg a(z) {domain} üzemeltetőjét, hogy frissítse a ChatFluxot.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18297,7 +18297,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "A(z) {domain} a Fluxer újabb verzióját futtatja, mint ez az alkalmazás. Frissítsd az alkalmazást, majd próbáld újra.",
+    "instanceRequiresNewerClient": "A(z) {domain} a ChatFlux újabb verzióját futtatja, mint ez az alkalmazás. Frissítsd az alkalmazást, majd próbáld újra.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

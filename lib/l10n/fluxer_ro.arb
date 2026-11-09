@@ -5291,7 +5291,7 @@
     "@connectionRemoveFailed": {
         "description": "Toast shown when the delete request fails."
     },
-    "connectionTokenSavedToast": "Fluxer-verification salvat",
+    "connectionTokenSavedToast": "ChatFlux-verification salvat",
     "@connectionTokenSavedToast": {
         "description": "Toast shown after the token file is saved successfully."
     },
@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Finalizează plata",
-    "premiumCompletePaymentBody": "Acum vei fi redirecționat către Stripe pentru a finaliza plata. Revino la Fluxer după ce ai terminat.",
+    "premiumCompletePaymentBody": "Acum vei fi redirecționat către Stripe pentru a finaliza plata. Revino la ChatFlux după ce ai terminat.",
     "premiumChoosePaymentMethodTitle": "Alege metoda de plată",
     "premiumPixPaymentPromptDescription": "Plătește cu Pix automat pentru a autoriza direct de pe banca ta braziliană taxele recurente. Sau alege să folosești cardul pentru a introduce un card de credit pe ecranul următor al Stripe.",
     "premiumUsePix": "Folosește Pix",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "Ești deja Visionary",
     "premiumAlreadyVisionaryBody": "Visionary include deja acces permanent, deci nu este necesar un abonament recurent. Poți cumpăra în continuare cadouri pentru alții.",
     "premiumExistingSubscriptionTitle": "Abonamentul există deja",
-    "premiumExistingSubscriptionBody": "Am găsit un abonament Fluxer Plutonium existent pentru acest cont. Gestionați-l în portalul de facturare securizat pentru a actualiza detaliile de plată sau pentru a verifica starea reînnoirii. Dacă tocmai ați plătit, așteptați un minut și redeschideți această pagină.",
+    "premiumExistingSubscriptionBody": "Am găsit un abonament ChatFlux Plutonium existent pentru acest cont. Gestionați-l în portalul de facturare securizat pentru a actualiza detaliile de plată sau pentru a verifica starea reînnoirii. Dacă tocmai ați plătit, așteptați un minut și redeschideți această pagină.",
     "premiumPurchasesDisabledTitle": "Achizițiile nu sunt disponibile",
     "premiumPurchasesDisabledBody": "Achizițiile sunt dezactivate pentru acest cont. Contactați {supportEmail} dacă credeți că este o greșeală.",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Revendică-ți contul pentru a cumpăra Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Trebuie să îți verifici emailul înainte de a putea achiziționa Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Revendică-ți contul pentru a cumpăra ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Trebuie să îți verifici emailul înainte de a putea achiziționa ChatFlux Plutonium.",
     "premiumPerkCommunities": "Comunități",
     "premiumPerkMessageCharacterLimit": "Limită de caractere mesaj",
     "premiumPerkBookmarkedMessages": "Mesaje salvate",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "Află mai multe despre Visionary.",
     "storePlutoniumDonatePrompt": "Vrei doar să susții dezvoltarea open source a Fluxer? ",
     "storePlutoniumDonateLink": "Donează în schimb.",
-    "storePlutoniumHighlightsLead": "Abonarea finanțează Fluxer și deblochează",
+    "storePlutoniumHighlightsLead": "Abonarea finanțează ChatFlux și deblochează",
     "storePlutoniumHighlightEmoji": "Emoji și stickere personalizate în orice chat",
     "storePlutoniumHighlightProfile": "Profil animat, insignă și număr personalizat din 4 cifre",
     "storePlutoniumHighlightFiles": "Încărcări de până la 500 MB",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "Și multe altele",
     "storePlutoniumRenewsThroughPlay": "Se reînnoiește automat prin Google Play până la anulare.",
     "storePlutoniumRenewsThroughAppStore": "Se reînnoiește automat prin App Store până la anulare.",
-    "storePlutoniumAlreadySubscribed": "Ai deja un abonament Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Ai deja un abonament ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Economisește {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul Fluxer.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul ChatFlux.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Folosește releul push Fluxer",
+    "notificationsPushRelayConsentLabel": "Folosește releul push ChatFlux",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul Fluxer.",
+    "pushRelayConsentDescription": "{pushProvider} livrează notificări push doar prin propriul serviciu, așa că notificările pentru acest dispozitiv trec prin releul ChatFlux.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Deschide Fluxer și conectează-te mai întâi.",
+    "assistantNeedsLogin": "Deschide ChatFlux și conectează-te mai întâi.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer nu a putut găsi asta.",
+    "assistantNotFound": "ChatFlux nu a putut găsi asta.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer nu a putut finaliza asta.",
+    "assistantFailed": "ChatFlux nu a putut finaliza asta.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "Deschid Fluxer.",
+    "assistantOkOpened": "Deschid ChatFlux.",
     "lookAndFeelChatWallpaperTitle": "Fundal chat",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18199,7 +18199,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Releu Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "Releu ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18219,7 +18219,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer va reporni ca să aplice noua pictogramă de pe ecranul de pornire.",
+    "appIconAndroidChangeDescription": "ChatFlux va reporni ca să aplice noua pictogramă de pe ecranul de pornire.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18259,7 +18259,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer s-a închis neașteptat. Partajarea datelor anonime despre blocări și erori ne ajută să remediem problemele mai repede.",
+    "observabilityReportingConsentSubtitle": "ChatFlux s-a închis neașteptat. Partajarea datelor anonime despre blocări și erori ne ajută să remediem problemele mai repede.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18293,7 +18293,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Această instanță este prea veche pentru această aplicație. Cere administratorului {domain} să actualizeze Fluxer.",
+    "instanceOutdatedForClient": "Această instanță este prea veche pentru această aplicație. Cere administratorului {domain} să actualizeze ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18302,7 +18302,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} rulează o versiune Fluxer mai nouă decât această aplicație. Actualizează aplicația, apoi încearcă din nou.",
+    "instanceRequiresNewerClient": "{domain} rulează o versiune ChatFlux mai nouă decât această aplicație. Actualizează aplicația, apoi încearcă din nou.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -9830,7 +9830,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} doručuje push oznámení jen přes vlastní službu, takže oznámení pro toto zařízení procházejí přes přenos Fluxeru.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} doručuje push oznámení jen přes vlastní službu, takže oznámení pro toto zařízení procházejí přes přenos ChatFluxu.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -9839,7 +9839,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Používat push přenos Fluxeru",
+    "notificationsPushRelayConsentLabel": "Používat push přenos ChatFluxu",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -9851,7 +9851,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} doručuje push oznámení jen přes vlastní službu, takže oznámení pro toto zařízení procházejí přes přenos Fluxeru.",
+    "pushRelayConsentDescription": "{pushProvider} doručuje push oznámení jen přes vlastní službu, takže oznámení pro toto zařízení procházejí přes přenos ChatFluxu.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Dokončit platbu",
-    "premiumCompletePaymentBody": "Nyní budete přesměrováni na Stripe k dokončení platby. Po dokončení se vraťte do Fluxeru.",
+    "premiumCompletePaymentBody": "Nyní budete přesměrováni na Stripe k dokončení platby. Po dokončení se vraťte do ChatFluxu.",
     "premiumChoosePaymentMethodTitle": "Zvolte způsob platby",
     "premiumPixPaymentPromptDescription": "Zaplaťte pomocí Pix automático a povolte opakované platby přímo z vaší brazilské banky. Nebo zvolte platbu kartou a zadejte údaje o kreditní kartě na další obrazovce Stripe.",
     "premiumUsePix": "Použít Pix",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Už máte Visionary",
     "premiumAlreadyVisionaryBody": "Visionary už zahrnuje trvalý přístup, takže opakované předplatné není potřeba. Stále můžete kupovat dárky pro ostatní.",
     "premiumExistingSubscriptionTitle": "Předplatné už existuje",
-    "premiumExistingSubscriptionBody": "Našli jsme existující předplatné Fluxer Plutonium pro tento účel. Spravujte ho v zabezpečeném platebním portálu pro aktualizaci platebních údajů nebo kontrolu stavu obnovení. Pokud jste právě zaplatili, počkejte minutu a znovu otevřete tuto stránku.",
+    "premiumExistingSubscriptionBody": "Našli jsme existující předplatné ChatFlux Plutonium pro tento účel. Spravujte ho v zabezpečeném platebním portálu pro aktualizaci platebních údajů nebo kontrolu stavu obnovení. Pokud jste právě zaplatili, počkejte minutu a znovu otevřete tuto stránku.",
     "premiumPurchasesDisabledTitle": "Nákupy nejsou k dispozici",
     "premiumPurchasesDisabledBody": "Nákupy jsou pro tento účet zakázány. Pokud se vám to nezdá, kontaktujte {supportEmail}.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Získejte svůj účet a kupte si Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Před nákupem Fluxer Plutonium si musíte ověřit svůj e-mail.",
+    "premiumClaimAccountToPurchase": "Získejte svůj účet a kupte si ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Před nákupem ChatFlux Plutonium si musíte ověřit svůj e-mail.",
     "premiumPerkCommunities": "Komunity",
     "premiumPerkMessageCharacterLimit": "Limit znaků zprávy",
     "premiumPerkBookmarkedMessages": "Zprávy se záložkou",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Zjistěte více o Visionary.",
     "storePlutoniumDonatePrompt": "Chcete jen podpořit open source vývoj Fluxeru? ",
     "storePlutoniumDonateLink": "Místo toho přispějte.",
-    "storePlutoniumHighlightsLead": "Předplacením podpoříte Fluxer a odemknete si",
+    "storePlutoniumHighlightsLead": "Předplacením podpoříte ChatFlux a odemknete si",
     "storePlutoniumHighlightEmoji": "Vlastní emoji a samolepky v jakémkoli chatu",
     "storePlutoniumHighlightProfile": "Animovaný profil, odznak a vybrané čtyřmístné číslo",
     "storePlutoniumHighlightFiles": "Nahrávání souborů až do 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "A další",
     "storePlutoniumRenewsThroughPlay": "Automaticky se obnovuje přes Google Play, dokud předplatné nezrušíte.",
     "storePlutoniumRenewsThroughAppStore": "Automaticky se obnovuje přes App Store, dokud předplatné nezrušíte.",
-    "storePlutoniumAlreadySubscribed": "Už máte předplatné Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Už máte předplatné ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Ušetřete {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Nejprve otevřete Fluxer a přihlaste se.",
+    "assistantNeedsLogin": "Nejprve otevřete ChatFlux a přihlaste se.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer to nenašel.",
+    "assistantNotFound": "ChatFlux to nenašel.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer to nemohl dokončit.",
+    "assistantFailed": "ChatFlux to nemohl dokončit.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Otevírám Fluxer.",
+    "assistantOkOpened": "Otevírám ChatFlux.",
     "applicationsTitle": "Aplikace",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18190,7 +18190,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Přenosový server Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "Přenosový server ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18210,7 +18210,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer se restartuje, aby použil novou ikonu na domovské obrazovce.",
+    "appIconAndroidChangeDescription": "ChatFlux se restartuje, aby použil novou ikonu na domovské obrazovce.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18250,7 +18250,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer se neočekávaně ukončil. Sdílení anonymních dat o pádech a chybách nám pomůže problémy opravit rychleji.",
+    "observabilityReportingConsentSubtitle": "ChatFlux se neočekávaně ukončil. Sdílení anonymních dat o pádech a chybách nám pomůže problémy opravit rychleji.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18284,7 +18284,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Tato instance je pro tuto aplikaci zastaralá. Požádejte správce {domain}, aby Fluxer aktualizoval.",
+    "instanceOutdatedForClient": "Tato instance je pro tuto aplikaci zastaralá. Požádejte správce {domain}, aby ChatFlux aktualizoval.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18293,7 +18293,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} používá novější verzi Fluxeru než tato aplikace. Aktualizujte aplikaci a zkuste to znovu.",
+    "instanceRequiresNewerClient": "{domain} používá novější verzi ChatFluxu než tato aplikace. Aktualizujte aplikaci a zkuste to znovu.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

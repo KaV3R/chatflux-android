@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Hoàn tất thanh toán",
-    "premiumCompletePaymentBody": "Bạn sẽ được chuyển hướng đến Stripe để hoàn tất thanh toán. Quay lại Fluxer sau khi hoàn tất.",
+    "premiumCompletePaymentBody": "Bạn sẽ được chuyển hướng đến Stripe để hoàn tất thanh toán. Quay lại ChatFlux sau khi hoàn tất.",
     "premiumChoosePaymentMethodTitle": "Chọn phương thức thanh toán",
     "premiumPixPaymentPromptDescription": "Thanh toán bằng Pix tự động để ủy quyền các khoản phí định kỳ trực tiếp từ ngân hàng Brazil của bạn. Hoặc chọn sử dụng thẻ để nhập thẻ tín dụng trên màn hình tiếp theo của Stripe.",
     "premiumUsePix": "Sử dụng Pix",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "Bạn đã là Visionary rồi",
     "premiumAlreadyVisionaryBody": "Visionary đã bao gồm quyền truy cập vĩnh viễn, nên bạn không cần đăng ký định kỳ. Bạn vẫn có thể mua quà tặng cho người khác.",
     "premiumExistingSubscriptionTitle": "Gói đăng ký đã tồn tại",
-    "premiumExistingSubscriptionBody": "Chúng tôi tìm thấy một gói đăng ký Fluxer Plutonium hiện có cho tài khoản này. Quản lý gói đăng ký đó trong cổng thanh toán bảo mật để cập nhật chi tiết thanh toán hoặc kiểm tra trạng thái gia hạn. Nếu bạn vừa thanh toán, hãy đợi một phút và mở lại trang này.",
+    "premiumExistingSubscriptionBody": "Chúng tôi tìm thấy một gói đăng ký ChatFlux Plutonium hiện có cho tài khoản này. Quản lý gói đăng ký đó trong cổng thanh toán bảo mật để cập nhật chi tiết thanh toán hoặc kiểm tra trạng thái gia hạn. Nếu bạn vừa thanh toán, hãy đợi một phút và mở lại trang này.",
     "premiumPurchasesDisabledTitle": "Tính năng mua hàng không khả dụng",
     "premiumPurchasesDisabledBody": "Giao dịch đã bị tắt cho tài khoản này. Liên hệ {supportEmail} nếu bạn thấy có gì đó không đúng.",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Xác nhận tài khoản của bạn để mua Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Bạn cần xác minh email trước khi có thể mua Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Xác nhận tài khoản của bạn để mua ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Bạn cần xác minh email trước khi có thể mua ChatFlux Plutonium.",
     "premiumPerkCommunities": "Cộng đồng",
     "premiumPerkMessageCharacterLimit": "Giới hạn ký tự tin nhắn",
     "premiumPerkBookmarkedMessages": "Tin nhắn đã lưu",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "Tìm hiểu thêm về Visionary.",
     "storePlutoniumDonatePrompt": "Chỉ muốn ủng hộ việc phát triển mã nguồn mở của Fluxer? ",
     "storePlutoniumDonateLink": "Hoặc quyên góp.",
-    "storePlutoniumHighlightsLead": "Đăng ký tài trợ cho Fluxer và mở khóa",
+    "storePlutoniumHighlightsLead": "Đăng ký tài trợ cho ChatFlux và mở khóa",
     "storePlutoniumHighlightEmoji": "Biểu tượng cảm xúc và nhãn dán tùy chỉnh trong mọi cuộc trò chuyện",
     "storePlutoniumHighlightProfile": "Hồ sơ động, huy hiệu và số tùy chỉnh gồm 4 chữ số",
     "storePlutoniumHighlightFiles": "Tải lên tối đa 500 MB",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "Và nhiều hơn nữa",
     "storePlutoniumRenewsThroughPlay": "Tự động gia hạn qua Google Play cho đến khi bạn hủy.",
     "storePlutoniumRenewsThroughAppStore": "Tự động gia hạn qua App Store cho đến khi bạn hủy.",
-    "storePlutoniumAlreadySubscribed": "Bạn đã có gói đăng ký Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Bạn đã có gói đăng ký ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Tiết kiệm {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} chỉ gửi thông báo đẩy qua dịch vụ của riêng họ, nên thông báo cho thiết bị này đi qua bộ chuyển tiếp của Fluxer.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} chỉ gửi thông báo đẩy qua dịch vụ của riêng họ, nên thông báo cho thiết bị này đi qua bộ chuyển tiếp của ChatFlux.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Dùng bộ chuyển tiếp đẩy của Fluxer",
+    "notificationsPushRelayConsentLabel": "Dùng bộ chuyển tiếp đẩy của ChatFlux",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} chỉ gửi thông báo đẩy qua dịch vụ của riêng họ, nên thông báo cho thiết bị này đi qua bộ chuyển tiếp của Fluxer.",
+    "pushRelayConsentDescription": "{pushProvider} chỉ gửi thông báo đẩy qua dịch vụ của riêng họ, nên thông báo cho thiết bị này đi qua bộ chuyển tiếp của ChatFlux.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Mở Fluxer và đăng nhập trước.",
+    "assistantNeedsLogin": "Mở ChatFlux và đăng nhập trước.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer không thể tìm thấy mục đó.",
+    "assistantNotFound": "ChatFlux không thể tìm thấy mục đó.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer không thể hoàn thành tác vụ đó.",
+    "assistantFailed": "ChatFlux không thể hoàn thành tác vụ đó.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "Đang mở Fluxer.",
+    "assistantOkOpened": "Đang mở ChatFlux.",
     "lookAndFeelChatWallpaperTitle": "Hình nền trò chuyện",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18215,7 +18215,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Máy chuyển tiếp Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "Máy chuyển tiếp ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18235,7 +18235,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer sẽ khởi động lại để áp dụng biểu tượng mới trên màn hình chính.",
+    "appIconAndroidChangeDescription": "ChatFlux sẽ khởi động lại để áp dụng biểu tượng mới trên màn hình chính.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18275,7 +18275,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer đã đóng đột ngột. Chia sẻ dữ liệu sự cố và lỗi ẩn danh giúp chúng tôi khắc phục sự cố nhanh hơn.",
+    "observabilityReportingConsentSubtitle": "ChatFlux đã đóng đột ngột. Chia sẻ dữ liệu sự cố và lỗi ẩn danh giúp chúng tôi khắc phục sự cố nhanh hơn.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18309,7 +18309,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Máy chủ này đã lỗi thời so với ứng dụng. Hãy nhờ người quản lý {domain} cập nhật Fluxer.",
+    "instanceOutdatedForClient": "Máy chủ này đã lỗi thời so với ứng dụng. Hãy nhờ người quản lý {domain} cập nhật ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18318,7 +18318,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} đang chạy phiên bản Fluxer mới hơn ứng dụng này. Hãy cập nhật ứng dụng rồi thử lại.",
+    "instanceRequiresNewerClient": "{domain} đang chạy phiên bản ChatFlux mới hơn ứng dụng này. Hãy cập nhật ứng dụng rồi thử lại.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

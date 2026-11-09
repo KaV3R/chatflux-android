@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -8841,7 +8841,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} leverer bare push-varsler via sin egen tjeneste, så varsler til denne enheten går gjennom Fluxer-reléet.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} leverer bare push-varsler via sin egen tjeneste, så varsler til denne enheten går gjennom ChatFlux-reléet.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -8850,7 +8850,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Bruk Fluxers push-relé",
+    "notificationsPushRelayConsentLabel": "Bruk ChatFluxs push-relé",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -8862,7 +8862,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} leverer bare push-varsler via sin egen tjeneste, så varsler til denne enheten går gjennom Fluxer-reléet.",
+    "pushRelayConsentDescription": "{pushProvider} leverer bare push-varsler via sin egen tjeneste, så varsler til denne enheten går gjennom ChatFlux-reléet.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Fullfør betaling",
-    "premiumCompletePaymentBody": "Du navigerer nå til Stripe for å fullføre betalingen. Gå tilbake til Fluxer når du er ferdig.",
+    "premiumCompletePaymentBody": "Du navigerer nå til Stripe for å fullføre betalingen. Gå tilbake til ChatFlux når du er ferdig.",
     "premiumChoosePaymentMethodTitle": "Velg betalingsmåte",
     "premiumPixPaymentPromptDescription": "Betal med Pix automático for å godkjenne gjentakende belastninger direkte fra din brasilianske bank. Eller velg bruk kort for å legge inn et kredittkort på Stripes neste skjerm.",
     "premiumUsePix": "Bruk Pix",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Du er allerede Visionary",
     "premiumAlreadyVisionaryBody": "Visionary inkluderer allerede permanent tilgang, så et gjentakende abonnement er ikke nødvendig. Du kan fortsatt kjøpe gaver til andre.",
     "premiumExistingSubscriptionTitle": "Abonnementet finnes allerede",
-    "premiumExistingSubscriptionBody": "Vi fant et eksisterende Fluxer Plutonium-abonnement for denne kontoen. Administrer det i den sikre faktureringsportalen for å oppdatere betalingsdetaljer eller sjekke fornyelsesstatus. Hvis du nettopp betalte, vent et minutt og lukk denne siden på nytt.",
+    "premiumExistingSubscriptionBody": "Vi fant et eksisterende ChatFlux Plutonium-abonnement for denne kontoen. Administrer det i den sikre faktureringsportalen for å oppdatere betalingsdetaljer eller sjekke fornyelsesstatus. Hvis du nettopp betalte, vent et minutt og lukk denne siden på nytt.",
     "premiumPurchasesDisabledTitle": "Kjøp er ikke tilgjengelig",
     "premiumPurchasesDisabledBody": "Kjøp er deaktivert for denne kontoen. Kontakt {supportEmail} hvis dette ser feil ut.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Gjør krav på kontoen din for å kjøpe Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Du må bekrefte e-posten din før du kan kjøpe Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Gjør krav på kontoen din for å kjøpe ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Du må bekrefte e-posten din før du kan kjøpe ChatFlux Plutonium.",
     "premiumPerkCommunities": "Fellesskap",
     "premiumPerkMessageCharacterLimit": "Tegngrense for meldinger",
     "premiumPerkBookmarkedMessages": "Lagrede meldinger",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Lær mer om Visionary.",
     "storePlutoniumDonatePrompt": "Vil du bare støtte Fluxers åpen kildekode-utvikling? ",
     "storePlutoniumDonateLink": "Doner i stedet.",
-    "storePlutoniumHighlightsLead": "Abonnementet finansierer Fluxer og låser opp",
+    "storePlutoniumHighlightsLead": "Abonnementet finansierer ChatFlux og låser opp",
     "storePlutoniumHighlightEmoji": "Egendefinerte emojier og klistremerker i alle chatter",
     "storePlutoniumHighlightProfile": "Animert profil, merke og valgfritt firesifret nummer",
     "storePlutoniumHighlightFiles": "Opplastinger på opptil 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "Og mer",
     "storePlutoniumRenewsThroughPlay": "Fornyes automatisk via Google Play til du sier opp.",
     "storePlutoniumRenewsThroughAppStore": "Fornyes automatisk via App Store til du sier opp.",
-    "storePlutoniumAlreadySubscribed": "Du har allerede et Fluxer Plutonium-abonnement.",
+    "storePlutoniumAlreadySubscribed": "Du har allerede et ChatFlux Plutonium-abonnement.",
     "storePlutoniumSavePercent": "Spar {percent} %",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15803,7 +15803,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Åpne Fluxer og logg på først.",
+    "assistantNeedsLogin": "Åpne ChatFlux og logg på først.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15811,7 +15811,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer fant ikke det.",
+    "assistantNotFound": "ChatFlux fant ikke det.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15819,7 +15819,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer kunne ikke fullføre dette.",
+    "assistantFailed": "ChatFlux kunne ikke fullføre dette.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15836,7 +15836,7 @@
             }
         }
     },
-    "assistantOkOpened": "Åpner Fluxer.",
+    "assistantOkOpened": "Åpner ChatFlux.",
     "applicationsTitle": "Apper",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18199,7 +18199,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push-relé",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push-relé",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18219,7 +18219,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer starter på nytt for å bruke det nye ikonet på startskjermen.",
+    "appIconAndroidChangeDescription": "ChatFlux starter på nytt for å bruke det nye ikonet på startskjermen.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18259,7 +18259,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer ble avsluttet uventet. Hvis du deler anonyme krasj- og feildata, kan vi rette problemer raskere.",
+    "observabilityReportingConsentSubtitle": "ChatFlux ble avsluttet uventet. Hvis du deler anonyme krasj- og feildata, kan vi rette problemer raskere.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18293,7 +18293,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Denne instansen er for gammel for denne appen. Be den som driver {domain}, om å oppdatere Fluxer.",
+    "instanceOutdatedForClient": "Denne instansen er for gammel for denne appen. Be den som driver {domain}, om å oppdatere ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18302,7 +18302,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} kjører en nyere versjon av Fluxer enn denne appen. Oppdater appen og prøv igjen.",
+    "instanceRequiresNewerClient": "{domain} kjører en nyere versjon av ChatFlux enn denne appen. Oppdater appen og prøv igjen.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

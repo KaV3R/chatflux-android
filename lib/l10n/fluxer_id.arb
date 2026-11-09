@@ -5291,7 +5291,7 @@
     "@connectionRemoveFailed": {
         "description": "Toast shown when the delete request fails."
     },
-    "connectionTokenSavedToast": "Fluxer-verifikasi tersimpan",
+    "connectionTokenSavedToast": "ChatFlux-verifikasi tersimpan",
     "@connectionTokenSavedToast": {
         "description": "Toast shown after the token file is saved successfully."
     },
@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Selesaikan pembayaran",
-    "premiumCompletePaymentBody": "Anda sekarang diarahkan ke Stripe untuk menyelesaikan pembayaran. Kembali ke Fluxer setelah selesai.",
+    "premiumCompletePaymentBody": "Anda sekarang diarahkan ke Stripe untuk menyelesaikan pembayaran. Kembali ke ChatFlux setelah selesai.",
     "premiumChoosePaymentMethodTitle": "Pilih metode pembayaran",
     "premiumPixPaymentPromptDescription": "Bayar dengan Pix otomatis untuk mengotorisasi tagihan berulang langsung dari bank Brasil Anda. Atau pilih gunakan kartu untuk memasukkan kartu kredit di layar Stripe berikutnya.",
     "premiumUsePix": "Gunakan Pix",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "Kamu sudah menjadi Visionary",
     "premiumAlreadyVisionaryBody": "Visionary sudah mencakup akses permanen, jadi langganan berulang tidak diperlukan. Kamu masih bisa membeli hadiah untuk orang lain.",
     "premiumExistingSubscriptionTitle": "Langganan sudah ada",
-    "premiumExistingSubscriptionBody": "Kami menemukan langganan Fluxer Plutonium yang sudah ada untuk akun ini. Kelola di portal penagihan aman untuk memperbarui detail pembayaran atau memeriksa status perpanjangan. Jika baru saja membayar, tunggu sebentar dan buka kembali halaman ini.",
+    "premiumExistingSubscriptionBody": "Kami menemukan langganan ChatFlux Plutonium yang sudah ada untuk akun ini. Kelola di portal penagihan aman untuk memperbarui detail pembayaran atau memeriksa status perpanjangan. Jika baru saja membayar, tunggu sebentar dan buka kembali halaman ini.",
     "premiumPurchasesDisabledTitle": "Pembelian tidak tersedia",
     "premiumPurchasesDisabledBody": "Pembelian dinonaktifkan untuk akun ini. Hubungi {supportEmail} jika ini terlihat salah.",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Klaim akun Anda untuk membeli Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Anda perlu memverifikasi email Anda sebelum dapat membeli Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Klaim akun Anda untuk membeli ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Anda perlu memverifikasi email Anda sebelum dapat membeli ChatFlux Plutonium.",
     "premiumPerkCommunities": "Komunitas",
     "premiumPerkMessageCharacterLimit": "Batas karakter pesan",
     "premiumPerkBookmarkedMessages": "Pesan di bookmark",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "Pelajari lebih lanjut tentang Visionary.",
     "storePlutoniumDonatePrompt": "Hanya ingin mendukung pengembangan sumber terbuka Fluxer? ",
     "storePlutoniumDonateLink": "Donasi saja.",
-    "storePlutoniumHighlightsLead": "Berlangganan mendanai Fluxer dan membuka kunci",
+    "storePlutoniumHighlightsLead": "Berlangganan mendanai ChatFlux dan membuka kunci",
     "storePlutoniumHighlightEmoji": "Emoji dan stiker kustom di chat mana pun",
     "storePlutoniumHighlightProfile": "Profil animasi, lencana, dan nomor 4 digit kustom",
     "storePlutoniumHighlightFiles": "Unggah hingga 500 MB",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "Dan lainnya",
     "storePlutoniumRenewsThroughPlay": "Diperbarui secara otomatis melalui Google Play sampai Anda membatalkan.",
     "storePlutoniumRenewsThroughAppStore": "Diperbarui secara otomatis melalui App Store sampai Anda membatalkan.",
-    "storePlutoniumAlreadySubscribed": "Anda sudah memiliki langganan Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Anda sudah memiliki langganan ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Hemat {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} hanya mengirim notifikasi push lewat layanannya sendiri, jadi notifikasi untuk perangkat ini melewati relai Fluxer.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} hanya mengirim notifikasi push lewat layanannya sendiri, jadi notifikasi untuk perangkat ini melewati relai ChatFlux.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Gunakan relai push Fluxer",
+    "notificationsPushRelayConsentLabel": "Gunakan relai push ChatFlux",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} hanya mengirim notifikasi push lewat layanannya sendiri, jadi notifikasi untuk perangkat ini melewati relai Fluxer.",
+    "pushRelayConsentDescription": "{pushProvider} hanya mengirim notifikasi push lewat layanannya sendiri, jadi notifikasi untuk perangkat ini melewati relai ChatFlux.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Buka Fluxer dan masuk terlebih dahulu.",
+    "assistantNeedsLogin": "Buka ChatFlux dan masuk terlebih dahulu.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer tidak dapat menemukan itu.",
+    "assistantNotFound": "ChatFlux tidak dapat menemukan itu.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer tidak dapat menyelesaikan itu.",
+    "assistantFailed": "ChatFlux tidak dapat menyelesaikan itu.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "Membuka Fluxer.",
+    "assistantOkOpened": "Membuka ChatFlux.",
     "lookAndFeelChatWallpaperTitle": "Wallpaper Obrolan",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18199,7 +18199,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Relai Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "Relai ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18219,7 +18219,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer akan dimulai ulang untuk menerapkan ikon layar utama yang baru.",
+    "appIconAndroidChangeDescription": "ChatFlux akan dimulai ulang untuk menerapkan ikon layar utama yang baru.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18259,7 +18259,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer tertutup secara tiba-tiba. Membagikan data crash dan error secara anonim membantu kami memperbaiki masalah lebih cepat.",
+    "observabilityReportingConsentSubtitle": "ChatFlux tertutup secara tiba-tiba. Membagikan data crash dan error secara anonim membantu kami memperbaiki masalah lebih cepat.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18293,7 +18293,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Versi instance ini sudah terlalu lama untuk aplikasi ini. Minta pengelola {domain} untuk memperbarui Fluxer.",
+    "instanceOutdatedForClient": "Versi instance ini sudah terlalu lama untuk aplikasi ini. Minta pengelola {domain} untuk memperbarui ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18302,7 +18302,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} menjalankan versi Fluxer yang lebih baru daripada aplikasi ini. Perbarui aplikasi, lalu coba lagi.",
+    "instanceRequiresNewerClient": "{domain} menjalankan versi ChatFlux yang lebih baru daripada aplikasi ini. Perbarui aplikasi, lalu coba lagi.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

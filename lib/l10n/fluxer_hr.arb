@@ -5291,7 +5291,7 @@
     "@connectionRemoveFailed": {
         "description": "Toast shown when the delete request fails."
     },
-    "connectionTokenSavedToast": "Fluxer-verifikacija spremljena",
+    "connectionTokenSavedToast": "ChatFlux-verifikacija spremljena",
     "@connectionTokenSavedToast": {
         "description": "Toast shown after the token file is saved successfully."
     },
@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Dovrši plaćanje",
-    "premiumCompletePaymentBody": "Sada prelazite na Stripe kako biste dovršili plaćanje. Vratite se u Fluxer nakon što završite.",
+    "premiumCompletePaymentBody": "Sada prelazite na Stripe kako biste dovršili plaćanje. Vratite se u ChatFlux nakon što završite.",
     "premiumChoosePaymentMethodTitle": "Odaberite način plaćanja",
     "premiumPixPaymentPromptDescription": "Platite automatskim Pixom za autorizaciju ponavljajućih naplata izravno s vašeg brazilskog bankovnog računa. Ili odaberite \"upotrijebi karticu\" za unos kreditne kartice na sljedećem zaslonu Stripe.",
     "premiumUsePix": "Upotrijebi Pix",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "Već ste Visionary",
     "premiumAlreadyVisionaryBody": "Visionary već uključuje trajni pristup, pa ponavljajuća pretplata nije potrebna. I dalje možete kupovati poklone za druge.",
     "premiumExistingSubscriptionTitle": "Pretplata već postoji",
-    "premiumExistingSubscriptionBody": "Pronašli smo postojeću pretplatu na Fluxer Plutonium za ovaj račun. Upravljajte njome u sigurnosnom portalu za naplatu kako biste ažurirali podatke o plaćanju ili provjerili status obnove. Ako ste upravo platili, pričekajte minutu i ponovno otvorite ovu stranicu.",
+    "premiumExistingSubscriptionBody": "Pronašli smo postojeću pretplatu na ChatFlux Plutonium za ovaj račun. Upravljajte njome u sigurnosnom portalu za naplatu kako biste ažurirali podatke o plaćanju ili provjerili status obnove. Ako ste upravo platili, pričekajte minutu i ponovno otvorite ovu stranicu.",
     "premiumPurchasesDisabledTitle": "Kupnja nije dostupna",
     "premiumPurchasesDisabledBody": "Kupnje su onemogućene za ovaj račun. Obratite se na {supportEmail} ako ovo izgleda pogrešno.",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Preuzmite svoj račun za kupnju Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Potrebno je potvrditi svoju e-poštu prije nego što možete kupiti Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Preuzmite svoj račun za kupnju ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Potrebno je potvrditi svoju e-poštu prije nego što možete kupiti ChatFlux Plutonium.",
     "premiumPerkCommunities": "Zajednice",
     "premiumPerkMessageCharacterLimit": "Ograničenje broja znakova u poruci",
     "premiumPerkBookmarkedMessages": "Označene poruke",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "Saznajte više o programu Visionary.",
     "storePlutoniumDonatePrompt": "Želite li samo podržati razvoj Fluxera otvorenog koda? ",
     "storePlutoniumDonateLink": "Donirajte umjesto toga.",
-    "storePlutoniumHighlightsLead": "Pretplatom financirate Fluxer i otključavate",
+    "storePlutoniumHighlightsLead": "Pretplatom financirate ChatFlux i otključavate",
     "storePlutoniumHighlightEmoji": "Prilagođeni emojiji i naljepnice u bilo kojem chatu",
     "storePlutoniumHighlightProfile": "Animirani profil, značka i odabrani četveroznamenkasti broj",
     "storePlutoniumHighlightFiles": "Prijenosi do 500 MB",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "I više",
     "storePlutoniumRenewsThroughPlay": "Automatski se obnavlja putem Google Playa dok ne otkažete.",
     "storePlutoniumRenewsThroughAppStore": "Automatski se obnavlja putem App Storea dok ne otkažete.",
-    "storePlutoniumAlreadySubscribed": "Već imate pretplatu na Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Već imate pretplatu na ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Uštedite {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} isporučuje push obavijesti samo preko vlastite usluge, pa obavijesti za ovaj uređaj idu kroz Fluxerov prijenosnik.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} isporučuje push obavijesti samo preko vlastite usluge, pa obavijesti za ovaj uređaj idu kroz ChatFluxov prijenosnik.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Koristi Fluxerov push prijenosnik",
+    "notificationsPushRelayConsentLabel": "Koristi ChatFluxov push prijenosnik",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} isporučuje push obavijesti samo preko vlastite usluge, pa obavijesti za ovaj uređaj idu kroz Fluxerov prijenosnik.",
+    "pushRelayConsentDescription": "{pushProvider} isporučuje push obavijesti samo preko vlastite usluge, pa obavijesti za ovaj uređaj idu kroz ChatFluxov prijenosnik.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Prvo otvorite Fluxer i prijavite se.",
+    "assistantNeedsLogin": "Prvo otvorite ChatFlux i prijavite se.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer to nije mogao pronaći.",
+    "assistantNotFound": "ChatFlux to nije mogao pronaći.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer to nije mogao dovršiti.",
+    "assistantFailed": "ChatFlux to nije mogao dovršiti.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "Otvaram Fluxer.",
+    "assistantOkOpened": "Otvaram ChatFlux.",
     "lookAndFeelChatWallpaperTitle": "Pozadina chata",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18207,7 +18207,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push prijenosnik",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push prijenosnik",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18227,7 +18227,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer će se ponovno pokrenuti kako bi primijenio novu ikonu na početnom zaslonu.",
+    "appIconAndroidChangeDescription": "ChatFlux će se ponovno pokrenuti kako bi primijenio novu ikonu na početnom zaslonu.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18267,7 +18267,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer se neočekivano zatvorio. Dijeljenje anonimnih podataka o rušenjima i pogreškama pomaže nam brže ispraviti probleme.",
+    "observabilityReportingConsentSubtitle": "ChatFlux se neočekivano zatvorio. Dijeljenje anonimnih podataka o rušenjima i pogreškama pomaže nam brže ispraviti probleme.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18301,7 +18301,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Ova je instanca zastarjela za ovu aplikaciju. Zamolite onoga tko vodi {domain} da ažurira Fluxer.",
+    "instanceOutdatedForClient": "Ova je instanca zastarjela za ovu aplikaciju. Zamolite onoga tko vodi {domain} da ažurira ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18310,7 +18310,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} koristi noviju verziju Fluxera od ove aplikacije. Ažurirajte aplikaciju pa pokušajte ponovno.",
+    "instanceRequiresNewerClient": "{domain} koristi noviju verziju ChatFluxa od ove aplikacije. Ažurirajte aplikaciju pa pokušajte ponovno.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

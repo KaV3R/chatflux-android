@@ -6153,7 +6153,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -9302,7 +9302,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} dostarcza powiadomienia push tylko przez własną usługę, więc powiadomienia dla tego urządzenia przechodzą przez przekaźnik Fluxera.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} dostarcza powiadomienia push tylko przez własną usługę, więc powiadomienia dla tego urządzenia przechodzą przez przekaźnik ChatFluxa.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -9311,7 +9311,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Używaj przekaźnika push Fluxera",
+    "notificationsPushRelayConsentLabel": "Używaj przekaźnika push ChatFluxa",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -9323,7 +9323,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} dostarcza powiadomienia push tylko przez własną usługę, więc powiadomienia dla tego urządzenia przechodzą przez przekaźnik Fluxera.",
+    "pushRelayConsentDescription": "{pushProvider} dostarcza powiadomienia push tylko przez własną usługę, więc powiadomienia dla tego urządzenia przechodzą przez przekaźnik ChatFluxa.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -14597,7 +14597,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Dokończ płatność",
-    "premiumCompletePaymentBody": "Teraz nastąpi przekierowanie do Stripe w celu dokończenia płatności. Po zakończeniu wróć do Fluxer.",
+    "premiumCompletePaymentBody": "Teraz nastąpi przekierowanie do Stripe w celu dokończenia płatności. Po zakończeniu wróć do ChatFlux.",
     "premiumChoosePaymentMethodTitle": "Wybierz metodę płatności",
     "premiumPixPaymentPromptDescription": "Zapłać przez Pix automatyczny, aby autoryzować cykliczne obciążenia bezpośrednio z Twojego brazylijskiego banku. Możesz też wybrać płatność kartą, aby wprowadzić dane karty kredytowej na następnym ekranie Stripe.",
     "premiumUsePix": "Użyj Pix",
@@ -14609,7 +14609,7 @@
     "premiumAlreadyVisionaryTitle": "Masz już Visionary",
     "premiumAlreadyVisionaryBody": "Visionary zapewnia już stały dostęp, więc subskrypcja cykliczna nie jest potrzebna. Nadal możesz kupować prezenty dla innych.",
     "premiumExistingSubscriptionTitle": "Subskrypcja już istnieje",
-    "premiumExistingSubscriptionBody": "Znaleźliśmy istniejącą subskrypcję Fluxer Plutonium dla tego konta. Zarządzaj nią w bezpiecznym portalu płatności, aby zaktualizować dane płatności lub sprawdzić status odnowienia. Jeśli właśnie zapłaciłeś, odczekaj minutę i otwórz tę stronę ponownie.",
+    "premiumExistingSubscriptionBody": "Znaleźliśmy istniejącą subskrypcję ChatFlux Plutonium dla tego konta. Zarządzaj nią w bezpiecznym portalu płatności, aby zaktualizować dane płatności lub sprawdzić status odnowienia. Jeśli właśnie zapłaciłeś, odczekaj minutę i otwórz tę stronę ponownie.",
     "premiumPurchasesDisabledTitle": "Zakupy niedostępne",
     "premiumPurchasesDisabledBody": "Zakupy są wyłączone dla tego konta. Skontaktuj się z {supportEmail}, jeśli uważasz, że to błąd.",
     "@premiumPurchasesDisabledBody": {
@@ -14624,8 +14624,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Odbierz swoje konto, aby kupić Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "Musisz zweryfikować swój adres e-mail, zanim będziesz mógł kupić Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Odbierz swoje konto, aby kupić ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "Musisz zweryfikować swój adres e-mail, zanim będziesz mógł kupić ChatFlux Plutonium.",
     "premiumPerkCommunities": "Społeczności",
     "premiumPerkMessageCharacterLimit": "Limit znaków w wiadomości",
     "premiumPerkBookmarkedMessages": "Wiadomości w zakładkach",
@@ -14681,7 +14681,7 @@
     "storePlutoniumLearnVisionary": "Dowiedz się więcej o Visionary.",
     "storePlutoniumDonatePrompt": "Chcesz po prostu wesprzeć rozwój Fluxera jako projektu open source? ",
     "storePlutoniumDonateLink": "Zamiast tego przekaż darowiznę.",
-    "storePlutoniumHighlightsLead": "Subskrypcja finansuje Fluxera i odblokowuje",
+    "storePlutoniumHighlightsLead": "Subskrypcja finansuje ChatFluxa i odblokowuje",
     "storePlutoniumHighlightEmoji": "Niestandardowe emoji i naklejki na każdym czacie",
     "storePlutoniumHighlightProfile": "Animowany profil, odznaka i wybrany 4-cyfrowy numer",
     "storePlutoniumHighlightFiles": "Przesyłanie plików do 500 MB",
@@ -14690,7 +14690,7 @@
     "storePlutoniumHighlightsMore": "I więcej",
     "storePlutoniumRenewsThroughPlay": "Odnawia się automatycznie przez Google Play, dopóki nie anulujesz.",
     "storePlutoniumRenewsThroughAppStore": "Automatycznie odnawia się przez App Store, dopóki nie anulujesz.",
-    "storePlutoniumAlreadySubscribed": "Masz już subskrypcję Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "Masz już subskrypcję ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "Oszczędź {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -15811,7 +15811,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Najpierw otwórz Fluxer i zaloguj się.",
+    "assistantNeedsLogin": "Najpierw otwórz ChatFlux i zaloguj się.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15819,7 +15819,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer nie mógł tego znaleźć.",
+    "assistantNotFound": "ChatFlux nie mógł tego znaleźć.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15827,7 +15827,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer nie mógł tego ukończyć.",
+    "assistantFailed": "ChatFlux nie mógł tego ukończyć.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15844,7 +15844,7 @@
             }
         }
     },
-    "assistantOkOpened": "Otwieram Fluxer.",
+    "assistantOkOpened": "Otwieram ChatFlux.",
     "applicationsTitle": "Aplikacje",
     "@applicationsTitle": {
         "description": "Title for the developer Applications settings tab."
@@ -18202,7 +18202,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Przekaźnik Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "Przekaźnik ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18222,7 +18222,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer uruchomi się ponownie, aby zastosować nową ikonę na ekranie głównym.",
+    "appIconAndroidChangeDescription": "ChatFlux uruchomi się ponownie, aby zastosować nową ikonę na ekranie głównym.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18262,7 +18262,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer nieoczekiwanie się zamknął. Udostępnienie anonimowych danych o awariach i błędach pomoże nam szybciej naprawiać problemy.",
+    "observabilityReportingConsentSubtitle": "ChatFlux nieoczekiwanie się zamknął. Udostępnienie anonimowych danych o awariach i błędach pomoże nam szybciej naprawiać problemy.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18296,7 +18296,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "Ta instancja jest zbyt stara dla tej aplikacji. Poproś osobę zarządzającą {domain} o zaktualizowanie Fluxera.",
+    "instanceOutdatedForClient": "Ta instancja jest zbyt stara dla tej aplikacji. Poproś osobę zarządzającą {domain} o zaktualizowanie ChatFluxa.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18305,7 +18305,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} działa na nowszej wersji Fluxera niż ta aplikacja. Zaktualizuj aplikację i spróbuj ponownie.",
+    "instanceRequiresNewerClient": "{domain} działa na nowszej wersji ChatFluxa niż ta aplikacja. Zaktualizuj aplikację i spróbuj ponownie.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

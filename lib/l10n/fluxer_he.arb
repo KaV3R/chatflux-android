@@ -5207,7 +5207,7 @@
             }
         }
     },
-    "connectionSaveTokenDialogTitle": "שמור אימות Fluxer",
+    "connectionSaveTokenDialogTitle": "שמור אימות ChatFlux",
     "@connectionSaveTokenDialogTitle": {
         "description": "Title of the save-file dialog opened by the download button."
     },
@@ -5291,7 +5291,7 @@
     "@connectionRemoveFailed": {
         "description": "Toast shown when the delete request fails."
     },
-    "connectionTokenSavedToast": "אימות Fluxer נשמר",
+    "connectionTokenSavedToast": "אימות ChatFlux נשמר",
     "@connectionTokenSavedToast": {
         "description": "Toast shown after the token file is saved successfully."
     },
@@ -10668,7 +10668,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -10811,7 +10811,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "השלם תשלום",
-    "premiumCompletePaymentBody": "אתה מועבר כעת ל-Stripe להשלמת התשלום. חזור ל-Fluxer לאחר שתסיים.",
+    "premiumCompletePaymentBody": "אתה מועבר כעת ל-Stripe להשלמת התשלום. חזור ל-ChatFlux לאחר שתסיים.",
     "premiumChoosePaymentMethodTitle": "בחירת אמצעי תשלום",
     "premiumPixPaymentPromptDescription": "שלם באמצעות Pix אוטומטי כדי לאשר חיובים חוזרים ישירות מהבנק הברזילאי שלך. לחלופין, בחר להשתמש בכרטיס כדי להזין פרטי כרטיס אשראי במסך הבא של Stripe.",
     "premiumUsePix": "השתמש בפיקס",
@@ -10823,7 +10823,7 @@
     "premiumAlreadyVisionaryTitle": "אתה כבר Visionary",
     "premiumAlreadyVisionaryBody": "Visionary כבר כולל גישה קבועה, ולכן אין צורך במנוי מתחדש. עדיין אפשר לקנות מתנות לאחרים.",
     "premiumExistingSubscriptionTitle": "המנוי כבר קיים",
-    "premiumExistingSubscriptionBody": "מצאנו מנוי קיים של Fluxer Plutonium עבור חשבון זה. נהלו אותו בפורטל החיוב המאובטח כדי לעדכן פרטי תשלום או לבדוק את סטטוס החידוש. אם שילמתם זה עתה, המתינו דקה ופתחו מחדש את הדף הזה.",
+    "premiumExistingSubscriptionBody": "מצאנו מנוי קיים של ChatFlux Plutonium עבור חשבון זה. נהלו אותו בפורטל החיוב המאובטח כדי לעדכן פרטי תשלום או לבדוק את סטטוס החידוש. אם שילמתם זה עתה, המתינו דקה ופתחו מחדש את הדף הזה.",
     "premiumPurchasesDisabledTitle": "רכישות אינן זמינות",
     "premiumPurchasesDisabledBody": "הרכישות מושבתות עבור חשבון זה. צור קשר עם {supportEmail} אם זה נראה שגוי.",
     "@premiumPurchasesDisabledBody": {
@@ -10838,8 +10838,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "אמת את חשבונך כדי לרכוש Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "עליך לאמת את כתובת הדוא\"ל שלך לפני שתוכל לרכוש Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "אמת את חשבונך כדי לרכוש ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "עליך לאמת את כתובת הדוא\"ל שלך לפני שתוכל לרכוש ChatFlux Plutonium.",
     "premiumPerkCommunities": "קהילות",
     "premiumPerkMessageCharacterLimit": "מגבלת תווים בהודעה",
     "premiumPerkBookmarkedMessages": "הודעות בסימניות",
@@ -10895,7 +10895,7 @@
     "storePlutoniumLearnVisionary": "למידע נוסף על Visionary.",
     "storePlutoniumDonatePrompt": "רק רוצה לתמוך בפיתוח הקוד הפתוח של Fluxer? ",
     "storePlutoniumDonateLink": "לתרום במקום זאת.",
-    "storePlutoniumHighlightsLead": "המינוי מממן את Fluxer ופותח",
+    "storePlutoniumHighlightsLead": "המינוי מממן את ChatFlux ופותח",
     "storePlutoniumHighlightEmoji": "אימוג'י ומדבקות מותאמים אישית בכל צ'אט",
     "storePlutoniumHighlightProfile": "פרופיל מונפש, תג ומספר 4-ספרתי מותאם אישית",
     "storePlutoniumHighlightFiles": "העלאות עד 500 מגה-בייט",
@@ -10904,7 +10904,7 @@
     "storePlutoniumHighlightsMore": "ועוד",
     "storePlutoniumRenewsThroughPlay": "מתחדש אוטומטית דרך Google Play עד שתבטל.",
     "storePlutoniumRenewsThroughAppStore": "מתחדש אוטומטית דרך App Store עד לביטול.",
-    "storePlutoniumAlreadySubscribed": "כבר יש לך מנוי ל-Fluxer Plutonium.",
+    "storePlutoniumAlreadySubscribed": "כבר יש לך מנוי ל-ChatFlux Plutonium.",
     "storePlutoniumSavePercent": "חסוך {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -11478,7 +11478,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} מספקת התראות דחיפה רק דרך השירות שלה, ולכן ההתראות למכשיר הזה עוברות דרך הממסר של Fluxer.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} מספקת התראות דחיפה רק דרך השירות שלה, ולכן ההתראות למכשיר הזה עוברות דרך הממסר של ChatFlux.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -11487,7 +11487,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "שימוש בממסר הדחיפה של Fluxer",
+    "notificationsPushRelayConsentLabel": "שימוש בממסר הדחיפה של ChatFlux",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -11499,7 +11499,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} מספקת התראות דחיפה רק דרך השירות שלה, ולכן ההתראות למכשיר הזה עוברות דרך הממסר של Fluxer.",
+    "pushRelayConsentDescription": "{pushProvider} מספקת התראות דחיפה רק דרך השירות שלה, ולכן ההתראות למכשיר הזה עוברות דרך הממסר של ChatFlux.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -15766,7 +15766,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "פתח את Fluxer והיכנס קודם.",
+    "assistantNeedsLogin": "פתח את ChatFlux והיכנס קודם.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -15774,7 +15774,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer לא מצא את זה.",
+    "assistantNotFound": "ChatFlux לא מצא את זה.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -15782,7 +15782,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer לא הצליח להשלים זאת.",
+    "assistantFailed": "ChatFlux לא הצליח להשלים זאת.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -15799,7 +15799,7 @@
             }
         }
     },
-    "assistantOkOpened": "פותח את Fluxer.",
+    "assistantOkOpened": "פותח את ChatFlux.",
     "lookAndFeelChatWallpaperTitle": "טפט צ'אט",
     "@lookAndFeelChatWallpaperTitle": {
         "description": "Look and Feel section title for chat wallpaper presets."
@@ -18211,7 +18211,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "ממסר Fluxer Push",
+    "notificationsPushDeliveryRelayLabel": "ממסר ChatFlux Push",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -18231,7 +18231,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer תופעל מחדש כדי להחיל את האייקון החדש במסך הבית.",
+    "appIconAndroidChangeDescription": "ChatFlux תופעל מחדש כדי להחיל את האייקון החדש במסך הבית.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -18271,7 +18271,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer נסגרה באופן לא צפוי. שיתוף נתוני קריסות ושגיאות אנונימיים עוזר לנו לתקן בעיות מהר יותר.",
+    "observabilityReportingConsentSubtitle": "ChatFlux נסגרה באופן לא צפוי. שיתוף נתוני קריסות ושגיאות אנונימיים עוזר לנו לתקן בעיות מהר יותר.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -18305,7 +18305,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "המופע הזה לא מעודכן עבור האפליקציה. בקש ממי שמפעיל את {domain} לעדכן את Fluxer.",
+    "instanceOutdatedForClient": "המופע הזה לא מעודכן עבור האפליקציה. בקש ממי שמפעיל את {domain} לעדכן את ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -18314,7 +18314,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} מריץ גרסה חדשה יותר של Fluxer מהאפליקציה הזו. עדכן את האפליקציה ונסה שוב.",
+    "instanceRequiresNewerClient": "{domain} מריץ גרסה חדשה יותר של ChatFlux מהאפליקציה הזו. עדכן את האפליקציה ונסה שוב.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {

@@ -2792,7 +2792,7 @@
     "@operatorPassWallReleaseList": {
         "description": "Switch for yearly Operators list opt-in."
     },
-    "operatorPassWallReleaseListHint": "Once a year, we publish a list of Operators in the notes of a Fluxer release and in its source code. Your wall name is only on it if you turn this on.",
+    "operatorPassWallReleaseListHint": "Once a year, we publish a list of Operators in the notes of a ChatFlux release and in its source code. Your wall name is only on it if you turn this on.",
     "@operatorPassWallReleaseListHint": {
         "description": "Hint for yearly Operators list opt-in."
     },
@@ -11882,7 +11882,7 @@
     "@userSettingsNavSecurityLogin": {
         "description": "User settings navigation item for security and login settings."
     },
-    "userSettingsNavFluxerPlutonium": "Fluxer Plutonium",
+    "userSettingsNavFluxerPlutonium": "ChatFlux Plutonium",
     "@userSettingsNavFluxerPlutonium": {
         "description": "User settings navigation item for Fluxer Plutonium subscription settings."
     },
@@ -12035,7 +12035,7 @@
         "description": "Error shown on a self-hosted instance when the selected Plutonium plan is not available. Names no support mailbox."
     },
     "premiumCompletePaymentTitle": "Complete payment",
-    "premiumCompletePaymentBody": "You are now navigating to Stripe to complete the payment. Return to Fluxer once you've completed it.",
+    "premiumCompletePaymentBody": "You are now navigating to Stripe to complete the payment. Return to ChatFlux once you've completed it.",
     "premiumChoosePaymentMethodTitle": "Choose payment method",
     "premiumPixPaymentPromptDescription": "Pay with Pix automático to authorize recurring charges directly from your Brazilian bank. Or choose use card to enter a credit card on Stripe's next screen.",
     "premiumUsePix": "Use Pix",
@@ -12047,7 +12047,7 @@
     "premiumAlreadyVisionaryTitle": "You're already Visionary",
     "premiumAlreadyVisionaryBody": "Visionary already includes permanent access, so a recurring subscription isn't needed. You can still buy gifts for others.",
     "premiumExistingSubscriptionTitle": "Subscription already exists",
-    "premiumExistingSubscriptionBody": "We found an existing Fluxer Plutonium subscription for this account. Manage it in the secure billing portal to update payment details or check renewal status. If you just paid, wait a minute and reopen this page.",
+    "premiumExistingSubscriptionBody": "We found an existing ChatFlux Plutonium subscription for this account. Manage it in the secure billing portal to update payment details or check renewal status. If you just paid, wait a minute and reopen this page.",
     "premiumPurchasesDisabledTitle": "Purchases unavailable",
     "premiumPurchasesDisabledBody": "Purchases are disabled for this account. Contact {supportEmail} if this looks wrong.",
     "@premiumPurchasesDisabledBody": {
@@ -12062,8 +12062,8 @@
     "@premiumPurchasesDisabledBodySelfHosted": {
         "description": "Shown on a self-hosted instance when purchases are disabled for the account. Names no email address."
     },
-    "premiumClaimAccountToPurchase": "Claim your account to purchase Fluxer Plutonium.",
-    "premiumVerifyEmailToPurchase": "You need to verify your email before you can purchase Fluxer Plutonium.",
+    "premiumClaimAccountToPurchase": "Claim your account to purchase ChatFlux Plutonium.",
+    "premiumVerifyEmailToPurchase": "You need to verify your email before you can purchase ChatFlux Plutonium.",
     "premiumPerkCommunities": "Communities",
     "premiumPerkMessageCharacterLimit": "Message character limit",
     "premiumPerkBookmarkedMessages": "Bookmarked messages",
@@ -12119,7 +12119,7 @@
     "storePlutoniumLearnVisionary": "Learn more about Visionary.",
     "storePlutoniumDonatePrompt": "Just want to support Fluxer's open source development? ",
     "storePlutoniumDonateLink": "Donate instead.",
-    "storePlutoniumHighlightsLead": "Subscribing funds Fluxer and unlocks",
+    "storePlutoniumHighlightsLead": "Subscribing funds ChatFlux and unlocks",
     "storePlutoniumHighlightEmoji": "Custom emoji and stickers in any chat",
     "storePlutoniumHighlightProfile": "Animated profile, badge, and custom 4-digit number",
     "storePlutoniumHighlightFiles": "Uploads up to 500 MB",
@@ -12132,7 +12132,7 @@
     "@storePlutoniumRestorePurchases": {
         "description": "Button on the iOS Plutonium store page that restores App Store subscriptions bought with the same Apple ID."
     },
-    "storePlutoniumAlreadySubscribed": "You already have a Fluxer Plutonium subscription.",
+    "storePlutoniumAlreadySubscribed": "You already have a ChatFlux Plutonium subscription.",
     "storePlutoniumSavePercent": "Save {percent}%",
     "@storePlutoniumSavePercent": {
         "placeholders": {
@@ -12726,7 +12726,7 @@
     "@notificationsPushDeliveryGatewayLabel": {
         "description": "Label for the UnifiedPush gateway host on notification settings."
     },
-    "notificationsPushDeliveryRelayLabel": "Fluxer Push relay",
+    "notificationsPushDeliveryRelayLabel": "ChatFlux Push relay",
     "@notificationsPushDeliveryRelayLabel": {
         "description": "Label for Fluxer Push relay status on notification settings."
     },
@@ -12746,7 +12746,7 @@
     "@notificationsPushRelaySectionTitle": {
         "description": "Notification settings section title for the Fluxer push relay."
     },
-    "notificationsPushRelaySectionDescription": "{pushProvider} only delivers push notifications through their own service, so pushes for this device pass through the Fluxer relay.",
+    "notificationsPushRelaySectionDescription": "{pushProvider} only delivers push notifications through their own service, so pushes for this device pass through the ChatFlux relay.",
     "@notificationsPushRelaySectionDescription": {
         "description": "Notification settings section description explaining why the push relay exists.",
         "placeholders": {
@@ -12755,7 +12755,7 @@
             }
         }
     },
-    "notificationsPushRelayConsentLabel": "Use the Fluxer push relay",
+    "notificationsPushRelayConsentLabel": "Use the ChatFlux push relay",
     "@notificationsPushRelayConsentLabel": {
         "description": "Toggle label for agreeing to the Fluxer push relay on this device."
     },
@@ -12767,7 +12767,7 @@
     "@pushRelayConsentTitle": {
         "description": "Title of the one-time Fluxer push relay consent sheet."
     },
-    "pushRelayConsentDescription": "{pushProvider} only delivers push notifications through their own service, so pushes for this device pass through the Fluxer relay.",
+    "pushRelayConsentDescription": "{pushProvider} only delivers push notifications through their own service, so pushes for this device pass through the ChatFlux relay.",
     "@pushRelayConsentDescription": {
         "description": "Subtitle of the push relay consent sheet explaining why the relay exists.",
         "placeholders": {
@@ -12902,7 +12902,7 @@
     "@appIconAndroidChangeTitle": {
         "description": "Title for the confirmation sheet before changing the app icon on Android."
     },
-    "appIconAndroidChangeDescription": "Fluxer will restart to apply the new home screen icon.",
+    "appIconAndroidChangeDescription": "ChatFlux will restart to apply the new home screen icon.",
     "@appIconAndroidChangeDescription": {
         "description": "Body for the confirmation sheet before changing the app icon on Android."
     },
@@ -12974,7 +12974,7 @@
     "@observabilityReportingConsentTitle": {
         "description": "Title of the post-crash opt-in sheet for crash and error reporting."
     },
-    "observabilityReportingConsentSubtitle": "Fluxer closed unexpectedly. Sharing anonymous crash and error data helps us fix issues faster.",
+    "observabilityReportingConsentSubtitle": "ChatFlux closed unexpectedly. Sharing anonymous crash and error data helps us fix issues faster.",
     "@observabilityReportingConsentSubtitle": {
         "description": "Subtitle on the post-crash crash reporting opt-in sheet. Keep the name Fluxer as is."
     },
@@ -13555,7 +13555,7 @@
     "@instanceInvalidDiscoveryResponse": {
         "description": "Error when the instance discovery document cannot be parsed."
     },
-    "instanceOutdatedForClient": "This instance is out of date for this app. Ask whoever runs {domain} to update Fluxer.",
+    "instanceOutdatedForClient": "This instance is out of date for this app. Ask whoever runs {domain} to update ChatFlux.",
     "@instanceOutdatedForClient": {
         "description": "Error when the instance api_code_version is below what this client requires.",
         "placeholders": {
@@ -13564,7 +13564,7 @@
             }
         }
     },
-    "instanceRequiresNewerClient": "{domain} runs a newer version of Fluxer than this app. Update the app, then try again.",
+    "instanceRequiresNewerClient": "{domain} runs a newer version of ChatFlux than this app. Update the app, then try again.",
     "@instanceRequiresNewerClient": {
         "description": "Error when the instance speaks a protocol generation this client does not support.",
         "placeholders": {
@@ -17774,7 +17774,7 @@
     "@homeQuickActionDms": {
         "description": "Home screen quick action that opens Direct Messages."
     },
-    "assistantNeedsLogin": "Open Fluxer and sign in first.",
+    "assistantNeedsLogin": "Open ChatFlux and sign in first.",
     "@assistantNeedsLogin": {
         "description": "Siri/Shortcuts result when the user is logged out."
     },
@@ -17782,7 +17782,7 @@
     "@assistantNotInVoice": {
         "description": "Siri/Shortcuts result when mute or leave runs with no live call."
     },
-    "assistantNotFound": "Fluxer could not find that.",
+    "assistantNotFound": "ChatFlux could not find that.",
     "@assistantNotFound": {
         "description": "Siri/Shortcuts result when a friend, channel, or community cannot be resolved."
     },
@@ -17790,7 +17790,7 @@
     "@assistantDmsDisabled": {
         "description": "Siri/Shortcuts result when DM actions are blocked by instance config."
     },
-    "assistantFailed": "Fluxer could not complete that.",
+    "assistantFailed": "ChatFlux could not complete that.",
     "@assistantFailed": {
         "description": "Siri/Shortcuts fallback when an assistant command fails."
     },
@@ -17807,7 +17807,7 @@
             }
         }
     },
-    "assistantOkOpened": "Opening Fluxer.",
+    "assistantOkOpened": "Opening ChatFlux.",
     "assistantOkMessageSent": "Message sent.",
     "assistantOkCustomStatusSet": "Custom status updated.",
     "assistantOkCustomStatusCleared": "Custom status cleared.",
