@@ -87,6 +87,43 @@ String resolveGuildJoinMessage(
   return builders[index](username);
 }
 
+/// ChatFlux: "<actor> changed <target>'s nickname to <nick>" (hu/en, no l10n
+/// catalog entries needed).
+String chatFluxNicknameChangeText(
+  FluxerLocalizations l10n, {
+  required Message message,
+  required String authorName,
+  required String? targetName,
+  required String newNick,
+}) {
+  final bool hu = l10n.localeName.toLowerCase().startsWith('hu');
+  final String? targetId = message.mentionedUserIds.isEmpty
+      ? null
+      : message.mentionedUserIds.first;
+  final bool isSelf = targetId != null && targetId == message.authorId;
+  if (isSelf) {
+    if (newNick.isEmpty) {
+      return hu
+          ? '$authorName visszaállította a saját becenevét.'
+          : '$authorName reset their nickname.';
+    }
+    return hu
+        ? '$authorName átváltotta a saját becenevét erre: $newNick.'
+        : '$authorName changed their nickname to $newNick.';
+  }
+  final String target = targetName != null && targetName.isNotEmpty
+      ? targetName
+      : (hu ? 'valaki' : 'someone');
+  if (newNick.isEmpty) {
+    return hu
+        ? '$authorName visszaállította $target becenevét.'
+        : "$authorName reset $target's nickname.";
+  }
+  return hu
+      ? '$authorName átváltotta $target becenevét erre: $newNick.'
+      : "$authorName changed $target's nickname to $newNick.";
+}
+
 String? stringifySystemMessage({
   required FluxerLocalizations l10n,
   required Message message,
@@ -134,6 +171,14 @@ String? stringifySystemMessage({
       return l10n.systemPreviewChangedChannelName(authorName);
     case messageTypeChannelIconChange:
       return l10n.systemPreviewChangedChannelIcon(authorName);
+    case messageTypeChatFluxNicknameChange:
+      return chatFluxNicknameChangeText(
+        l10n,
+        message: message,
+        authorName: authorName,
+        targetName: mentionedUserName,
+        newNick: message.content.trim(),
+      );
     case messageTypeChannelFollowAdd:
       return l10n.systemPreviewFollowAdd(authorName, message.content);
     case messageTypeCall:
@@ -340,6 +385,19 @@ String? _systemMessageTemplate({
     case messageTypeChannelIconChange:
       return l10n.systemPreviewChangedChannelIcon(
         kSystemMessageUsernamePlaceholder,
+      );
+    case messageTypeChatFluxNicknameChange:
+      return chatFluxNicknameChangeText(
+        l10n,
+        message: message,
+        authorName: kSystemMessageUsernamePlaceholder,
+        targetName:
+            mentionedUserName != null && mentionedUserName.isNotEmpty
+            ? kSystemMessageMentionedUsernamePlaceholder
+            : null,
+        newNick: message.content.trim().isEmpty
+            ? ''
+            : kSystemMessageNewNamePlaceholder,
       );
     default:
       if (message.isSystemMessage && !isKnownSystemMessageType(message.type)) {

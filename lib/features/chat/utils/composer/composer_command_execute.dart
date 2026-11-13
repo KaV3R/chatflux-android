@@ -118,18 +118,7 @@ Future<void> _executeNick({
   required String nickname,
   required FluxerLocalizations l10n,
 }) async {
-  final String? currentUserId = ref.read(currentUserIdProvider);
-  String previous = l10n.composerCommandUnknownUser;
-  String fallback = previous;
-  if (currentUserId != null) {
-    final GuildUserDisplay? display = ref
-        .read(guildUserDisplayFromDbProvider((currentUserId, guildId)))
-        .value;
-    if (display != null) {
-      fallback = display.accountDisplayName;
-      previous = display.displayName;
-    }
-  }
+  // ChatFlux: the nickname just changes, no message is posted to the chat.
   await ref
       .read(fluxerClientProvider)
       .guilds
@@ -138,12 +127,6 @@ Future<void> _executeNick({
         body: MyGuildMemberUpdateRequest(
           nick: JsonNullable.of(nickname.isEmpty ? null : nickname),
         ),
-      );
-  final String nextName = nickname.isEmpty ? fallback : nickname;
-  ref
-      .read(chatViewModelProvider.notifier)
-      .insertClientSystemMessage(
-        l10n.composerCommandNicknameChanged(previous, nextName),
       );
 }
 

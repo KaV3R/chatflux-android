@@ -9,6 +9,7 @@ const Map<int, bool> kMessageTypeDeletable = <int, bool>{
   messageTypeCall: false,
   messageTypeChannelNameChange: false,
   messageTypeChannelIconChange: false,
+  messageTypeChatFluxNicknameChange: false,
   messageTypeChannelPinnedMessage: true,
   messageTypeUserJoin: true,
   messageTypeChannelFollowAdd: true,

@@ -39,6 +39,8 @@ const int messageTypeChannelFollowAdd = 12;
 const int messageTypeThreadCreated = 18;
 const int messageTypeReply = 19;
 const int messageTypeThreadStarterMessage = 21;
+// ChatFlux: group DM nickname changed (content = new nick, mentions[0] = target).
+const int messageTypeChatFluxNicknameChange = 98;
 const int messageTypeClientSystem = 99;
 
 class EmbedAuthor {
@@ -933,7 +935,8 @@ bool isKnownSystemMessageType(int type) {
     messageTypeChannelIconChange ||
     messageTypeChannelPinnedMessage ||
     messageTypeUserJoin ||
-    messageTypeChannelFollowAdd => true,
+    messageTypeChannelFollowAdd ||
+    messageTypeChatFluxNicknameChange => true,
     _ => false,
   };
 }

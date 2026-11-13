@@ -445,6 +445,8 @@ class SystemMessage extends ConsumerWidget {
         return (PhosphorIconsBold.pencilSimple, mutedColor, false);
       case messageTypeChannelIconChange:
         return (PhosphorIconsBold.imageSquare, mutedColor, false);
+      case messageTypeChatFluxNicknameChange:
+        return (PhosphorIconsBold.identificationCard, mutedColor, false);
       default:
         return (PhosphorIconsFill.info, mutedColor, false);
     }
