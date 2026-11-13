@@ -173,10 +173,11 @@ class VoiceSession extends _$VoiceSession {
         unawaited(_onVoiceSettingsChanged(previous, next));
       })
       ..listen<Map<String, VoiceState>>(voiceStatesMapProvider, (
-        Map<String, VoiceState>? _,
+        Map<String, VoiceState>? previous,
         Map<String, VoiceState> next,
       ) {
         _syncMeshRoster(next);
+        _playRemoteScreenShareSounds(previous, next);
       })
       ..listen<bool>(voiceCallKitEngineSuppressedProvider, (
         bool? previous,
@@ -1095,6 +1096,62 @@ class VoiceSession extends _$VoiceSession {
       await drainVoiceMediaHandoffs(ref);
     }
     await mesh.close(handOffAudioSession: handOffAudioSession);
+  }
+
+  /// ChatFlux: play the screen share start/stop sound when someone else in my
+  /// current call starts or stops sharing their screen (own shares already
+  /// play it from _toggleScreenShare).
+  void _playRemoteScreenShareSounds(
+    Map<String, VoiceState>? previous,
+    Map<String, VoiceState> next,
+  ) {
+    if (previous == null || !state.isConnected) {
+      return;
+    }
+    final String? channelId = state.channelId;
+    final String? ownConnectionId = state.activeConnectionId;
+    if (channelId == null) {
+      return;
+    }
+    FluxerSfxClip? clip;
+    for (final VoiceState current in next.values) {
+      final String? connectionId = current.connectionId;
+      if (connectionId == null || connectionId == ownConnectionId) {
+        continue;
+      }
+      if (current.channelId != channelId) {
+        continue;
+      }
+      VoiceState? before;
+      for (final VoiceState candidate in previous.values) {
+        if (candidate.connectionId == connectionId) {
+          before = candidate;
+          break;
+        }
+      }
+      if (before == null || before.channelId != channelId) {
+        continue;
+      }
+      final bool wasStreaming = before.selfStream;
+      final bool isStreaming = current.selfStream;
+      if (wasStreaming == isStreaming) {
+        continue;
+      }
+      clip = isStreaming ? FluxerSfxClip.streamStart : FluxerSfxClip.streamStop;
+      if (isStreaming) {
+        break;
+      }
+    }
+    if (clip == null) {
+      return;
+    }
+    unawaited(
+      playFluxerSoundEffect(
+        prefs: ref.read(soundPreferencesProvider),
+        sfx: ref.read(fluxerSfxProvider),
+        clip: clip,
+      ),
+    );
   }
 
   void _syncMeshRoster(Map<String, VoiceState> voiceStates) {
