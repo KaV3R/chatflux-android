@@ -122,6 +122,13 @@ class VoiceSession extends _$VoiceSession {
   DateTime? _lastCameraOrientationRefresh;
   Listenable? _observedLocalParticipant;
   EventsListener<RoomEvent>? _roomEventsListener;
+  // ChatFlux: remote screen share sounds (LiveKit rooms).
+  final Set<String> _remoteScreenSharers = <String>{};
+  final Map<String, Timer> _remoteScreenShareStopTimers = <String, Timer>{};
+  DateTime _remoteScreenShareBoundAt = DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime _lastRemoteScreenShareSoundAt = DateTime.fromMillisecondsSinceEpoch(
+    0,
+  );
   Room? _managedLiveKitRoom;
   VoiceMeshTransport? _managedMesh;
   Timer? _meshConversionTimer;
@@ -1105,7 +1112,7 @@ class VoiceSession extends _$VoiceSession {
     Map<String, VoiceState>? previous,
     Map<String, VoiceState> next,
   ) {
-    if (previous == null || !state.isConnected) {
+    if (previous == null || !state.isConnected || state.mesh == null) {
       return;
     }
     final String? channelId = state.channelId;
@@ -1145,12 +1152,86 @@ class VoiceSession extends _$VoiceSession {
     if (clip == null) {
       return;
     }
+    _playRemoteScreenShareSound(clip);
+  }
+
+  void _playRemoteScreenShareSound(FluxerSfxClip clip) {
+    final DateTime now = DateTime.now();
+    if (now.difference(_lastRemoteScreenShareSoundAt) <
+        const Duration(milliseconds: 1200)) {
+      return;
+    }
+    _lastRemoteScreenShareSoundAt = now;
     unawaited(
       playFluxerSoundEffect(
         prefs: ref.read(soundPreferencesProvider),
         sfx: ref.read(fluxerSfxProvider),
         clip: clip,
       ),
+    );
+  }
+
+  static bool _participantHasScreenShare(RemoteParticipant participant) {
+    return participant.trackPublications.values.any(
+      (RemoteTrackPublication pub) => pub.source == TrackSource.screenShareVideo,
+    );
+  }
+
+  void _resetRemoteScreenShareTracking(Room room) {
+    for (final Timer timer in _remoteScreenShareStopTimers.values) {
+      timer.cancel();
+    }
+    _remoteScreenShareStopTimers.clear();
+    _remoteScreenSharers.clear();
+    _remoteScreenShareBoundAt = DateTime.now();
+    for (final RemoteParticipant participant in room.remoteParticipants.values) {
+      if (_participantHasScreenShare(participant)) {
+        _remoteScreenSharers.add(participant.identity);
+      }
+    }
+  }
+
+  void _onRemoteScreenSharePublished(String identity) {
+    _remoteScreenShareStopTimers.remove(identity)?.cancel();
+    if (!_remoteScreenSharers.add(identity)) {
+      return;
+    }
+    // Tracks that already existed when we joined are announced in a burst.
+    if (DateTime.now().difference(_remoteScreenShareBoundAt) <
+        const Duration(milliseconds: 2500)) {
+      return;
+    }
+    _playRemoteScreenShareSound(FluxerSfxClip.streamStart);
+  }
+
+  void _onRemoteScreenShareUnpublished(Room room, String identity) {
+    if (!_remoteScreenSharers.contains(identity)) {
+      return;
+    }
+    _remoteScreenShareStopTimers.remove(identity)?.cancel();
+    // A share can be republished (quality/codec switch); only a lasting stop counts.
+    _remoteScreenShareStopTimers[identity] = Timer(
+      const Duration(milliseconds: 1500),
+      () {
+        _remoteScreenShareStopTimers.remove(identity);
+        RemoteParticipant? current;
+        for (final RemoteParticipant p in room.remoteParticipants.values) {
+          if (p.identity == identity) {
+            current = p;
+            break;
+          }
+        }
+        if (current == null) {
+          // Left the call: the leave sound covers it.
+          _remoteScreenSharers.remove(identity);
+          return;
+        }
+        if (_participantHasScreenShare(current)) {
+          return;
+        }
+        _remoteScreenSharers.remove(identity);
+        _playRemoteScreenShareSound(FluxerSfxClip.streamStop);
+      },
     );
   }
 
@@ -3864,11 +3945,13 @@ class VoiceSession extends _$VoiceSession {
     final EventsListener<RoomEvent> listener = room.createListener();
     _roomEventsListener = listener;
     final String? selfIdentity = room.localParticipant?.identity;
+    _resetRemoteScreenShareTracking(room);
     listener
       ..on<RoomConnectedEvent>((RoomConnectedEvent evt) {
         if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
           return;
         }
+        _resetRemoteScreenShareTracking(room);
         _runVoiceAsync(
           () => _onLiveKitRoomConnected(
             room: room,
@@ -3919,10 +4002,22 @@ class VoiceSession extends _$VoiceSession {
         if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
           return;
         }
+        if (evt.publication.source == TrackSource.screenShareVideo &&
+            evt.participant.identity != selfIdentity) {
+          _onRemoteScreenSharePublished(evt.participant.identity);
+        }
         _runVoiceAsync(
           () => _subscribeRemotePublicationIfNeeded(evt.publication),
           label: 'subscribe remote track',
         );
+      })
+      ..on<TrackUnpublishedEvent>((TrackUnpublishedEvent evt) {
+        if (!_isLatestRoomAttempt(attempt) || _intentionalLiveKitTeardown) {
+          return;
+        }
+        if (evt.publication.source == TrackSource.screenShareVideo) {
+          _onRemoteScreenShareUnpublished(room, evt.participant.identity);
+        }
       })
       ..on<ParticipantConnectedEvent>((ParticipantConnectedEvent evt) {
         if (_intentionalLiveKitTeardown) {
